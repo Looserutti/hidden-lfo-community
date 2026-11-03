@@ -28,14 +28,41 @@ class RulesView(discord.ui.View):
         role = interaction.guild.get_role(VERIFIED_ROLE_ID)
         if role is None:
             return await interaction.response.send_message('Verified role is not configured.', ephemeral=True)
+
+        already_verified = role in interaction.user.roles
+
         try:
-            await interaction.user.add_roles(role, reason='Accepted community rules')
+            if not already_verified:
+                await interaction.user.add_roles(
+                    role,
+                    reason='Accepted community rules'
+                )
         except discord.Forbidden:
-            return await interaction.response.send_message('I cannot assign that role. Please contact an administrator.', ephemeral=True)
-        with Session() as db:
-            m = member(db, interaction.user.id)
-            m.verified_at = now()
-            db.commit()
+            return await interaction.response.send_message(
+                'I cannot assign that role. Please contact an administrator.',
+                ephemeral=True
+            )
+        except discord.HTTPException:
+            return await interaction.response.send_message(
+                'Discord could not complete verification. Please try again.',
+                ephemeral=True
+            )
+        try:
+            with Session() as db:
+                m = member(db, interaction.user.id)
+                if m.verified_at is None:
+                    m.verified_at = now()
+                db.commit()
+        except Exception:
+            logging.exception(
+                'Failed to save verification for member %s',
+                interaction.user.id
+            )
+            return await interaction.response.send_message(
+                'Your Discord role was verified, but the database '
+                'could not be updated. Please try again or contact an administrator.',
+                ephemeral=True
+            )
         await interaction.response.send_message('Thanks! You are now verified.', ephemeral=True)
 
 class RSVPView(discord.ui.View):
