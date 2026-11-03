@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Event administration</h1><p><a href="/admin/activity">Member activity dashboard</a></p><p>Only allowlisted Discord accounts can access this page.</p>
+<article><h2>Create draft event</h2><form method="post" action="/admin/events">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Title <input name="title" required maxlength="200"></label>
+<label>Description <textarea name="description"></textarea></label>
+<label>Start time with timezone offset (ISO 8601) <input name="starts_at" required placeholder="2026-11-14T19:00:00-08:00"></label>
+<label>Location <input name="location" value="Discord"></label>
+<label>Capacity (optional) <input name="capacity" type="number" min="1"></label>
+<button>Create draft</button></form></article>
+<h2>Events</h2>
+{% for event in events %}<article>
+<h3>{{ event.title }} — {{ 'Published' if event.published else 'Unpublished / Draft' }}</h3>
+<p><a href="/admin/events/{{ event.id }}/registrations">View registrations</a></p><p>{{ counts[event.id] }} registered{% if event.capacity %} / {{ event.capacity }} capacity{% endif %}</p>
+<details><summary>Edit event</summary><form method="post" action="/admin/events/{{ event.id }}/edit">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Title <input name="title" required maxlength="200" value="{{ event.title }}"></label>
+<label>Description <textarea name="description">{{ event.description }}</textarea></label>
+<label>Start (ISO 8601 with offset) <input name="starts_at" required value="{{ event.starts_at.isoformat() }}"></label>
+<label>Location <input name="location" value="{{ event.location }}"></label>
+<label>Capacity <input name="capacity" type="number" min="1" value="{{ event.capacity if event.capacity is not none else '' }}"></label>
+<button>Save changes</button></form></details>
+<form action="/admin/events/{{ event.id }}/publish" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ 'Unpublish' if event.published else 'Publish' }}</button></form>
+{% if event.published %}<form action="/admin/events/{{ event.id }}/cancel" method="post" onsubmit="return confirm('Remove this event from the public calendar and Discord announcement?')"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Cancel event</button></form>{% endif %}
+</article>{% else %}<p>No events yet.</p>{% endfor %}
+<p class="note">The Discord bot reconciles event posts about every 30 seconds while online. Unpublishing preserves RSVP history and removes the Discord announcement.</p>
+{% endblock %}

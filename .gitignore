@@ -1,0 +1,23 @@
+.env
+*.db
+*.db-shm
+*.db-wal
+__pycache__/
+.pytest_cache/
+.venv/
+.DS_Store
+backups/
+# Additional secrets
+.env.*
+!.env.example
+
+# Database backups
+*.backup
+*.sqlite
+*.sqlite3
+
+# Python compiled files
+*.pyc
+
+# Editor settings
+.vscode/

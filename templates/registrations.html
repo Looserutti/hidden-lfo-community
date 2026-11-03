@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Registrations: {{ event.title }}</h1><p><a href="/admin">← Event administration</a></p>
+<p>Registration records are visible to authorized administrators only.</p>
+<table><thead><tr><th>Discord user ID</th><th>Status</th><th>Recorded (UTC)</th></tr></thead><tbody>
+{% for r in registrations %}<tr><td>{{ r.discord_id }}</td><td>{{ r.status }}</td><td>{{ r.created_at }}</td></tr>{% else %}<tr><td colspan="3">No registrations yet.</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

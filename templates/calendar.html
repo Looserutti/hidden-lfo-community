@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}
+<div class="page-heading"><div><p class="eyebrow">COMMUNITY SCHEDULE</p><h1>Event calendar</h1><p>All events are public. RSVP in Discord after joining and verifying.</p></div>{% if invite_url %}<a class="cta" href="{{ invite_url }}" target="_blank" rel="noopener noreferrer">Join our Discord</a>{% endif %}</div>
+<div class="calendar-toolbar"><a href="/calendar?year={{ previous[0] }}&month={{ previous[1] }}" aria-label="Previous month">← Previous</a><h2>{{ month_name }} {{ year }}</h2><a href="/calendar?year={{ following[0] }}&month={{ following[1] }}" aria-label="Next month">Next →</a></div>
+<div class="calendar-grid" role="grid" aria-label="{{ month_name }} {{ year }} event calendar">
+{% for name in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}<div class="weekday">{{ name }}</div>{% endfor %}
+{% for week in weeks %}{% for day in week %}<div class="calendar-day{% if not day.in_month %} outside{% endif %}" role="gridcell"><span class="day-number">{{ day.date.day }}</span>{% for event in day.events %}<a class="calendar-event" href="/events/{{ event.id }}"><strong>{{ event.title }}</strong><small><time class="local-time" datetime="{{ event.starts_at.isoformat() }}">{{ event.starts_at.strftime('%H:%M') }} UTC</time></small></a>{% endfor %}</div>{% endfor %}{% endfor %}
+</div><p class="hint">Calendar days use UTC for grouping. Event times display in your device's local time zone. Events close to midnight may fall on a different local date.</p>
+{% endblock %}

@@ -1,0 +1,58 @@
+name: community-platform
+x-app: &app
+  build: .
+  env_file: .env
+  environment:
+    DATABASE_URL: sqlite:////data/community.db
+  volumes:
+    - community_data:/data
+  restart: unless-stopped
+  init: true
+services:
+  migrate:
+    <<: *app
+    restart: 'no'
+    command: ["alembic", "upgrade", "head"]
+  web:
+    <<: *app
+    command: ["uvicorn", "app.web:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks: [internal]
+  bot:
+    <<: *app
+    command: ["python", "-m", "bot.main"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [internal]
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [internal]
+networks:
+  internal:
+volumes:
+  community_data:
+  caddy_data:
+  caddy_config:

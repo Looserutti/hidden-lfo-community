@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Member activity review</h1><p><a href="/admin">← Event administration</a></p>
+<p class="note">Activity is based only on observed interactions and online presence. Online presence is not server-specific. Unknown history is not evidence of inactivity. No member is automatically removed.</p>
+<section><h2>Summary</h2><p>Active: {{ totals.active }} · Review: {{ totals.review }} · Grace: {{ totals.grace }} · Unknown: {{ totals.unknown }} · Exempt: {{ totals.exempt }}</p></section>
+<form method="get" action="/admin/activity"><label>Status <select name="status">{% for option in ['all','active','review','grace','unknown','exempt'] %}<option value="{{ option }}" {% if status == option %}selected{% endif %}>{{ option|capitalize }}</option>{% endfor %}</select></label><label>Discord user ID <input name="search" value="{{ search }}"></label><button>Filter</button></form>
+<div style="overflow-x:auto"><table><thead><tr><th>Discord ID</th><th>Status</th><th>Joined (UTC)</th><th>Server activity (UTC)</th><th>Online observed (UTC)</th><th>Exemption</th></tr></thead><tbody>
+{% for m in rows %}<tr><td>{{ m.discord_id }}</td><td>{{ m.status }}</td><td>{{ m.joined_at.strftime('%Y-%m-%d') if m.joined_at else 'Unknown' }}</td><td>{{ m.last_server_activity.strftime('%Y-%m-%d %H:%M') if m.last_server_activity else 'Not observed' }}</td><td>{{ m.last_observed_online.strftime('%Y-%m-%d %H:%M') if m.last_observed_online else 'Not observed' }}</td><td><form method="post" action="/admin/members/{{ m.discord_id }}/exemption"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="enabled" value="{{ 'false' if m.exempt else 'true' }}"><button>{{ 'Remove exemption' if m.exempt else 'Exempt' }}</button></form></td></tr>
+{% else %}<tr><td colspan="6">No matching members.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
