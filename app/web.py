@@ -60,7 +60,7 @@ def home(request: Request):
     with Session() as db:
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= datetime.now(timezone.utc)).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events}
-        return templates.TemplateResponse('index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL), 'index.html')
 
 @app.get('/calendar', response_class=HTMLResponse)
 def calendar_page(request: Request, year: int | None = None, month: int | None = None):
@@ -76,7 +76,7 @@ def calendar_page(request: Request, year: int | None = None, month: int | None =
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start, Event.starts_at < next_month).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         prev, nxt = calendar_navigation(year, month)
-        return templates.TemplateResponse('calendar.html', context(request, weeks=month_grid(year, month, events), month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(context(request, weeks=month_grid(year, month, events), month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL), 'calendar.html')
 
 @app.get('/events/{event_id}', response_class=HTMLResponse)
 def event_detail(request: Request, event_id: int):
@@ -85,7 +85,7 @@ def event_detail(request: Request, event_id: int):
         if not e or not e.published:
             raise HTTPException(404)
         count = db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going'))
-        return templates.TemplateResponse('event.html', context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL), 'event.html')
 
 @app.get('/login')
 def login(request: Request):
@@ -130,7 +130,7 @@ def dashboard(request: Request):
     with Session() as db:
         events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
-        return templates.TemplateResponse('admin.html', context(request, events=events, counts=counts))
+        return templates.TemplateResponse(context(request, events=events, counts=counts), 'admin.html')
 
 @app.post('/admin/events')
 def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(...), location: str = Form('Discord'), capacity: str = Form('')):
@@ -230,7 +230,7 @@ def activity_dashboard(request: Request, status: str = 'all', search: str = ''):
         rows = [r for r in rows if r['status'] == status]
     if search.strip():
         rows = [r for r in rows if search.strip() in str(r['discord_id'])]
-    return templates.TemplateResponse('activity.html', context(request, rows=rows, totals=totals, status=status, search=search))
+    return templates.TemplateResponse(context(request, rows=rows, totals=totals, status=status, search=search), 'activity.html')
 
 @app.post('/admin/members/{discord_id}/exemption')
 def member_exemption(request: Request, discord_id: int, csrf: str = Form(...), enabled: str = Form(...)):
@@ -253,4 +253,4 @@ def event_registrations(request: Request, event_id: int):
         if not e:
             raise HTTPException(404)
         regs = db.scalars(select(Registration).where(Registration.event_id == event_id).order_by(Registration.created_at.desc())).all()
-        return templates.TemplateResponse('registrations.html', context(request, event=e, registrations=regs))
+        return templates.TemplateResponse(context(request, event=e, registrations=regs), 'registrations.html')
