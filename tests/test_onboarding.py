@@ -87,4 +87,49 @@ def test_agree_button_preserves_timestamp_on_second_click(tmp_path):
     # The original verification timestamp must remain unchanged.
     with TestSession() as db:
         saved = db.query(Member).filter_by(discord_id=member_id).one()
-        assert saved.verified_at == original_time.replace(tzinfo=None)    
+        assert saved.verified_at == original_time.replace(tzinfo=None) 
+
+def test_agree_button_handles_discord_permission_error(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'permission_test.db'}")
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+
+    member_id = 987654321
+    role = MagicMock(spec=discord.Role)
+
+    user = MagicMock(spec=discord.Member)
+    user.id = member_id
+    user.roles = []
+    user.add_roles = AsyncMock(
+        side_effect=discord.Forbidden(
+            MagicMock(status=403, reason="Forbidden"),
+            "Missing Permissions",
+        )
+    )
+
+    guild = MagicMock(spec=discord.Guild)
+    guild.get_role.return_value = role
+
+    interaction = MagicMock(spec=discord.Interaction)
+    interaction.guild = guild
+    interaction.user = user
+    interaction.response.send_message = AsyncMock()
+
+    view = RulesView()
+    button = view.children[0]
+
+    with (
+        patch("bot.main.GUILD_ID", guild.id),
+        patch("bot.main.Session", TestSession),
+    ):
+        asyncio.run(button.callback(interaction))
+
+    user.add_roles.assert_awaited_once()
+    interaction.response.send_message.assert_awaited_once_with(
+        "I cannot assign that role. Please contact an administrator.",
+        ephemeral=True,
+    )
+
+    with TestSession() as db:
+        saved = db.query(Member).filter_by(discord_id=member_id).one_or_none()
+        assert saved is None or saved.verified_at is None
