@@ -85,3 +85,9 @@ def test_oauth_callback_success(monkeypatch):
 
         admin_response = client.get('/admin')
         assert admin_response.status_code == 200
+
+
+def test_public_homepage_without_login():
+    with TestClient(app) as client:
+        response = client.get('/')
+        assert response.status_code == 200
