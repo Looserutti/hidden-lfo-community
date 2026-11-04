@@ -60,7 +60,7 @@ def home(request: Request):
     with Session() as db:
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= datetime.now(timezone.utc)).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events}
-        return templates.TemplateResponse(context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL), 'index.html')
+        return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL))
 
 @app.get('/calendar', response_class=HTMLResponse)
 def calendar_page(request: Request, year: int | None = None, month: int | None = None):
@@ -86,7 +86,7 @@ def event_detail(request: Request, event_id: int):
         if not e or not e.published:
             raise HTTPException(404)
         count = db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going'))
-        return templates.TemplateResponse(context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL), 'event.html')
+        return templates.TemplateResponse(request, 'event.html', context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL))
 
 @app.get('/login')
 def login(request: Request):
@@ -131,7 +131,7 @@ def dashboard(request: Request):
     with Session() as db:
         events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
-        return templates.TemplateResponse(context(request, events=events, counts=counts), 'admin.html')
+        return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts))
 
 @app.post('/admin/events')
 def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(...), location: str = Form('Discord'), capacity: str = Form('')):
@@ -231,7 +231,7 @@ def activity_dashboard(request: Request, status: str = 'all', search: str = ''):
         rows = [r for r in rows if r['status'] == status]
     if search.strip():
         rows = [r for r in rows if search.strip() in str(r['discord_id'])]
-    return templates.TemplateResponse(context(request, rows=rows, totals=totals, status=status, search=search), 'activity.html')
+    return templates.TemplateResponse(request, 'activity.html', context(request, rows=rows, totals=totals, status=status, search=search))
 
 @app.post('/admin/members/{discord_id}/exemption')
 def member_exemption(request: Request, discord_id: int, csrf: str = Form(...), enabled: str = Form(...)):
@@ -254,4 +254,4 @@ def event_registrations(request: Request, event_id: int):
         if not e:
             raise HTTPException(404)
         regs = db.scalars(select(Registration).where(Registration.event_id == event_id).order_by(Registration.created_at.desc())).all()
-        return templates.TemplateResponse(context(request, event=e, registrations=regs), 'registrations.html')
+        return templates.TemplateResponse(request, 'registrations.html', context(request, event=e, registrations=regs))
