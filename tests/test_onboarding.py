@@ -133,3 +133,43 @@ def test_agree_button_handles_discord_permission_error(tmp_path):
     with TestSession() as db:
         saved = db.query(Member).filter_by(discord_id=member_id).one_or_none()
         assert saved is None or saved.verified_at is None
+
+def test_agree_button_handles_database_failure():
+    member_id = 555666777
+    role = MagicMock(spec=discord.Role)
+
+    user = MagicMock(spec=discord.Member)
+    user.id = member_id
+    user.roles = []
+    user.add_roles = AsyncMock()
+
+    guild = MagicMock(spec=discord.Guild)
+    guild.get_role.return_value = role
+
+    interaction = MagicMock(spec=discord.Interaction)
+    interaction.guild = guild
+    interaction.user = user
+    interaction.response.send_message = AsyncMock()
+
+    view = RulesView()
+    button = view.children[0]
+
+    # Simulate the database being unavailable.
+    with (
+        patch("bot.main.GUILD_ID", guild.id),
+        patch("bot.main.Session", side_effect=RuntimeError("Database unavailable")),
+    ):
+        asyncio.run(button.callback(interaction))
+
+    # Discord role assignment should have succeeded.
+    user.add_roles.assert_awaited_once_with(
+        role,
+        reason="Accepted community rules",
+    )
+
+    # The member should receive an accurate error message.
+    interaction.response.send_message.assert_awaited_once_with(
+        "Your Discord role was verified, but the database "
+        "could not be updated. Please try again or contact an administrator.",
+        ephemeral=True,
+    )
