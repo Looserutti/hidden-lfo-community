@@ -76,7 +76,8 @@ def calendar_page(request: Request, year: int | None = None, month: int | None =
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start, Event.starts_at < next_month).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         prev, nxt = calendar_navigation(year, month)
-        return templates.TemplateResponse(context(request, weeks=month_grid(year, month, events), month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL), 'calendar.html')
+        return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events), month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
+  
 
 @app.get('/events/{event_id}', response_class=HTMLResponse)
 def event_detail(request: Request, event_id: int):
