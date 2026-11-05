@@ -1,4 +1,106 @@
-{% extends 'base.html' %}{% block content %}
-<div class="page-heading"><div><p class="eyebrow">WELCOME TO THE COMMUNITY</p><h1>Upcoming community events</h1><p>Browse events freely. Join our Discord server, acknowledge the rules, and register using the event announcement.</p></div><div class="actions"><a class="cta" href="/calendar">Monthly calendar</a>{% if invite_url %}<a class="cta secondary" href="{{ invite_url }}" target="_blank" rel="noopener noreferrer">Join Discord</a>{% endif %}</div></div>
-<section class="grid">{% for event in events %}<article><p class="eyebrow">UPCOMING EVENT</p><h2><a href="/events/{{ event.id }}">{{ event.title }}</a></h2><p><time class="local-time" datetime="{{ event.starts_at.isoformat() }}">{{ event.starts_at.strftime('%B %d, %Y · %H:%M') }} UTC</time></p><p>{{ event.location }}</p><p>{{ counts[event.id] }} registered{% if event.capacity %} / {{ event.capacity }} spots{% endif %}</p><a href="/events/{{ event.id }}">View event details →</a></article>{% else %}<article><p>No upcoming events have been published yet.</p><a href="/calendar">Browse the calendar</a></article>{% endfor %}</section>
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- HIDDEN LFO INTRODUCTION -->
+<section class="home-intro">
+  <p class="eyebrow">NORTH COUNTY SAN DIEGO</p>
+  <h1>HIDDEN LFO</h1>
+  <p>Electronic music and art collective.</p>
+</section>
+
+<!-- EVENT PHOTOGRAPHY -->
+<section class="home-gallery" aria-label="Hidden LFO event photography">
+  <div class="gallery-slides">
+    {% for number in range(1, 7) %}
+    <img
+      src="/static/images/event-{{ '%02d' | format(number) }}.jpg"
+      alt="Hidden LFO event photograph {{ number }}"
+      class="gallery-image{% if number == 1 %} is-active{% endif %}"
+      loading="{% if number == 1 %}eager{% else %}lazy{% endif %}"
+    >
+    {% endfor %}
+  </div>
+
+  <button class="gallery-arrow gallery-prev"
+          type="button"
+          aria-label="Previous photograph">
+    &#8592;
+  </button>
+
+  <button class="gallery-arrow gallery-next"
+          type="button"
+          aria-label="Next photograph">
+    &#8594;
+  </button>
+
+  <div class="gallery-counter" aria-live="polite">
+    <span id="gallery-current">01</span> / 06
+  </div>
+</section>
+
+
+<!-- UPCOMING EVENTS -->
+<section class="home-events">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">WHAT'S NEXT</p>
+      <h2>UPCOMING EVENTS</h2>
+    </div>
+
+    <div class="actions">
+      <a class="cta" href="/calendar">Monthly calendar</a>
+
+      {% if invite_url %}
+      <a
+        class="cta secondary"
+        href="{{ invite_url }}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Join Discord
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid">
+    {% for event in events %}
+    <article>
+      <p class="eyebrow">UPCOMING EVENT</p>
+      <h2>
+        <a href="/events/{{ event.id }}">{{ event.title }}</a>
+      </h2>
+
+      <p>
+        <time
+          class="local-time"
+          datetime="{{ event.starts_at.isoformat() }}"
+        >
+          {{ event.starts_at.strftime('%B %d, %Y · %H:%M') }} UTC
+        </time>
+      </p>
+
+      <p>{{ event.location }}</p>
+
+      <p>
+        {{ counts[event.id] }} registered
+        {% if event.capacity %}
+        / {{ event.capacity }} spots
+        {% endif %}
+      </p>
+
+      <a href="/events/{{ event.id }}">View event details →</a>
+    </article>
+
+    {% else %}
+    <article>
+      <p>No upcoming events have been published yet.</p>
+      <a href="/calendar">Browse the calendar</a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+<script src="/static/gallery.js" defer></script>
 {% endblock %}
