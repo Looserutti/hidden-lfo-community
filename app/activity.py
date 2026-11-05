@@ -24,7 +24,8 @@ def classify(m: Member, at: datetime | None = None, grace_days=90, inactive_days
         status = 'review'
     else:
         status = 'active'
-    return {'discord_id': m.discord_id, 'status': status, 'joined_at': joined,
+    return {'discord_id': m.discord_id, 'discord_username': m.discord_username,
+            'server_display_name': m.server_display_name, 'status': status, 'joined_at': joined,
             'last_server_activity': utc(m.last_server_activity),
             'last_observed_online': utc(m.last_observed_online), 'last_seen': seen,
             'exempt': bool(m.exempt)}

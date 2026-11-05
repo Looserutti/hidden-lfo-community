@@ -12,6 +12,14 @@ def member(db: DBSession, discord_id: int) -> Member:
         db.flush()
     return m
 
+def sync_member_identity(db: DBSession, discord_member) -> Member:
+    """Names are labels, never identity keys or evidence of activity."""
+    record = member(db, discord_member.id)
+    record.discord_username = discord_member.name
+    record.server_display_name = discord_member.display_name
+    return record
+
+
 def touch(db: DBSession, discord_id: int, field='last_server_activity'):
     m = member(db, discord_id)
     setattr(m, field, now())

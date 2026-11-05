@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from sqlalchemy import select, func
 from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID
 from app.db import Session, Member, Event, Registration, init_db, now
-from app.services import member, touch, rsvp, inactive_members, event_announcement
+from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
 
 logging.basicConfig(level=logging.INFO)
@@ -139,8 +139,28 @@ async def exempt(interaction: discord.Interaction, user: discord.Member, enabled
 async def on_member_join(m):
     if m.guild.id != GUILD_ID: return
     with Session() as db:
-        record = member(db, m.id)
+        record = sync_member_identity(db, m)
         record.joined_at = m.joined_at
+        db.commit()
+
+@bot.event
+async def on_member_update(before, after):
+    if after.guild.id != GUILD_ID:
+        return
+    with Session() as db:
+        sync_member_identity(db, after)
+        db.commit()
+
+@bot.event
+async def on_user_update(before, after):
+    guild = bot.get_guild(GUILD_ID)
+    guild_member = guild.get_member(after.id) if guild else None
+    if guild_member is None:
+        return
+    with Session() as db:
+        record = sync_member_identity(db, guild_member)
+        record.discord_username = after.name
+        record.server_display_name = guild_member.nick or after.global_name or after.name
         db.commit()
 
 @bot.event
@@ -170,7 +190,7 @@ async def on_ready():
     if guild:
         with Session() as db:
             for m in guild.members:
-                record = member(db, m.id)
+                record = sync_member_identity(db, m)
                 if record.joined_at is None: record.joined_at = m.joined_at
                 if record.verified_at is None and any(r.id == VERIFIED_ROLE_ID for r in m.roles):
                     record.verified_at = now()

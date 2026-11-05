@@ -12,6 +12,8 @@ def now():
 class Member(Base):
     __tablename__ = 'members'
     discord_id: Mapped[int] = mapped_column(primary_key=True)
+    discord_username: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    server_display_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     joined_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_server_activity: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
