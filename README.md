@@ -96,3 +96,19 @@ python -m compileall -q app bot scripts
 10. Only after successful testing, configure HTTPS, persistent storage, off-server backups, and production monitoring.
 
 **Known limitations:** Discord OAuth2 and real Discord interactions are not exercised by unit tests. Docker and live bot permissions still require testing. SQLite concurrency is suitable for this initial single-host architecture but must be reevaluated if traffic or write contention grows.
+
+## Branding and reuse
+
+This platform is intended for other communities and artists to build on. Hidden LFO is the current example community; Discord, calendar, event and authentication behavior remain separate from presentation.
+
+- Edit **`config/site.json`** for the community name, location eyebrow, description, footer wording, social URLs, and gallery folder. No template or Python edits are needed. Restart the website after changing this JSON file.
+- To start fresh, copy `config/site.example.json` to `config/site.json`. The example has generic wording, no social accounts. Blank social URLs hide their icons; an empty gallery folder hides the carousel and viewer. Any number of photos is supported, with counters generated automatically.
+- **Drag and drop photos into `static/images/gallery/`**, then refresh the homepage. Delete photos from that folder to remove them. No JSON edits or server restart are needed for photo changes. The folder is scanned on each page request; an already-open page needs a refresh.
+- Supported formats: JPG/JPEG, PNG, WebP, GIF, and AVIF (browser support varies). Convert HEIC photos to JPEG first. Hidden files, subfolders, and symlinks are ignored. Photos sort naturally by filename: use `01-stage.jpg`, `02-crowd.jpg`, etc. Filenames also supply the generated image descriptions, so use descriptive names.
+- Change `gallery_folder` in `config/site.json` to use another folder relative to `static/`. Restart after configuration changes. The generic example uses the same folder; remove the example photos when rebranding. Use photos you have permission to distribute; existing event photos are not a promise of reuse rights.
+- For a deployed site, add/remove files on the server or redeploy the updated folder; changing files on your Mac only updates your local preview.
+- Edit **`static/theme.css`** for homepage, carousel, viewer, footer, and social icon styling. `static/style.css` contains shared application styles and color variables. Refresh the browser after CSS edits.
+- Shared layout lives in `templates/base.html`; social vector artwork is isolated in `templates/_social_icon.html`. Account URLs are configuration, never embedded in icons.
+- Configure the Discord invite, deployment base URL and OAuth callback in `.env` using `.env.example`. Public branding JSON must not contain credentials.
+
+Keep future branding changes in these presentation files and configuration. Changes to events, permissions, authentication, or bot services should be scoped and reviewed separately.

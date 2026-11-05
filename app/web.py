@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select, func
+from app.branding import site_context
 from app.config import ADMIN_IDS, BASE_URL
 from app.config import DISCORD_INVITE_URL
 from app.db import init_db, Session, Event, Registration, Member
@@ -53,7 +54,7 @@ def csrf_check(request: Request, token: str):
 def context(request: Request, **kwargs):
     if 'csrf' not in request.session:
         request.session['csrf'] = secrets.token_urlsafe(32)
-    return {'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
+    return {'site': site_context(), 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
 
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):

@@ -1,0 +1,12 @@
+{
+  "name": "Your Community",
+  "eyebrow": "YOUR CITY OR REGION",
+  "description": "A space for your community.",
+  "footer_text": "Event registration takes place inside our Discord server.",
+  "socials": {
+    "instagram": "",
+    "tiktok": "",
+    "youtube": ""
+  },
+  "gallery_folder": "images/gallery"
+}
