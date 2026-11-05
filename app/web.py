@@ -5,7 +5,7 @@ import calendar
 from app.calendar_utils import month_grid, calendar_navigation
 from urllib.parse import urlencode
 import httpx
-from fastapi import FastAPI, Request, HTTPException, Form
+from fastapi import FastAPI, Request, HTTPException, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -132,7 +132,11 @@ def dashboard(request: Request):
     with Session() as db:
         events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
-        return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts))
+        _, activity_totals = report(db)
+        upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= datetime.now(timezone.utc) for e in events)
+        return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
+            activity_totals=activity_totals, member_total=sum(activity_totals.values()),
+            upcoming_total=upcoming_total, draft_total=sum(not e.published for e in events)))
 
 @app.post('/admin/events')
 def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(...), location: str = Form('Discord'), capacity: str = Form('')):
@@ -221,7 +225,7 @@ def cancel_event(request: Request, event_id: int, csrf: str = Form(...)):
 
 
 @app.get('/admin/activity', response_class=HTMLResponse)
-def activity_dashboard(request: Request, status: str = 'all', search: str = ''):
+def activity_dashboard(request: Request, status: str = 'all', search: str = '', page: int = Query(1, ge=1)):
     admin(request)
     allowed = {'all', 'active', 'review', 'grace', 'unknown', 'exempt'}
     if status not in allowed:
@@ -231,8 +235,20 @@ def activity_dashboard(request: Request, status: str = 'all', search: str = ''):
     if status != 'all':
         rows = [r for r in rows if r['status'] == status]
     if search.strip():
-        rows = [r for r in rows if search.strip() in str(r['discord_id'])]
-    return templates.TemplateResponse(request, 'activity.html', context(request, rows=rows, totals=totals, status=status, search=search))
+        query = search.strip().casefold()
+        rows = [r for r in rows if any(query in str(r.get(key) or '').casefold()
+            for key in ('discord_id', 'discord_username', 'server_display_name'))]
+    filtered_total = len(rows)
+    page_size = 50
+    page_count = max(1, (filtered_total + page_size - 1) // page_size)
+    page = min(page, page_count)
+    offset = (page - 1) * page_size
+    page_url = lambda number: '/admin/activity?' + urlencode({'status': status, 'search': search, 'page': number})
+    return templates.TemplateResponse(request, 'activity.html', context(request,
+        rows=rows[offset:offset + page_size], totals=totals, status=status, search=search,
+        filtered_total=filtered_total, page=page, page_count=page_count,
+        first_result=offset + 1, last_result=min(offset + page_size, filtered_total),
+        previous_page_url=page_url(page - 1), next_page_url=page_url(page + 1)))
 
 @app.post('/admin/members/{discord_id}/exemption')
 def member_exemption(request: Request, discord_id: int, csrf: str = Form(...), enabled: str = Form(...)):
@@ -256,3 +272,8 @@ def event_registrations(request: Request, event_id: int):
             raise HTTPException(404)
         regs = db.scalars(select(Registration).where(Registration.event_id == event_id).order_by(Registration.created_at.desc())).all()
         return templates.TemplateResponse(request, 'registrations.html', context(request, event=e, registrations=regs))
+
+@app.get('/admin/settings', response_class=HTMLResponse)
+def admin_settings(request: Request):
+    admin(request)
+    return templates.TemplateResponse(request, 'admin_settings.html', context(request, public_base_url=BASE_URL))

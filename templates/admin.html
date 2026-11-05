@@ -1,6 +1,14 @@
-{% extends 'base.html' %}{% block content %}
-<h1>Event administration</h1><p><a href="/admin/activity">Member activity dashboard</a></p><p>Only allowlisted Discord accounts can access this page.</p>
-<article><h2>Create draft event</h2><form method="post" action="/admin/events">
+{% extends 'admin_base.html' %}{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">COMMUNITY OPERATIONS</p><h1>Community overview</h1><p>Events and member observations, in one place.</p></div><a class="cta" href="#create-event">Create event</a></div>
+<section class="admin-metrics" aria-label="Community summary">
+  <a class="metric" href="/admin/activity"><span>Tracked members</span><strong>{{ member_total }}</strong><small>Members recorded by the bot</small></a>
+  <a class="metric" href="/admin/activity?status=review"><span>Needs review</span><strong>{{ activity_totals.review }}</strong><small>Older observations to review with care</small></a>
+  <a class="metric" href="/admin/activity?status=unknown"><span>Unknown activity</span><strong>{{ activity_totals.unknown }}</strong><small>Not enough history to classify</small></a>
+  <a class="metric" href="/calendar"><span>Upcoming events</span><strong>{{ upcoming_total }}</strong><small>Published on the public calendar</small></a>
+</section>
+<p class="admin-notice">Staff access only. Activity reflects observations, not attendance. No members are automatically removed. <a href="/admin/activity#status-guide">How activity statuses work →</a></p>
+<div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Plan what’s next</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
+<article id="create-event" class="admin-panel"><h2>Create draft event</h2><form method="post" action="/admin/events">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Title <input name="title" required maxlength="200"></label>
 <label>Description <textarea name="description"></textarea></label>

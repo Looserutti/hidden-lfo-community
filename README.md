@@ -112,3 +112,15 @@ This platform is intended for other communities and artists to build on. Hidden 
 - Configure the Discord invite, deployment base URL and OAuth callback in `.env` using `.env.example`. Public branding JSON must not contain credentials.
 
 Keep future branding changes in these presentation files and configuration. Changes to events, permissions, authentication, or bot services should be scoped and reviewed separately.
+
+## Admin dashboard and member names
+
+`/admin` provides the community overview and event management. `/admin/activity` provides status summaries, name/ID search, a paginated member list (50 per page), and CSRF-protected exemptions. These pages require an allowlisted Discord login and do not cache staff data.
+
+Member records keep the latest Discord username and server display name alongside the stable Discord ID. The server display name uses the server nickname when present, otherwise Discord's global display name or username. Names are synced on bot startup, member joins, member updates and user updates for the configured guild. Existing members show an ID fallback until observed. Name changes do not count as activity; no historical name log is retained. This remains a single-guild installation.
+
+Before starting the updated web app or bot, back up SQLite and run `alembic upgrade head` to add the nullable name columns (revision `0002`). Restart both services afterward. No member records or RSVP history are removed. Live Discord name synchronization still requires an integration test with the bot connected.
+
+Activity classifications remain observation-based: a 90-day new-member grace period and a 60-day observation window. Online presence is not server-specific, unknown data does not establish inactivity, and no automatic removals occur.
+
+`/admin/settings` contains calendar connection information. External calendar push/pull is pending provider and direction selection; no external synchronization is performed yet.

@@ -1,0 +1,5 @@
+{% extends 'admin_base.html' %}{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">CALENDAR CONNECTIONS</p><h1>Calendar settings</h1><p>Manage how community events reach your website and external calendars.</p></div></div>
+<section class="admin-panel"><h2>Website calendar</h2><p>Published events appear on <a href="/calendar">your public calendar</a>. Drafts stay private until published.</p><p>Public website: {{ public_base_url }}</p><a class="cta" href="/admin#create-event">Manage events</a></section>
+<section class="admin-panel"><h2>External calendar push &amp; pull</h2><span class="status-badge">Not connected</span><p>External calendar synchronization is not implemented yet. The calendar provider and sync direction need to be selected before connection settings can be configured.</p><p class="note">No external events are currently imported, and no calendar events are exported to an external account.</p></section>
+{% endblock %}

@@ -1,0 +1,50 @@
+/* Reusable staff interface; independent of the public community theme. */
+.admin-shell { --admin-line: #3a3a3a; --admin-muted: #b0b0b0; }
+.admin-nav { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--admin-line); gap: 1rem; }
+.admin-brand { font-weight: 750; text-decoration: none; overflow-wrap: anywhere; }
+.admin-brand span { display: block; color: var(--admin-muted); font-size: .65rem; letter-spacing: .2em; }
+.admin-nav-links { display: flex; gap: .5rem 1.5rem; flex-wrap: wrap; }
+.admin-nav a { padding-block: .5rem; color: var(--off-white); }
+.admin-nav a[aria-current="page"] { text-decoration-thickness: 2px; }
+.admin-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 2rem 0 1.5rem; }
+.admin-heading h1, .admin-heading h2 { margin: .5rem 0; overflow-wrap: anywhere; }
+.admin-heading p { margin: .5rem 0; }
+.admin-heading > span { color: var(--admin-muted); font-size: .85rem; }
+.admin-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.activity-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.metric { display: flex; flex-direction: column; padding: 1.25rem; gap: .6rem; border: 1px solid var(--admin-line); text-decoration: none; background: #151515; }
+.metric:hover, .metric[aria-current] { border-color: var(--off-white); background: #202020; }
+.metric > span { font-size: .8rem; color: var(--off-white); }
+.metric strong { font-size: 2.5rem; line-height: 1.1; font-weight: 650; }
+.metric small { font-size: .75rem; color: var(--admin-muted); }
+.admin-notice { border-left: 2px solid #777; padding: .75rem 1rem; margin: 1.5rem 0 2rem; font-size: .85rem; color: var(--admin-muted); }
+.admin-panel { border: 1px solid var(--admin-line); background: #151515; padding: 1.5rem; margin-block: 1.5rem; border-radius: 0; }
+.admin-panel > h2 { margin-top: 0; }
+.activity-filters { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+.activity-filters label { margin: 0; flex: 1 1 180px; font-size: .85rem; }
+.activity-filters label input, .activity-filters label select { margin-top: .5rem; }
+.activity-filters > a { padding-block: .8rem; }
+.result-count { font-size: .8rem; margin-block: 1.5rem .75rem; }
+.admin-table-scroll { overflow-x: auto; max-width: 100%; }
+.admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .8rem; }
+.admin-table th, .admin-table td { padding: 1rem .75rem; border-bottom: 1px solid var(--admin-line); vertical-align: middle; }
+.admin-table thead th { color: var(--admin-muted); font-size: .7rem; font-weight: 600; white-space: nowrap; }
+.member-id { font-family: ui-monospace, monospace; font-weight: 400; }
+.status-badge { display: inline-block; white-space: nowrap; padding: .2rem .55rem; border: 1px solid #777; border-radius: 3px; font-size: .7rem; }
+.status-review { color: #f2ce8f; border-color: #8d733f; }
+.status-active { color: #b6d7bd; border-color: #5c7962; }
+.status-unknown { color: #ccc; border-style: dashed; }
+.status-grace { color: #b8cde5; border-color: #62758d; }
+.table-action { font-size: .75rem; padding: .6rem .75rem; min-height: 44px; white-space: nowrap; }
+.admin-empty { padding: 2.5rem 1rem !important; color: var(--admin-muted); }
+.admin-pagination { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: .85rem; padding-top: 1.25rem; }
+.status-guide { display: grid; grid-template-columns: 140px 1fr; gap: 1rem; font-size: .85rem; }
+.status-guide dt { font-weight: 650; }
+.status-guide dd { margin: 0; color: var(--admin-muted); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 850px) { .admin-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-nav { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 480px) { .admin-panel { padding: 1rem; } .metric { padding: 1rem; } .metric strong { font-size: 2rem; } .status-guide { grid-template-columns: 1fr; gap: .5rem; } .status-guide dd { margin-bottom: 1rem; } }
+
+.member-name, .member-handle, .member-id { display: block; }
+.member-name { font-weight: 650; min-width: 140px; overflow-wrap: anywhere; }
+.member-handle, .member-id { color: var(--admin-muted); font-size: .7rem; margin-top: .2rem; }

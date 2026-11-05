@@ -1,9 +1,39 @@
-{% extends 'base.html' %}{% block content %}
-<h1>Member activity review</h1><p><a href="/admin">← Event administration</a></p>
-<p class="note">Activity is based only on observed interactions and online presence. Online presence is not server-specific. Unknown history is not evidence of inactivity. No member is automatically removed.</p>
-<section><h2>Summary</h2><p>Active: {{ totals.active }} · Review: {{ totals.review }} · Grace: {{ totals.grace }} · Unknown: {{ totals.unknown }} · Exempt: {{ totals.exempt }}</p></section>
-<form method="get" action="/admin/activity"><label>Status <select name="status">{% for option in ['all','active','review','grace','unknown','exempt'] %}<option value="{{ option }}" {% if status == option %}selected{% endif %}>{{ option|capitalize }}</option>{% endfor %}</select></label><label>Discord user ID <input name="search" value="{{ search }}"></label><button>Filter</button></form>
-<div style="overflow-x:auto"><table><thead><tr><th>Discord ID</th><th>Status</th><th>Joined (UTC)</th><th>Server activity (UTC)</th><th>Online observed (UTC)</th><th>Exemption</th></tr></thead><tbody>
-{% for m in rows %}<tr><td>{{ m.discord_id }}</td><td>{{ m.status }}</td><td>{{ m.joined_at.strftime('%Y-%m-%d') if m.joined_at else 'Unknown' }}</td><td>{{ m.last_server_activity.strftime('%Y-%m-%d %H:%M') if m.last_server_activity else 'Not observed' }}</td><td>{{ m.last_observed_online.strftime('%Y-%m-%d %H:%M') if m.last_observed_online else 'Not observed' }}</td><td><form method="post" action="/admin/members/{{ m.discord_id }}/exemption"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="enabled" value="{{ 'false' if m.exempt else 'true' }}"><button>{{ 'Remove exemption' if m.exempt else 'Exempt' }}</button></form></td></tr>
-{% else %}<tr><td colspan="6">No matching members.</td></tr>{% endfor %}</tbody></table></div>
+{% extends 'admin_base.html' %}{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">MEMBER OBSERVATIONS</p><h1>Member activity</h1><p>A starting point for staff review and community conversations.</p></div><a href="#status-guide">Understand the statuses ↓</a></div>
+<section class="admin-metrics activity-metrics" aria-label="Activity summary">
+{% for key, label in [('active','Recently observed'), ('review','Needs review'), ('grace','New member grace'), ('unknown','Unknown'), ('exempt','Exempt')] %}
+<a class="metric" href="/admin/activity?status={{ key }}" {% if status == key %}aria-current="true"{% endif %}><span>{{ label }}</span><strong>{{ totals[key] }}</strong><small>View members →</small></a>
+{% endfor %}
+</section>
+<p class="admin-notice">These totals cover all tracked members. Presence is not server-specific; offline or invisible activity may be missed. Unknown history is not evidence of inactivity. No member is automatically removed.</p>
+<section class="admin-panel" aria-labelledby="member-list-heading">
+<h2 id="member-list-heading">Member review</h2>
+<form class="activity-filters" method="get" action="/admin/activity">
+  <label>Status<select name="status">{% for option in ['all','active','review','grace','unknown','exempt'] %}<option value="{{ option }}" {% if status == option %}selected{% endif %}>{{ option|capitalize }}</option>{% endfor %}</select></label>
+  <label>Name or Discord ID<input name="search" value="{{ search }}" placeholder="Server name, username or ID"></label>
+  <button>Apply filters</button><a href="/admin/activity">Reset</a>
+</form>
+<p class="result-count" role="status">{{ filtered_total }} matching members{% if filtered_total %} · Showing {{ first_result }}–{{ last_result }}{% endif %}</p>
+<div class="admin-table-scroll" role="region" aria-label="Member observations; scroll horizontally for all columns" tabindex="0">
+<table class="admin-table"><caption class="visually-hidden">Filtered member activity observations, with timestamps in UTC</caption><thead><tr><th scope="col">Member</th><th scope="col">Status</th><th scope="col">Joined (UTC)</th><th scope="col">Server activity (UTC)</th><th scope="col">Online observed (UTC)</th><th scope="col">Staff action</th></tr></thead><tbody>
+{% for m in rows %}<tr>
+<th scope="row"><span class="member-name">{{ m.server_display_name or m.discord_username or 'Name not yet observed' }}</span>{% if m.discord_username %}<span class="member-handle">@{{ m.discord_username }}</span>{% endif %}<span class="member-id">{{ m.discord_id }}</span></th>
+<td><span class="status-badge status-{{ m.status }}">{{ 'Needs review' if m.status == 'review' else m.status|capitalize }}</span></td>
+<td>{{ m.joined_at.strftime('%Y-%m-%d') if m.joined_at else 'Unknown' }}</td>
+<td>{{ m.last_server_activity.strftime('%Y-%m-%d %H:%M') if m.last_server_activity else 'Not observed' }}</td>
+<td>{{ m.last_observed_online.strftime('%Y-%m-%d %H:%M') if m.last_observed_online else 'Not observed' }}</td>
+<td><form method="post" action="/admin/members/{{ m.discord_id }}/exemption"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="enabled" value="{{ 'false' if m.exempt else 'true' }}"><button class="table-action" aria-label="{{ 'Remove exemption for' if m.exempt else 'Exempt' }} member {{ m.discord_id }}">{{ 'Remove exemption' if m.exempt else 'Exempt' }}</button></form></td>
+</tr>{% else %}<tr><td colspan="6" class="admin-empty">{% if search or status != 'all' %}No members match these filters. Try another name or ID or reset the filters.{% else %}No members have been recorded yet. Once the bot observes members, they will appear here.{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% if page_count > 1 %}<nav class="admin-pagination" aria-label="Member list pages">{% if page > 1 %}<a href="{{ previous_page_url }}">← Previous</a>{% endif %}<span>Page {{ page }} of {{ page_count }}</span>{% if page < page_count %}<a href="{{ next_page_url }}">Next →</a>{% endif %}</nav>{% endif %}
+</section>
+<section class="admin-panel" id="status-guide"><p class="eyebrow">READING THE DATA</p><h2>What each status means</h2>
+<dl class="status-guide">
+<dt>Active</dt><dd>A server interaction or online presence was observed within the past 60 days, after the new-member grace period. This does not confirm event attendance.</dd>
+<dt>Needs review</dt><dd>The latest observation is older than 60 days, after the grace period. Review context before taking any action.</dd>
+<dt>Grace</dt><dd>The member joined less than 90 days ago and is still in the new-member grace period.</dd>
+<dt>Unknown</dt><dd>The join date is missing, or there are no observations after the grace period. Missing data is not proof of inactivity.</dd>
+<dt>Exempt</dt><dd>A staff member excluded this person from activity classification. Remove the exemption to resume classification; their observations are kept.</dd>
+</dl><p class="note">Names reflect the latest values observed by the bot. Server names and usernames can change or be duplicated; Discord IDs remain the permanent identifier. Historical names and detailed activity history are not stored.</p>
+</section>
 {% endblock %}
