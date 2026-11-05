@@ -1,0 +1,9 @@
+[
+  {
+    "id": "discord",
+    "name": "Discord scheduled Events",
+    "adapter": "discord",
+    "url": "https://discord.com",
+    "timezone": "UTC"
+  }
+]

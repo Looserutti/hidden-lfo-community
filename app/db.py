@@ -61,3 +61,17 @@ Session = sessionmaker(engine, expire_on_commit=False)
 
 def init_db():
     Base.metadata.create_all(engine)
+
+
+class ImportedEvent(Base):
+    """Source listings stay separate from community events and their RSVPs."""
+    __tablename__ = 'imported_events'
+    source_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    external_id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    title: Mapped[str] = mapped_column(String(250))
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    location: Mapped[str] = mapped_column(String(250), default='')
+    source_url: Mapped[str] = mapped_column(Text)
+    suppressed: Mapped[bool] = mapped_column(Boolean, default=False)
+    cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

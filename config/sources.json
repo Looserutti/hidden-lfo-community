@@ -1,0 +1,23 @@
+[
+  {
+    "id": "discord",
+    "name": "Discord scheduled Events",
+    "adapter": "discord",
+    "url": "https://discord.com",
+    "timezone": "UTC"
+  },
+  {
+    "id": "music-box",
+    "name": "Music Box",
+    "adapter": "ticketweb_calendar",
+    "url": "https://musicboxsd.com/calendar/",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "casbah",
+    "name": "Casbah Presents / Soda Bar",
+    "adapter": "ticketweb_calendar",
+    "url": "https://www.casbahmusic.com/calendar/",
+    "timezone": "America/Los_Angeles"
+  }
+]

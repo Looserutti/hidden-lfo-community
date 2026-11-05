@@ -1,5 +1,7 @@
 import os
 import secrets
+from uuid import uuid4
+from urllib.parse import urlsplit
 from datetime import datetime, timezone
 import calendar
 from app.calendar_utils import month_grid, calendar_navigation
@@ -11,9 +13,10 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select, func
 from app.branding import site_context
+from app import feeds
 from app.config import ADMIN_IDS, BASE_URL
 from app.config import DISCORD_INVITE_URL
-from app.db import init_db, Session, Event, Registration, Member
+from app.db import init_db, Session, Event, Registration, Member, Setting, ImportedEvent
 from app.activity import report
 
 app = FastAPI(title='Community Platform')
@@ -76,6 +79,7 @@ def calendar_page(request: Request, year: int | None = None, month: int | None =
     with Session() as db:
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start, Event.starts_at < next_month).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
+        events = sorted([*events, *feeds.calendar_events(db, start, next_month)], key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))
         prev, nxt = calendar_navigation(year, month)
         return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events), month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
   
@@ -276,4 +280,85 @@ def event_registrations(request: Request, event_id: int):
 @app.get('/admin/settings', response_class=HTMLResponse)
 def admin_settings(request: Request):
     admin(request)
-    return templates.TemplateResponse(request, 'admin_settings.html', context(request, public_base_url=BASE_URL))
+    with Session() as db:
+        sources = [feeds.source_state(db, source) for source in feeds.SOURCES]
+        collection = feeds.enabled(db, 'collection')
+        website = feeds.enabled(db, 'website')
+        worker = db.get(Setting, 'feeds.worker_seen')
+        worker_seen = worker.value if worker else None
+        listings = db.scalars(select(ImportedEvent).order_by(ImportedEvent.starts_at.desc()).limit(50)).all()
+    return templates.TemplateResponse(request, 'admin_settings.html', context(request,
+        public_base_url=BASE_URL, sources=sources, collection=collection, website=website,
+        worker_seen=worker_seen, listings=listings))
+
+
+@app.post('/admin/settings/feeds')
+def update_feed_settings(request: Request, csrf: str = Form(...), collection: bool = Form(False), website: bool = Form(False)):
+    admin(request)
+    csrf_check(request, csrf)
+    with Session.begin() as db:
+        feeds.set_enabled(db, 'collection', collection)
+        feeds.set_enabled(db, 'website', website)
+    return RedirectResponse('/admin/settings?saved=1', status_code=303)
+
+
+@app.post('/admin/settings/sources/{source_id}')
+def update_source_settings(request: Request, source_id: str, csrf: str = Form(...), collect: bool = Form(False), publish: bool = Form(False)):
+    admin(request)
+    csrf_check(request, csrf)
+    if source_id not in {s['id'] for s in feeds.SOURCES}:
+        raise HTTPException(404, 'Unknown calendar source')
+    with Session.begin() as db:
+        feeds.set_enabled(db, source_id + '.collect', collect)
+        feeds.set_enabled(db, source_id + '.publish', publish)
+    return RedirectResponse('/admin/settings?saved=1', status_code=303)
+
+
+@app.post('/admin/settings/sources/{source_id}/pull')
+async def pull_calendar_source(request: Request, source_id: str, csrf: str = Form(...)):
+    admin(request)
+    csrf_check(request, csrf)
+    if source_id not in {s['id'] for s in feeds.SOURCES}:
+        raise HTTPException(404, 'Unknown calendar source')
+    with Session() as db:
+        if not feeds.collection_enabled(db, source_id):
+            raise HTTPException(409, 'Enable collection and this source before pulling')
+    await feeds.collect_source(source_id)
+    return RedirectResponse('/admin/settings#sources', status_code=303)
+
+
+@app.post('/admin/settings/listings')
+def add_source_listing(request: Request, csrf: str = Form(...), source_id: str = Form(...), title: str = Form(...), starts_at: str = Form(...), source_url: str = Form(...), location: str = Form('')):
+    admin(request)
+    csrf_check(request, csrf)
+    if source_id not in {s['id'] for s in feeds.SOURCES}:
+        raise HTTPException(400, 'Unknown source')
+    try:
+        stamp = datetime.fromisoformat(starts_at)
+    except ValueError:
+        raise HTTPException(400, 'Start time must be ISO 8601 with timezone offset')
+    try:
+        parsed_url = urlsplit(source_url)
+    except ValueError:
+        raise HTTPException(400, 'Invalid show URL')
+    if stamp.tzinfo is None or not title.strip() or len(title) > 250 or len(location) > 250:
+        raise HTTPException(400, 'Use a title, valid location and timezone-aware start time')
+    if parsed_url.scheme != 'https' or not parsed_url.netloc or parsed_url.username or parsed_url.password:
+        raise HTTPException(400, 'Provide a public HTTPS show or ticket link')
+    with Session.begin() as db:
+        db.add(ImportedEvent(source_id=source_id, external_id='manual-' + uuid4().hex,
+            title=title.strip(), starts_at=stamp.astimezone(timezone.utc),
+            location=location, source_url=source_url, cancelled=False, suppressed=False))
+    return RedirectResponse('/admin/settings#listings', status_code=303)
+
+
+@app.post('/admin/settings/listings/{source_id}/{external_id}/visibility')
+def set_listing_visibility(request: Request, source_id: str, external_id: str, csrf: str = Form(...), hidden: bool = Form(...)):
+    admin(request)
+    csrf_check(request, csrf)
+    with Session.begin() as db:
+        listing = db.get(ImportedEvent, (source_id, external_id))
+        if not listing:
+            raise HTTPException(404, 'Listing not found')
+        listing.suppressed = hidden
+    return RedirectResponse('/admin/settings#listings', status_code=303)

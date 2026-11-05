@@ -48,3 +48,11 @@
 .member-name, .member-handle, .member-id { display: block; }
 .member-name { font-weight: 650; min-width: 140px; overflow-wrap: anywhere; }
 .member-handle, .member-id { color: var(--admin-muted); font-size: .7rem; margin-top: .2rem; }
+
+.setting-check { display: flex; align-items: flex-start; gap: .75rem; }
+.setting-check input { width: 20px; height: 20px; margin: .2rem 0 0; flex: 0 0 20px; accent-color: var(--off-white); }
+.setting-check small { display: block; color: var(--admin-muted); font-size: .8rem; margin-top: .3rem; }
+.source-pull { margin-top: 1rem; }
+.source-error { color: #f2ce8f; font-size: .85rem; }
+.admin-shell button:disabled { opacity: .5; cursor: not-allowed; }
+.source-card h3 { margin-top: 0; }

@@ -33,6 +33,14 @@ services:
       migrate:
         condition: service_completed_successfully
     networks: [internal]
+  calendar-collector:
+    <<: *app
+    profiles: [shows]
+    command: ["python", "-m", "app.feeds"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [internal]
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped

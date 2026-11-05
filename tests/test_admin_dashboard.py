@@ -82,7 +82,34 @@ def test_calendar_settings_require_staff_access(dashboard):
     client, _ = dashboard
     response = client.get('/admin/settings')
     assert response.status_code == 200
-    assert 'Not connected' in response.text
+    assert 'Calendar controls' in response.text and 'Save calendar controls' in response.text
     assert response.headers['cache-control'] == 'no-store'
     client.cookies.clear()
     assert client.get('/admin/settings').status_code == 403
+
+
+def test_calendar_control_switches_and_manual_show(dashboard):
+    from app import feeds
+    from app.db import ImportedEvent
+    client, sessions = dashboard
+    response = client.post('/admin/settings/feeds', data={'csrf': 'invalid', 'website': 'true'})
+    assert response.status_code == 403
+    assert client.post('/admin/settings/sources/casbah/pull', data={'csrf': 'test-csrf'}).status_code == 409
+    form = {'csrf': 'test-csrf', 'source_id': 'casbah', 'title': 'Example Soda Bar Show',
+            'starts_at': '2026-11-14T20:00:00-08:00', 'source_url': 'https://example.com/show', 'location': 'Soda Bar'}
+    assert client.post('/admin/settings/listings', data=form, follow_redirects=False).status_code == 303
+    assert 'Example Soda Bar Show' not in client.get('/calendar?year=2026&month=11').text
+    client.post('/admin/settings/feeds', data={'csrf': 'test-csrf', 'website': 'true'})
+    client.post('/admin/settings/sources/casbah', data={'csrf': 'test-csrf', 'publish': 'true'})
+    html = client.get('/calendar?year=2026&month=11').text
+    assert 'Example Soda Bar Show' in html and 'Casbah Presents / Soda Bar' in html
+    with sessions() as db:
+        event = db.query(ImportedEvent).one()
+        path = f'/admin/settings/listings/casbah/{event.external_id}/visibility'
+        assert not feeds.enabled(db, 'collection')
+    client.post(path, data={'csrf': 'test-csrf', 'hidden': 'true'})
+    assert 'Example Soda Bar Show' not in client.get('/calendar?year=2026&month=11').text
+    assert client.post('/admin/settings/listings', data={**form, 'source_url': 'javascript:alert(1)'}).status_code == 400
+    assert client.post('/admin/settings/listings', data={**form, 'starts_at': '2026-11-14T20:00:00'}).status_code == 400
+    client.cookies.clear()
+    assert client.post('/admin/settings/feeds', data={'csrf': 'test-csrf'}).status_code == 403

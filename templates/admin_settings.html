@@ -1,5 +1,35 @@
 {% extends 'admin_base.html' %}{% block admin_content %}
-<div class="admin-heading"><div><p class="eyebrow">CALENDAR CONNECTIONS</p><h1>Calendar settings</h1><p>Manage how community events reach your website and external calendars.</p></div></div>
-<section class="admin-panel"><h2>Website calendar</h2><p>Published events appear on <a href="/calendar">your public calendar</a>. Drafts stay private until published.</p><p>Public website: {{ public_base_url }}</p><a class="cta" href="/admin#create-event">Manage events</a></section>
-<section class="admin-panel"><h2>External calendar push &amp; pull</h2><span class="status-badge">Not connected</span><p>External calendar synchronization is not implemented yet. The calendar provider and sync direction need to be selected before connection settings can be configured.</p><p class="note">No external events are currently imported, and no calendar events are exported to an external account.</p></section>
+<div class="admin-heading"><div><p class="eyebrow">CALENDAR SOURCES</p><h1>Calendar controls</h1><p>Collect Discord scheduled Events and local venue listings independently.</p></div><a href="/calendar">View public calendar ↗</a></div>
+{% if request.query_params.get('saved') %}<p class="admin-notice" role="status">Settings saved.</p>{% endif %}
+<section class="admin-panel"><h2>Collection &amp; publishing</h2><p>These controls affect imported listings only. Community events created under Overview &amp; events keep their own publish controls.</p>
+<form method="post" action="/admin/settings/feeds"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label class="setting-check"><input type="checkbox" name="collection" value="true" {% if collection %}checked{% endif %}><span>Enable automatic collection<small>Allow enabled sources to update stored listings. Pausing keeps existing records.</small></span></label>
+<label class="setting-check"><input type="checkbox" name="website" value="true" {% if website %}checked{% endif %}><span>Publish imported listings on the website<small>Show listings from sources enabled for publishing. Turning this off hides imported listings without deleting them.</small></span></label>
+<button>Save calendar controls</button></form>
+<p class="note">Scheduled collection runs every 15 minutes while the separate calendar collector is running. Last worker check: {{ worker_seen or 'No worker check recorded' }}. “Pull now” works without the worker.</p>
+<p class="note">Imported Discord event titles, start times and locations become public when website publishing and Discord source publishing are enabled. Recurring Discord events currently import the next scheduled occurrence only.</p>
+</section>
+<section id="sources"><div class="admin-heading"><h2>Source registry</h2><span>{{ sources|length }} configured sources</span></div>
+{% for source in sources %}<article class="admin-panel source-card"><h3>{{ source.name }}</h3><p><a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">Source website ↗</a> · {{ source.stored_count }} stored listings</p>
+<form method="post" action="/admin/settings/sources/{{ source.id }}"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label class="setting-check"><input type="checkbox" name="collect" value="true" {% if source.collect %}checked{% endif %}><span>Collect this source</span></label>
+<label class="setting-check"><input type="checkbox" name="publish" value="true" {% if source.publish %}checked{% endif %}><span>Publish this source on the calendar</span></label><button>Save source settings</button></form>
+<form method="post" action="/admin/settings/sources/{{ source.id }}/pull" class="source-pull"><input type="hidden" name="csrf" value="{{ csrf }}"><button {% if not collection or not source.collect %}disabled{% endif %}>Pull now</button></form>
+<p class="note">Last successful pull: {{ source.result.last_success or 'Never' }}{% if source.result.attempted_at %} · Last attempt: {{ source.result.attempted_at }}{% endif %}</p>
+{% if source.result.error %}<p class="source-error" role="status">{{ source.result.error }}</p>{% elif source.result.last_success %}<p class="note">Last pull received {{ source.result.received }} listings.</p>{% endif %}
+{% if source.id == 'casbah' %}<p class="note">The current Casbah site rejected our automated request (HTTP 403). Imports may remain unavailable until a supported feed or venue-approved access is provided. You can add Casbah and Soda Bar shows manually below.</p>{% endif %}
+</article>{% endfor %}</section>
+<section class="admin-panel"><h2>Add a venue show manually</h2><p>Use a verified show listing when a venue feed is unavailable. The source and website publishing switches still apply.</p>
+<form method="post" action="/admin/settings/listings"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Source<select name="source_id">{% for source in sources if source.adapter != 'discord' %}<option value="{{ source.id }}">{{ source.name }}</option>{% endfor %}</select></label>
+<label>Show title<input name="title" required maxlength="250"></label>
+<label>Start time with timezone offset<input name="starts_at" placeholder="2026-11-14T20:00:00-08:00" required></label>
+<label>Venue<input name="location" maxlength="250" required></label>
+<label>Show or ticket URL<input name="source_url" type="url" placeholder="https://" required></label>
+<button>Add show</button></form></section>
+<section class="admin-panel" id="listings"><h2>Recent listings</h2><p>Up to 50 listings, newest event date first. Hiding a listing persists through future pulls.</p>
+<div class="admin-table-scroll" role="region" aria-label="Imported show listings" tabindex="0"><table class="admin-table"><thead><tr><th scope="col">Show</th><th scope="col">Source</th><th scope="col">Start (UTC)</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead><tbody>
+{% for listing in listings %}<tr><th scope="row"><a href="{{ listing.source_url }}" target="_blank" rel="noopener noreferrer">{{ listing.title }}</a></th><td>{{ listing.source_id }}{% if listing.external_id.startswith('manual-') %} · manual{% endif %}</td><td>{{ listing.starts_at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ 'Hidden by staff' if listing.suppressed else 'Cancelled / ended' if listing.cancelled else 'Stored' }}</td><td><form method="post" action="/admin/settings/listings/{{ listing.source_id }}/{{ listing.external_id }}/visibility"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="hidden" value="{{ 'false' if listing.suppressed else 'true' }}"><button class="table-action">{{ 'Unhide' if listing.suppressed else 'Hide' }}</button></form></td></tr>{% else %}<tr><td colspan="5" class="admin-empty">No imported listings yet. Configure a source and pull, or add a venue show manually.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<p class="admin-notice">This module only imports listings and displays them on your website. It does not create Discord scheduled Events or send show roundups to Discord. Venue listings keep their source attribution and do not use community-event RSVPs.</p>
 {% endblock %}

@@ -123,4 +123,20 @@ Before starting the updated web app or bot, back up SQLite and run `alembic upgr
 
 Activity classifications remain observation-based: a 90-day new-member grace period and a 60-day observation window. Online presence is not server-specific, unknown data does not establish inactivity, and no automatic removals occur.
 
-`/admin/settings` contains calendar connection information. External calendar push/pull is pending provider and direction selection; no external synchronization is performed yet.
+## Calendar collection and source publishing
+
+`/admin/settings` controls imports independently of onboarding, activity tracking and community event management. All collection and publication settings default **off** and persist in SQLite.
+
+1. Back up the database and run `alembic upgrade head` (revision `0003` adds a separate imported-listings table); restart the web app.
+2. Sign in as an allowlisted administrator. Enable global collection and select **Collect this source** for each desired source. **Pull now** reads one source immediately and displays success/error status.
+3. For scheduled checks, run `python -m app.feeds` in a separate process. It checks enabled sources every 15 minutes, independently of the Discord gateway bot. Docker installations can run `docker compose --profile shows up -d calendar-collector`; the optional worker uses the same database volume and environment.
+4. Enable global website publishing and **Publish this source on the calendar** for the desired sources. Imported listings appear on `/calendar`, with source attribution and an external show link. Pausing collection preserves stored listings; pausing website publishing hides them. Neither switch changes manually managed community events.
+5. Add venue shows manually if a source cannot be read. The same publication switches apply. A staff Hide action survives future imports and can be reversed with Unhide.
+
+**Discord scheduled Events:** the collector reads the configured guild's native scheduled Events using the existing `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` settings. It does not read channel posts, publish Discord messages, or create scheduled Events. Turning on website publishing makes imported event titles, times and locations public. Recurring events currently expose the next scheduled occurrence only. Canceled/ended or missing scheduled Events are retired on the next successful snapshot. Live integration with your guild still needs a test; imported website listings do not add website RSVPs or change Discord event subscriptions.
+
+**Venue sources:** edit `config/sources.json` to add/remove source definitions; `config/sources.example.json` is a neutral starting point. IDs must remain stable, since they identify stored listings and source switches. Supported adapters are `discord` and `ticketweb_calendar` (FullCalendar literal data in the format exercised by the Music Box calendar). Set each venue's IANA timezone so local start times convert to UTC correctly. Restart the web app and collector after editing source configuration. More source formats need a separate reader module; no brand-specific logic belongs in calendar templates.
+
+The Music Box reader was checked against its public calendar markup; private-event blocks are excluded. The Casbah Presents/Soda Bar source is registered, but the current site returned HTTP 403 to our automated request. Automatic imports there remain unverified; use manual entries or a supported/venue-approved feed. No access-control bypass is attempted. Venue pages can be partial: missing entries never delete existing listings, so cancellations must be reviewed and hidden by staff when needed. Matches use source ID plus external event ID; the same show listed by two sources or added manually may require manual deduplication.
+
+Collection failures preserve earlier data and are shown in the admin source status. Source URLs are trusted deployment configuration, not user-submitted fetch destinations. Source JSON contains public settings only; credentials stay in `.env`. The current import upsert uses SQLite, matching this single-host starter architecture. Public calendar day grouping remains UTC. Discord show roundups/outbound publication are a separate future feature.
