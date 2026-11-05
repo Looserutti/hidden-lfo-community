@@ -17,3 +17,7 @@ BASE_URL = os.getenv('PUBLIC_BASE_URL', 'http://localhost:8000').rstrip('/')
 DISCORD_INVITE_URL = os.getenv("DISCORD_INVITE_URL", "").strip()
 
 STAFF_REPORT_CHANNEL_ID = env_int("STAFF_REPORT_CHANNEL_ID")
+
+# Outbound bot jobs are opt-in, including on staging.
+EVENT_PUBLISHING_ENABLED = os.getenv('EVENT_PUBLISHING_ENABLED', 'false').lower() == 'true'
+STAFF_REPORTS_ENABLED = os.getenv('STAFF_REPORTS_ENABLED', 'false').lower() == 'true'

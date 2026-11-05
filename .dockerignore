@@ -9,3 +9,18 @@ __pycache__
 *.db-shm
 backups
 *.zip
+
+# Keep local credentials, editor state, originals and backups out of images.
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+**/*.backup.*
+**/*.HEIC
+**/*.heic
+static/images/IMG_*
+.vscode
+.codex
+.agents
+releases

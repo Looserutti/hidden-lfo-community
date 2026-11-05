@@ -8,6 +8,11 @@ x-app: &app
     - community_data:/data
   restart: unless-stopped
   init: true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
 services:
   migrate:
     <<: *app
@@ -28,6 +33,7 @@ services:
     networks: [internal]
   bot:
     <<: *app
+    profiles: [bot]
     command: ["python", "-m", "bot.main"]
     depends_on:
       migrate:

@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy import select, func
-from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID
+from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED
 from app.db import Session, Member, Event, Registration, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
@@ -98,8 +98,10 @@ class CommunityBot(commands.Bot):
                 self.add_view(RSVPView(e.id), message_id=e.discord_message_id)
         if GUILD_ID:
             await self.tree.sync(guild=discord.Object(id=GUILD_ID))
-        # self.publish_events.start()
-        # self.weekly_report.start()
+        if EVENT_PUBLISHING_ENABLED and not publish_events.is_running():
+            publish_events.start()
+        if STAFF_REPORTS_ENABLED and not weekly_report.is_running():
+            weekly_report.start()
 
 bot = CommunityBot(command_prefix=commands.when_mentioned, intents=intents)
 
@@ -110,7 +112,7 @@ def authorized(interaction: discord.Interaction) -> bool:
 async def post_rules(interaction: discord.Interaction):
     if not authorized(interaction):
         return await interaction.response.send_message('Not authorized.', ephemeral=True)
-    channel = bot.get_channel(1566971290886348840)
+    channel = bot.get_channel(RULES_CHANNEL_ID)
     if not isinstance(channel, discord.TextChannel):
         return await interaction.response.send_message('Rules channel not configured.', ephemeral=True)
     await channel.send('Please read the server rules and click **I Agree** to access the community.', view=RulesView())
