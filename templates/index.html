@@ -5,20 +5,21 @@
 
 <!-- HIDDEN LFO INTRODUCTION -->
 <section class="home-intro">
-  <p class="eyebrow">NORTH COUNTY SAN DIEGO</p>
-  <h1>HIDDEN LFO</h1>
-  <p>Electronic music and art collective.</p>
+  <p class="eyebrow">{{ site.eyebrow }}</p>
+  <h1>{{ site.name }}</h1>
+  <p>{{ site.description }}</p>
 </section>
 
 <!-- EVENT PHOTOGRAPHY -->
-<section class="home-gallery" aria-label="Hidden LFO event photography">
+{% if site.gallery %}
+<section class="home-gallery" aria-label="{{ site.name }} event photography">
   <div class="gallery-slides">
-    {% for number in range(1, 7) %}
+    {% for photo in site.gallery %}
     <img
-      src="/static/images/event-{{ '%02d' | format(number) }}.jpg"
-      alt="Hidden LFO event photograph {{ number }}"
-      class="gallery-image{% if number == 1 %} is-active{% endif %}"
-      loading="{% if number == 1 %}eager{% else %}lazy{% endif %}"
+      src="{{ photo.src }}"
+      alt="{{ photo.alt }}"
+      class="gallery-image{% if loop.first %} is-active{% endif %}"
+      loading="{% if loop.first %}eager{% else %}lazy{% endif %}"
     >
     {% endfor %}
   </div>
@@ -35,11 +36,23 @@
     &#8594;
   </button>
 
+  <button class="gallery-expand" type="button" aria-haspopup="dialog">Expand photo</button>
+
   <div class="gallery-counter" aria-live="polite">
-    <span id="gallery-current">01</span> / 06
+    <span id="gallery-current">01</span> / {{ '%02d' | format(site.gallery | length) }}
   </div>
 </section>
 
+
+<dialog class="photo-viewer" aria-label="Fullscreen event photographs">
+  <button class="viewer-close" type="button" aria-label="Close photo viewer" autofocus>Close ×</button>
+  <img class="viewer-image" alt="">
+  <button class="gallery-arrow gallery-prev" type="button" aria-label="Previous photograph">&#8592;</button>
+  <button class="gallery-arrow gallery-next" type="button" aria-label="Next photograph">&#8594;</button>
+  <div class="gallery-counter" aria-live="polite"><span class="viewer-current">01</span> / {{ '%02d' | format(site.gallery | length) }}</div>
+</dialog>
+
+{% endif %}
 
 <!-- UPCOMING EVENTS -->
 <section class="home-events">

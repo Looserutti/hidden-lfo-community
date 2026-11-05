@@ -4,19 +4,35 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Hidden LFO</title>
+    <title>{{ site.name }}</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/theme.css">
 </head>
 
 <body>
-    <header><a href="/">Hidden LFO</a>
-        <nav><a href="/">Events</a> <a href="/calendar">Calendar</a> {% if is_admin %}<a href="/admin">Admin</a>{% endif
-            %} {% if user_id %}<form action="/logout" method="post"><input type="hidden" name="csrf"
-                    value="{{ csrf }}"><button>Sign out</button></form>{% else %}<a href="/login">Admin sign in</a>{%
-            endif %}</nav>
-    </header>
     <main>{% block content %}{% endblock %}</main>
-    <footer>Event registration takes place inside our Discord server.</footer>
+    <footer class="site-footer">
+        <span>{{ site.footer_text }}</span>
+        <nav class="footer-socials" aria-label="{{ site.name }} social media">
+            {% for platform, url in site.socials.items() if url %}
+            <a href="{{ url }}" target="_blank" rel="noopener noreferrer"
+               aria-label="{{ site.name }} on {{ platform }} (opens in a new tab)" title="{{ platform }}">
+                {% include '_social_icon.html' %}
+            </a>
+            {% endfor %}
+        </nav>
+        <div class="footer-admin">
+            {% if is_admin %}<a href="/admin">Admin</a>{% endif %}
+            {% if user_id %}
+            <form action="/logout" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button>Sign out</button>
+            </form>
+            {% else %}
+            <a href="/login">Admin sign in</a>
+            {% endif %}
+        </div>
+    </footer>
     <script src="/static/local-time.js" defer></script>
 </body>
 

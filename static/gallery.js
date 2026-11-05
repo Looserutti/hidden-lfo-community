@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!images.length || !previous || !next || !counter) return;
 
+  const viewer = document.querySelector(".photo-viewer");
+  const viewerImage = viewer.querySelector(".viewer-image");
+  const expand = gallery.querySelector(".gallery-expand");
+  let returnFocus;
+  let previousOverflow;
   let current = 0;
   let timer;
 
@@ -22,6 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     counter.textContent = String(current + 1).padStart(2, "0");
+    viewerImage.src = images[current].src;
+    viewerImage.alt = images[current].alt;
+    viewer.querySelector(".viewer-current").textContent = counter.textContent;
   }
 
   function stopTimer() {
@@ -30,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startTimer() {
     stopTimer();
+
+    if (viewer.open || images[current].classList.contains("is-color")) return;
 
     timer = setInterval(() => {
       if (!images[current].classList.contains("is-color")) {
@@ -60,6 +70,36 @@ document.addEventListener("DOMContentLoaded", () => {
         startTimer();
       }
     });
+  });
+
+  function openViewer() {
+    if (viewer.open) return;
+    returnFocus = document.activeElement;
+    previousOverflow = document.body.style.overflow;
+    stopTimer();
+    viewer.showModal();
+    document.body.style.overflow = "hidden";
+  }
+
+  expand.addEventListener("click", openViewer);
+  images.forEach((image) => {
+    image.addEventListener("dblclick", () => {
+      if (image.classList.contains("is-active")) openViewer();
+    });
+  });
+  viewer.querySelector(".viewer-close").addEventListener("click", () => viewer.close());
+  viewer.querySelector(".gallery-prev").addEventListener("click", () => showPhoto(current - 1));
+  viewer.querySelector(".gallery-next").addEventListener("click", () => showPhoto(current + 1));
+  viewer.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      showPhoto(current + (event.key === "ArrowLeft" ? -1 : 1));
+    }
+  });
+  viewer.addEventListener("close", () => {
+    document.body.style.overflow = previousOverflow;
+    returnFocus?.focus();
+    startTimer();
   });
 
   showPhoto(0);
