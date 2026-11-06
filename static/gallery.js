@@ -17,6 +17,26 @@ document.addEventListener("DOMContentLoaded", () => {
   let previousOverflow;
   let current = 0;
   let timer;
+  let pendingPhoto = 0;
+  const loading = viewer.querySelector('.viewer-loading');
+
+  function loadViewerPhoto() {
+    const ticket = ++pendingPhoto;
+    const image = images[current];
+    const source = image.currentSrc || image.src;
+    if (viewerImage.getAttribute('src') === source) return;
+    loading.textContent = 'Loading photo…';
+    const ready = new Image();
+    ready.src = source;
+    ready.decode().then(() => {
+      if (ticket !== pendingPhoto) return;
+      viewerImage.src = source;
+      viewerImage.alt = image.alt;
+      loading.textContent = '';
+    }).catch(() => {
+      if (ticket === pendingPhoto) loading.textContent = 'Couldn’t load that photo. Try another.';
+    });
+  }
 
   function showPhoto(index) {
     current = (index + images.length) % images.length;
@@ -27,8 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     counter.textContent = String(current + 1).padStart(2, "0");
-    viewerImage.src = images[current].src;
-    viewerImage.alt = images[current].alt;
+    if (viewer.open) loadViewerPhoto();
     viewer.querySelector(".viewer-current").textContent = counter.textContent;
   }
 
@@ -78,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     previousOverflow = document.body.style.overflow;
     stopTimer();
     viewer.showModal();
+    loadViewerPhoto();
     viewer.dispatchEvent(new Event("gallery:open"));
     document.body.style.overflow = "hidden";
   }
