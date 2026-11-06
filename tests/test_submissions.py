@@ -86,3 +86,15 @@ def test_discord_command_guard_and_modal_submission(store,monkeypatch):
     with store() as db:
         assert db.scalar(select(EventSubmission)).status=='pending'
         assert db.scalar(select(func.count()).select_from(Event))==0
+
+
+def test_retry_preserves_form_values(monkeypatch):
+ monkeypatch.setattr(events,'verified_member',lambda i:True)
+ interaction=SimpleNamespace(user=SimpleNamespace(id=123),response=SimpleNamespace(send_modal=AsyncMock()))
+ async def run():
+  retry=events.RetryEvent(123,{'event_title':'My show','date':'tomorrow','time':'7pm','description':'Keep this'})
+  await retry.edit.callback(interaction)
+  modal=interaction.response.send_modal.call_args.args[0]
+  assert modal.event_title.default=='My show' and modal.date.default=='tomorrow'
+  assert modal.time.default=='7pm' and modal.description.default=='Keep this'
+ asyncio.run(run())
