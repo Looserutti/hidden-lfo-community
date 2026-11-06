@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resume && viewer.open) audio.play().catch(() => { status.textContent = 'Press Play to start the track.'; });
   }
   viewer.addEventListener('gallery:open', () => { if (!initialized) choose(0); });
-  viewer.addEventListener('close', () => audio.pause());
+  viewer.addEventListener('close', () => { audio.pause(); viewer.querySelector('.player-details').open = false; });
   audio.addEventListener('play', () => { if (!viewer.open) audio.pause(); });
   audio.addEventListener('error', () => { status.textContent = 'This track could not be loaded. Try another track.'; });
   audio.addEventListener('ended', () => { if (tracks.length > 1 && viewer.open) choose(index + 1, true); });

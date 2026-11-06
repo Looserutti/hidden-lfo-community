@@ -370,35 +370,32 @@
   .footer-socials, .footer-admin { grid-column: 1; }
 }
 
-/* Gallery soundtrack stays inside the modal, separate from the homepage. */
-.photo-viewer.has-player { padding-bottom: 220px; }
+/* Compact gallery audio; metadata and playlist appear only on request. */
+.photo-viewer.has-player { padding-bottom: 100px; }
 .photo-viewer.has-player .gallery-counter { top: 16px; left: 16px; right: auto; bottom: auto; }
-.gallery-player { position: absolute; bottom: 16px; left: 16px; right: 16px; width: min(100% - 32px, 900px); margin-inline: auto; padding: 16px 20px; background: #191919; border: 1px solid #444; border-radius: 8px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 1.3fr); gap: 12px 24px; align-items: center; }
+.gallery-player { position: absolute; bottom: 16px; left: 16px; right: 16px; width: min(100% - 32px, 560px); margin-inline: auto; padding: 8px; background: #191919; border: 1px solid #444; border-radius: 8px; display: flex; align-items: center; gap: 8px; }
+.player-audio { flex: 1; width: 100%; min-width: 0; height: 44px; }
+.player-details { flex: none; }
+.player-details > summary { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 6px 10px; border-radius: 4px; color: #ddd; cursor: pointer; font-size: .75rem; list-style: none; }
+.player-details > summary::-webkit-details-marker { display: none; }
+.player-details > summary:hover { background: #303030; }
+.player-details[open] > summary { background: #303030; }
+.player-details[open] > summary > [aria-hidden] { transform: rotate(180deg); }
+.player-details-panel { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; display: grid; gap: 14px; padding: 16px; max-height: min(50dvh, 320px); overflow: auto; background: #191919; border: 1px solid #444; border-radius: 8px; }
 .player-track { display: grid; gap: 4px; min-width: 0; }
-.player-track .eyebrow { font-size: 0.65rem; color: #999; }
+.player-track .eyebrow { font-size: .65rem; color: #999; }
 .player-title { font-size: 1rem; overflow-wrap: anywhere; }
-.player-artist { font-size: 0.8rem; color: #aaa; }
-.player-transport { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.player-transport button { width: 36px; min-height: 44px; padding: 4px; background: transparent; color: #fff; border-color: #555; font-size: 1.4rem; }
-.player-transport button:disabled { opacity: .35; cursor: default; }
-.player-audio { width: 100%; min-width: 0; height: 44px; }
-.player-selection { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin: 0; font-size: .75rem; color: #aaa; }
-.player-selection select { max-width: none; padding: 6px 10px; font-size: .8rem; min-height: 36px; }
-.player-status { grid-column: 1 / -1; margin: 0; font-size: .8rem; }
+.player-artist { font-size: .8rem; color: #aaa; }
+.player-selection { display: flex; align-items: center; gap: 12px; margin: 0; font-size: .75rem; color: #aaa; }
+.player-selection select { max-width: none; min-width: 0; padding: 6px 10px; font-size: .8rem; min-height: 36px; }
+.player-skip { display: flex; justify-content: space-between; gap: 12px; }
+.player-skip button { min-height: 44px; padding: 6px 12px; background: transparent; color: #fff; border-color: #555; font-size: .8rem; }
+.player-skip button:disabled { opacity: .35; cursor: default; }
+.player-status { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; margin: 0; padding: 8px; background: #191919; font-size: .8rem; }
 .player-status:empty { display: none; }
-@media (max-width: 700px) {
-  .photo-viewer.has-player { padding-bottom: 260px; }
-  .gallery-player { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 10px; }
-  .player-selection { grid-column: 1; }
-  .player-title { font-size: .9rem; }
-}
-
-
 .viewer-loading { position: absolute; top: 16px; left: 110px; right: 130px; margin: 0; color: #aaa; text-align: center; font-size: .75rem; pointer-events: none; }
 .viewer-loading:empty { display: none; }
-.player-selection select { min-width: 0; }
 
-/* Short landscape screens need image height, not a large bottom audio reserve. */
 @media (orientation: landscape) and (max-height: 600px) and (max-width: 1100px) {
   .home-gallery { aspect-ratio: 16 / 9; }
   .photo-viewer { padding: 56px 12px 12px; }
@@ -406,16 +403,8 @@
     --landscape-player-width: clamp(220px, 34vw, 300px);
     padding: 56px calc(var(--landscape-player-width) + 24px) 12px 12px;
   }
-  .photo-viewer.has-player .gallery-player {
-    top: 56px; bottom: 12px; left: auto; right: 12px;
-    width: var(--landscape-player-width); max-height: calc(100dvh - 68px);
-    margin: 0; padding: 12px; grid-template-columns: minmax(0, 1fr);
-    align-content: center; gap: 10px; overflow: auto; overscroll-behavior: contain;
-  }
+  .photo-viewer.has-player .gallery-player { bottom: 12px; left: auto; right: 12px; width: var(--landscape-player-width); margin: 0; }
   .photo-viewer.has-player > .gallery-next { right: calc(var(--landscape-player-width) + 24px); }
-  .photo-viewer.has-player .player-transport { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; }
-  .photo-viewer.has-player .player-audio { grid-row: 1; grid-column: 1 / -1; }
-  .photo-viewer.has-player .player-previous { grid-row: 2; grid-column: 1; }
-  .photo-viewer.has-player .player-next { grid-row: 2; grid-column: 3; }
-  .photo-viewer.has-player .player-selection { grid-column: 1; }
+  .photo-viewer.has-player .player-info-label { display: none; }
+  .photo-viewer.has-player .player-details-panel { max-height: calc(100dvh - 150px); }
 }
