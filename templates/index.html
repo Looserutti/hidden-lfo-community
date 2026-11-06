@@ -55,13 +55,18 @@
   <div class="gallery-counter" aria-live="polite"><span class="viewer-current">01</span> / {{ '%02d' | format(site.gallery | length) }}</div>
   {% if gallery_audio %}
   <section class="gallery-player" aria-label="Gallery soundtrack">
+    <button class="player-previous" type="button" aria-label="Previous track">‹</button>
     <audio class="player-audio" controls preload="none" aria-label="Gallery music"></audio>
+    <button class="player-next" type="button" aria-label="Next track">›</button>
     <details class="player-details">
-      <summary aria-label="Track info and playlist"><span class="player-info-label">Track info</span><span aria-hidden="true">⌃</span></summary>
+      <summary aria-label="Track info and playlist"><span class="player-info-label">Tracks</span><span aria-hidden="true">⌃</span></summary>
       <div class="player-details-panel">
-        <div class="player-track"><span class="eyebrow">GALLERY RADIO</span><strong class="player-title"></strong><span class="player-artist"></span></div>
-        <label class="player-selection">Track<select class="player-select" aria-label="Choose a track">{% for track in gallery_audio %}<option value="{{ loop.index0 }}">{{ track.title }}{% if track.artist %} — {{ track.artist }}{% endif %}</option>{% endfor %}</select></label>
-        <div class="player-skip"><button class="player-previous" type="button" aria-label="Previous track">‹ Previous</button><button class="player-next" type="button" aria-label="Next track">Next ›</button></div>
+        <div class="player-track"><span class="eyebrow">SELECTED TRACK</span><strong class="player-title"></strong><span class="player-artist"></span></div>
+        <ol class="player-playlist" aria-label="Choose a track">
+        {% for track in gallery_audio %}
+          <li><button type="button" class="player-track-choice" data-track-index="{{ loop.index0 }}"><span class="player-track-number" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span><span>{{ track.title }}{% if track.artist %}<small>{{ track.artist }}</small>{% endif %}</span></button></li>
+        {% endfor %}
+        </ol>
       </div>
     </details>
     <p class="player-status" role="status" aria-live="polite"></p>
@@ -130,5 +135,5 @@
   <p class="home-community-note">{{ site.footer_text }}</p>
 </section>
 <script src="/static/gallery.js?v=landscape2" defer></script>
-<script src="/static/gallery-player.js?v=compact2" defer></script>
+<script src="/static/gallery-player.js?v=playlist3" defer></script>
 {% endblock %}

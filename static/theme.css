@@ -390,11 +390,17 @@
 .player-track .eyebrow { font-size: .65rem; color: #999; }
 .player-title { font-size: 1rem; overflow-wrap: anywhere; }
 .player-artist { font-size: .8rem; color: #aaa; }
-.player-selection { display: flex; align-items: center; gap: 12px; margin: 0; font-size: .75rem; color: #aaa; }
-.player-selection select { max-width: none; min-width: 0; padding: 6px 10px; font-size: .8rem; min-height: 36px; }
-.player-skip { display: flex; justify-content: space-between; gap: 12px; }
-.player-skip button { min-height: 44px; padding: 6px 12px; background: transparent; color: #fff; border-color: #555; font-size: .8rem; }
-.player-skip button:disabled { opacity: .35; cursor: default; }
+.player-artist:empty { display: none; }
+.gallery-player > .player-previous, .gallery-player > .player-next { flex: none; width: 28px; height: 36px; min-height: 0; padding: 0; border-color: transparent; background: transparent; color: #ddd; font-size: 22px; }
+.gallery-player > .player-previous:hover, .gallery-player > .player-next:hover { background: #303030; }
+.gallery-player > button:disabled { opacity: .35; cursor: default; }
+.player-playlist { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.player-track-choice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 10px; text-align: left; font-size: .8rem; font-weight: 500; background: transparent; color: #ddd; border: 1px solid transparent; }
+.player-track-choice[aria-current="true"] { border-color: #777; background: #303030; color: #fff; }
+.player-track-choice:hover { background: #303030; }
+.player-track-choice > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.player-track-choice small { display: block; margin-top: 3px; color: #aaa; }
+.player-track-number { flex: none; color: #999; font-variant-numeric: tabular-nums; }
 .player-status { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; margin: 0; padding: 8px; background: #191919; font-size: .8rem; }
 .player-status:empty { display: none; }
 .viewer-loading { position: absolute; top: 16px; left: 110px; right: 130px; margin: 0; color: #aaa; text-align: center; font-size: .75rem; pointer-events: none; }
@@ -409,9 +415,14 @@
   }
   .photo-viewer.has-player .gallery-player { bottom: 12px; left: auto; right: 12px; width: var(--landscape-player-width); margin: 0; }
   .photo-viewer.has-player > .gallery-next { right: calc(var(--landscape-player-width) + 24px); }
-  .photo-viewer.has-player .player-info-label { display: none; }
+  .photo-viewer.has-player .gallery-player { display: grid; grid-template-columns: 28px minmax(0,1fr) 28px; row-gap: 2px; }
+  .photo-viewer.has-player .player-audio { grid-row: 1; grid-column: 1 / -1; }
+  .photo-viewer.has-player .player-previous { grid-row: 2; grid-column: 1; }
+  .photo-viewer.has-player .player-next { grid-row: 2; grid-column: 3; }
+  .photo-viewer.has-player .player-details { grid-row: 2; grid-column: 2; justify-self: center; }
   .photo-viewer.has-player .player-details-panel { max-height: calc(100dvh - 150px); }
 }
 
 /* Compact photo navigation inside the expanded viewer. */
+.home-gallery > .gallery-arrow,
 .photo-viewer > .gallery-arrow { width: 32px; height: 32px; font-size: 18px; }
