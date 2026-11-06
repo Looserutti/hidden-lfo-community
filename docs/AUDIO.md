@@ -21,7 +21,7 @@ Run `alembic upgrade head` before starting this feature; revision `0005` adds au
 
 Defaults are **50 MB per upload** and **512 MB total library storage**. Override with `GALLERY_AUDIO_MAX_UPLOAD_MB` and `GALLERY_AUDIO_MAX_STORAGE_MB`. The admin page shows current usage. MP3s are usually much smaller than WAVs; this version stores the original file without transcoding. Format-header checks reject obvious wrong files; final decoding support is determined by the visitor's browser.
 
-Back up **both** the SQLite database and the audio directory. The existing SQLite backup helper copies metadata, not uploaded audio files. Preserve matching metadata/files when restoring. Delete removes the working copy, not historical backups. There is no automatic off-server audio backup task.
+Back up **both** the SQLite database and the audio directory. The existing SQLite backup helper copies metadata, not uploaded audio files. Preserve matching metadata/files when restoring. Delete removes the working copy, not historical backups. For complete encrypted backups and optional scheduled off-server replication, configure the host helper described in [BACKUPS.md](BACKUPS.md). Off-server replication requires a separately authorized destination.
 
 Admin writes require the existing allowlist and CSRF token. Uploads have bounded size and quota checks; original filenames never become storage paths. Published media supports HTTP byte ranges for seeking and uses `Cache-Control: no-store` so publication changes are checked on new requests. Playing audio consumes server outbound bandwidth; media uses `preload="none"` and does not autoplay.
 

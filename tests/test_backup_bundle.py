@@ -1,0 +1,28 @@
+import sqlite3
+import pytest
+from scripts.backup_bundle import snapshot, verify
+
+
+def test_complete_snapshot_and_corruption_detection(tmp_path):
+    source=tmp_path/'live.db'; audio=tmp_path/'audio'; audio.mkdir()
+    names=['a'*32+'.mp3','b'*32+'.mp3']
+    for name in names:(audio/name).write_bytes(b'ID3test')
+    with sqlite3.connect(source) as db:
+        db.execute('PRAGMA journal_mode=WAL')
+        db.execute('CREATE TABLE gallery_tracks(filename TEXT,byte_size INTEGER,normalized_filename TEXT,normalized_byte_size INTEGER)')
+        db.execute('INSERT INTO gallery_tracks VALUES (?,?,?,?)',(names[0],7,names[1],7))
+        db.execute('CREATE TABLE members(id INTEGER)');db.execute('INSERT INTO members VALUES (123)')
+    output=tmp_path/'backup'
+    assert snapshot(source,audio,output)==2
+    assert verify(output)==3
+    with sqlite3.connect(output/'community.db') as db:assert db.execute('SELECT id FROM members').fetchone()==(123,)
+    (output/'gallery-audio'/names[0]).write_bytes(b'changed')
+    with pytest.raises(ValueError):verify(output)
+
+
+def test_missing_audio_fails_instead_of_claiming_success(tmp_path):
+    source=tmp_path/'live.db'
+    with sqlite3.connect(source) as db:
+        db.execute('CREATE TABLE gallery_tracks(filename TEXT,byte_size INTEGER)')
+        db.execute('INSERT INTO gallery_tracks VALUES (?,?)',('a'*32+'.wav',8))
+    with pytest.raises(FileNotFoundError):snapshot(source,tmp_path/'audio',tmp_path/'backup')

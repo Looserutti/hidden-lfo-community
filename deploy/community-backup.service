@@ -1,0 +1,12 @@
+[Unit]
+Description=Community database, audio and configuration backup
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/hidden-lfo/backup-tools/deploy/backup.sh backup
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=1h

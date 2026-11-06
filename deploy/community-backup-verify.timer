@@ -1,0 +1,10 @@
+[Unit]
+Description=Monthly community backup restore verification
+
+[Timer]
+OnCalendar=*-*-01 05:00:00 America/Los_Angeles
+Persistent=true
+Unit=community-backup-verify.service
+
+[Install]
+WantedBy=timers.target

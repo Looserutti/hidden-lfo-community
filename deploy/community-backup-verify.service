@@ -1,0 +1,11 @@
+[Unit]
+Description=Isolated community backup restore verification
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/hidden-lfo/backup-tools/deploy/backup.sh verify
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=1h
