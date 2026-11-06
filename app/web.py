@@ -1,4 +1,6 @@
 import os
+import mimetypes
+mimetypes.add_type("image/webp", ".webp")
 import secrets
 from uuid import uuid4
 from urllib.parse import urlsplit
