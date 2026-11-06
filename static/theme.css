@@ -65,8 +65,41 @@
   border-top: 1px solid #444;
 }
 
-.home-events .page-heading {
-  margin-bottom: 32px;
+.events-panel {
+  padding: clamp(20px, 3vw, 28px);
+  background: var(--dark-grey);
+  border: 1px solid var(--light-grey);
+  border-radius: 8px;
+}
+
+.events-panel .page-heading {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #444;
+}
+
+.events-panel .page-heading .eyebrow {
+  margin: 0;
+}
+
+.events-panel .page-heading h2 {
+  margin: 6px 0 0;
+}
+
+.events-panel article {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.events-panel article > p:first-child {
+  margin-top: 0;
+}
+
+.events-panel article > :last-child {
+  margin-bottom: 0;
 }
 
 .home-events h2 {

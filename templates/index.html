@@ -61,53 +61,54 @@
     Join the Discord
   </a>
   {% endif %}
-  <div class="page-heading">
-    <div>
-      <p class="eyebrow">WHAT'S NEXT</p>
-      <h2>UPCOMING EVENTS</h2>
+  <div class="events-panel">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">WHAT'S NEXT</p>
+        <h2>UPCOMING EVENTS</h2>
+      </div>
+
+      <div class="actions">
+        <a class="cta home-primary-link" href="/calendar">Monthly calendar</a>
+
+      </div>
     </div>
 
-    <div class="actions">
-      <a class="cta home-primary-link" href="/calendar">Monthly calendar</a>
+    <div class="grid">
+      {% for event in events %}
+      <article>
+        <p class="eyebrow">UPCOMING EVENT</p>
+        <h2>
+          <a href="/events/{{ event.id }}">{{ event.title }}</a>
+        </h2>
 
+        <p>
+          <time
+            class="local-time"
+            datetime="{{ event.starts_at.isoformat() }}"
+          >
+            {{ event.starts_at.strftime('%B %d, %Y · %H:%M') }} UTC
+          </time>
+        </p>
+
+        <p>{{ event.location }}</p>
+
+        <p>
+          {{ counts[event.id] }} registered
+          {% if event.capacity %}
+          / {{ event.capacity }} spots
+          {% endif %}
+        </p>
+
+        <a href="/events/{{ event.id }}">View event details →</a>
+      </article>
+
+      {% else %}
+      <article>
+        <p>No upcoming events have been published yet.</p>
+        </article>
+      {% endfor %}
     </div>
-  </div>
-
-  <div class="grid">
-    {% for event in events %}
-    <article>
-      <p class="eyebrow">UPCOMING EVENT</p>
-      <h2>
-        <a href="/events/{{ event.id }}">{{ event.title }}</a>
-      </h2>
-
-      <p>
-        <time
-          class="local-time"
-          datetime="{{ event.starts_at.isoformat() }}"
-        >
-          {{ event.starts_at.strftime('%B %d, %Y · %H:%M') }} UTC
-        </time>
-      </p>
-
-      <p>{{ event.location }}</p>
-
-      <p>
-        {{ counts[event.id] }} registered
-        {% if event.capacity %}
-        / {{ event.capacity }} spots
-        {% endif %}
-      </p>
-
-      <a href="/events/{{ event.id }}">View event details →</a>
-    </article>
-
-    {% else %}
-    <article>
-      <p>No upcoming events have been published yet.</p>
-      <a href="/calendar">Browse the calendar</a>
-    </article>
-    {% endfor %}
   </div>
 </section>
 <script src="/static/gallery.js" defer></script>
