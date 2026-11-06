@@ -33,3 +33,5 @@ config/sources.local.json
 var/system-health/
 
 static/gallery-optimized/
+
+var/gallery-photos/

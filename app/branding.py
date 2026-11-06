@@ -55,8 +55,8 @@ def discover_gallery(site, static_root=None):
     return photos
 
 
-def site_context():
-    return {**SITE, 'gallery': discover_gallery(SITE)}
+def site_context(gallery=None):
+    return {**SITE, 'gallery': discover_gallery(SITE) if gallery is None else gallery}
 
 
 SITE = load_site()

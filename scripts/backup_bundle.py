@@ -14,7 +14,7 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def snapshot(database, audio, destination):
+def snapshot(database, audio, destination, photos=None):
     database, audio, destination = map(Path, (database, audio, destination))
     destination.mkdir(parents=True, exist_ok=True, mode=0o700)
     if any(destination.iterdir()):
@@ -49,6 +49,21 @@ def snapshot(database, audio, destination):
                             shutil.copyfile(source_file,target)
                             target.chmod(0o600)
                             files.append(name)
+                if 'settings' in tables:
+                    for key,value in saved.execute("SELECT key,value FROM settings WHERE key LIKE 'gallery.batch.%'"):
+                        batch_id=key.removeprefix('gallery.batch.')
+                        if not re.fullmatch(r'[a-f0-9]{32}',batch_id):raise ValueError('Invalid photo batch identifier')
+                        if photos is None:raise ValueError('Photo storage is required for this snapshot')
+                        record=json.loads(value)
+                        directory=Path(photos)/batch_id
+                        if directory.is_symlink():raise ValueError('Invalid photo directory')
+                        for name,size in record['files'].items():
+                            if not re.fullmatch(r'\d{2}-(?:full\.jpg|(?:480|960|1600)\.webp)',name):raise ValueError('Invalid photo filename')
+                            source_file=directory/name
+                            if source_file.is_symlink() or source_file.stat().st_size!=size:raise ValueError('Photo missing or size mismatch')
+                            target=destination/'gallery-photos'/batch_id/name
+                            target.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+                            shutil.copyfile(source_file,target);target.chmod(0o600);files.append(batch_id+'/'+name)
         finally:
             lock.rollback()
     (destination/'community.db').chmod(0o600)
@@ -75,8 +90,9 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--database',default='/data/community.db')
     parser.add_argument('--audio',default='/data/gallery-audio')
+    parser.add_argument('--photos',default='/data/gallery-photos')
     parser.add_argument('--output',required=True)
     parser.add_argument('--verify',action='store_true')
     args=parser.parse_args()
     if args.verify: print('Verified database and files:',verify(args.output))
-    else: print('Snapshot audio files:',snapshot(args.database,args.audio,args.output))
+    else: print('Snapshot media files:',snapshot(args.database,args.audio,args.output,args.photos))

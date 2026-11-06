@@ -67,7 +67,10 @@ def csrf_check(request: Request, token: str):
 def context(request: Request, **kwargs):
     if 'csrf' not in request.session:
         request.session['csrf'] = secrets.token_urlsafe(32)
-    return {'site': site_context(), 'is_preview': os.getenv('SITE_ENVIRONMENT') == 'preview', 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
+    from app.gallery_store import current_gallery
+    with Session() as gallery_db:
+        gallery=current_gallery(gallery_db,SITE['name'])
+    return {'site': site_context(gallery), 'is_preview': os.getenv('SITE_ENVIRONMENT') == 'preview', 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
 
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):
@@ -426,3 +429,8 @@ def reject_submission(request: Request, submission_id: int, csrf: str = Form(...
 
 app.include_router(audio_routes(lambda: Session(), admin, csrf_check,
     lambda request, **fields: templates.TemplateResponse(request, 'admin_music.html', context(request, **fields))))
+
+
+from app.gallery_admin import gallery_routes
+app.include_router(gallery_routes(lambda: Session(), admin, csrf_check,
+    lambda request, **fields: templates.TemplateResponse(request, 'admin_photos.html', context(request, **fields)), SITE['name']))

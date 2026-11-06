@@ -72,5 +72,5 @@ if __name__=='__main__':
         restrict(workdir)
         os.execv(sys.argv[2],sys.argv[2:])
     except Exception:
-        print('Audio isolation could not be enforced; processing was not started.',file=sys.stderr)
+        print('Media isolation could not be enforced; processing was not started.',file=sys.stderr)
         sys.exit(125)

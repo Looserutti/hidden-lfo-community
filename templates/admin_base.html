@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block head %}<link rel="stylesheet" href="/static/admin.css?v=activity-status2">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/admin.css?v=photo-batches1">{% endblock %}
 {% block content %}
 <div class="admin-shell">
   <nav class="admin-nav" aria-label="Administration">
@@ -8,6 +8,7 @@
       <a href="/admin" {% if request.url.path == '/admin' %}aria-current="page"{% endif %}>Overview &amp; events</a>
       <a href="/admin/activity" {% if request.url.path == '/admin/activity' %}aria-current="page"{% endif %}>Member activity</a>
       <a href="/admin/settings" {% if request.url.path == '/admin/settings' %}aria-current="page"{% endif %}>Calendar settings</a>
+      <a href="/admin/photos" {% if request.url.path.startswith("/admin/photos") %}aria-current="page"{% endif %}>Carousel photos</a>
       <a href="/admin/music" {% if request.url.path == '/admin/music' %}aria-current="page"{% endif %}>Gallery audio</a>
       <a href="/">View website ↗</a>
     </div>

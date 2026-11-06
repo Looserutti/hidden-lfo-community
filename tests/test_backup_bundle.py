@@ -26,3 +26,18 @@ def test_missing_audio_fails_instead_of_claiming_success(tmp_path):
         db.execute('CREATE TABLE gallery_tracks(filename TEXT,byte_size INTEGER)')
         db.execute('INSERT INTO gallery_tracks VALUES (?,?)',('a'*32+'.wav',8))
     with pytest.raises(FileNotFoundError):snapshot(source,tmp_path/'audio',tmp_path/'backup')
+
+
+def test_saved_photo_batches_are_backed_up_and_verified(tmp_path):
+    import json
+    source=tmp_path/'live.db';photos=tmp_path/'photos';key='c'*32
+    folder=photos/key;folder.mkdir(parents=True)
+    (folder/'00-full.jpg').write_bytes(b'photo')
+    with sqlite3.connect(source) as db:
+        db.execute('CREATE TABLE settings(key TEXT,value TEXT)')
+        db.execute('INSERT INTO settings VALUES (?,?)',('gallery.batch.'+key,json.dumps({'files':{'00-full.jpg':5}})))
+    output=tmp_path/'backup'
+    assert snapshot(source,tmp_path/'audio',output,photos)==1
+    assert verify(output)==2
+    (output/'gallery-photos'/key/'00-full.jpg').write_bytes(b'changed')
+    with pytest.raises(ValueError):verify(output)
