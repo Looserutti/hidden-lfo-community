@@ -26,6 +26,9 @@ def load_site(path=None):
             or type(schedule.get('hour')) is not int or not 0 <= schedule['weekday'] <= 6
             or not 0 <= schedule['hour'] <= 23):
         raise ValueError('calendar_collection requires weekday 0–6 and hour 0–23')
+    retention = site.get('venue_retention_days', 30)
+    if type(retention) is not int or not 1 <= retention <= 3650:
+        raise ValueError('venue_retention_days must be between 1 and 3650')
     return site
 
 

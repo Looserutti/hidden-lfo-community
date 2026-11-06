@@ -131,3 +131,27 @@ def test_weekly_source_schedule_timezone_restart_failure_and_manual_pull(store, 
         feeds.set_enabled(db, 'collection', False)
     with store() as db:
         assert not feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 17, 17, tzinfo=timezone.utc))
+
+
+def test_retention_removes_only_expired_venues_and_prevents_reimport(store, monkeypatch):
+    from datetime import timedelta
+    fixed = datetime(2026, 11, 5, 20, tzinfo=timezone.utc)
+    monkeypatch.setattr(feeds, 'now', lambda: fixed)
+    monkeypatch.setattr(feeds, 'SITE', {'venue_retention_days': 30})
+    discord = {**SOURCE, 'id': 'discord', 'adapter': 'discord'}
+    monkeypatch.setattr(feeds, 'SOURCES', [SOURCE, discord])
+    old = {**sample_event(), 'starts_at': fixed - timedelta(days=31)}
+    boundary = {**sample_event(), 'external_id': 'boundary', 'starts_at': fixed - timedelta(days=30)}
+    future = {**sample_event(), 'external_id': 'future', 'starts_at': fixed + timedelta(days=1)}
+    with store.begin() as db:
+        db.add(ImportedEvent(source_id=SOURCE['id'], **old))
+        feeds.save_events(db, discord, [old])
+        feeds.save_events(db, SOURCE, [boundary, future])
+    with store.begin() as db:
+        assert feeds.prune_venue_events(db) == 1
+        feeds.save_events(db, SOURCE, [old])
+    with store() as db:
+        assert db.get(ImportedEvent, (SOURCE['id'], old['external_id'])) is None
+        assert db.get(ImportedEvent, ('discord', old['external_id'])) is not None
+        assert db.get(ImportedEvent, (SOURCE['id'], 'boundary')) is not None
+        assert db.get(ImportedEvent, (SOURCE['id'], 'future')) is not None

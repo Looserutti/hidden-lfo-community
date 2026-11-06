@@ -13,5 +13,6 @@
   "calendar_collection": {
     "weekday": 1,
     "hour": 9
-  }
+  },
+  "venue_retention_days": 30
 }

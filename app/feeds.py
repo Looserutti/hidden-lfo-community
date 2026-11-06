@@ -1,7 +1,7 @@
 """Independent calendar collection. No messages are sent to Discord."""
 import ast
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from html import unescape
 import json
 import os
@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import httpx
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.dialects.sqlite import insert
 from app.config import GUILD_ID
 from app.branding import SITE
@@ -127,8 +127,24 @@ async def fetch_source(source):
     return parse_ticketweb_calendar(chunks.decode('utf-8'), source)
 
 
+def venue_cutoff(stamp=None):
+    return (stamp or now()) - timedelta(days=SITE.get('venue_retention_days', 30))
+
+
+def prune_venue_events(db, stamp=None):
+    """Remove expired venue imports only; Discord and community records are separate."""
+    venue_ids = [s['id'] for s in SOURCES if s['adapter'] != 'discord']
+    return db.execute(delete(ImportedEvent).where(
+        ImportedEvent.source_id.in_(venue_ids), ImportedEvent.starts_at < venue_cutoff(stamp))).rowcount
+
+
 def save_events(db, source, events):
+    cutoff = venue_cutoff()
     for event in events:
+        stamp = event['starts_at']
+        stamp = stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp
+        if source['adapter'] != 'discord' and stamp < cutoff:
+            continue
         values = {**event, 'source_id': source['id'], 'updated_at': now()}
         statement = insert(ImportedEvent).values(**values)
         db.execute(statement.on_conflict_do_update(
@@ -188,6 +204,8 @@ def automatic_pull_due(db, source, stamp):
 
 
 async def collect_enabled_sources():
+    with Session.begin() as db:
+        prune_venue_events(db)
     for source in SOURCES:
         with Session() as db:
             due = automatic_pull_due(db, source, now())

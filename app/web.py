@@ -292,7 +292,8 @@ def admin_settings(request: Request, page: int = Query(1, ge=1)):
         public_base_url=BASE_URL, sources=sources, collection=collection, website=website,
         collection_weekday=calendar.day_name[SITE.get("calendar_collection", {"weekday": 1})["weekday"]],
         collection_hour=SITE.get("calendar_collection", {"hour": 9})["hour"], calendar_timezone=CALENDAR_ZONE,
-        worker_seen=worker_seen, listings=listings, listing_page=page, listing_total=listing_total))
+        worker_seen=worker_seen, listings=listings, listing_page=page, listing_total=listing_total,
+        venue_retention_days=SITE.get('venue_retention_days', 30)))
 
 
 @app.post('/admin/settings/feeds')
@@ -348,6 +349,8 @@ def add_source_listing(request: Request, csrf: str = Form(...), source_id: str =
         raise HTTPException(400, 'Use a title, valid location and timezone-aware start time')
     if parsed_url.scheme != 'https' or not parsed_url.netloc or parsed_url.username or parsed_url.password:
         raise HTTPException(400, 'Provide a public HTTPS show or ticket link')
+    if stamp < feeds.venue_cutoff():
+        raise HTTPException(400, 'Venue listing is older than the retention window')
     with Session.begin() as db:
         db.add(ImportedEvent(source_id=source_id, external_id='manual-' + uuid4().hex,
             title=title.strip(), starts_at=stamp.astimezone(timezone.utc),
