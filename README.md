@@ -129,7 +129,7 @@ Activity classifications remain observation-based: a 90-day new-member grace per
 
 1. Back up the database and run `alembic upgrade head` (revision `0003` adds a separate imported-listings table); restart the web app.
 2. Sign in as an allowlisted administrator. Enable global collection and select **Collect this source** for each desired source. **Pull now** reads one source immediately and displays success/error status.
-3. For scheduled checks, run `python -m app.feeds` in a separate process. It checks enabled sources every 15 minutes, independently of the Discord gateway bot. Docker installations can run `docker compose --profile shows up -d calendar-collector`; the optional worker uses the same database volume and environment.
+3. For scheduled checks, run `python -m app.feeds` in a separate process. It wakes every 15 minutes and pulls enabled sources only when their weekly schedule is due, independently of the Discord gateway bot. Docker installations can run `docker compose --profile shows up -d calendar-collector`; the optional worker uses the same database volume and environment.
 4. Enable global website publishing and **Publish this source on the calendar** for the desired sources. Imported listings appear on `/calendar`, with source attribution and an external show link. Pausing collection preserves stored listings; pausing website publishing hides them. Neither switch changes manually managed community events.
 5. Add venue shows manually if a source cannot be read. The same publication switches apply. A staff Hide action survives future imports and can be reversed with Unhide.
 
@@ -144,3 +144,9 @@ Collection failures preserve earlier data and are shown in the admin source stat
 ## Hosted staging preparation
 
 See [deploy/STAGING.md](deploy/STAGING.md) for the website-only launch, optional bot cutover, preflight validation and backup restoration rehearsal. Bot and collector services are opt-in Compose profiles. Outbound bot event announcements and staff reports also require their explicit environment switches.
+
+### Automatic calendar collection schedule
+
+All enabled sources, including Discord scheduled Events and external venues, are attempted once on Tuesdays at or after 09:00 in `calendar_timezone` (within the next worker cycle). Change `calendar_collection` in `config/site.json`: `weekday` is Monday=0 through Sunday=6; `hour` uses 0–23. Restart the web and collector after editing configuration. The generic example uses UTC; Hidden LFO uses America/Los_Angeles, including daylight-saving changes.
+
+Last-attempt timestamps persist in the database, preventing another automatic source pull after a worker restart on the same day. Failed attempts also count toward that day's limit. If the collector is offline or paused for the entire scheduled window, it waits until the next configured weekday. Admin “Pull now” remains available any day when collection and the source are enabled; a manual pull on the scheduled day also counts toward that day's automatic limit. Publication switches remain independent.

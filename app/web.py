@@ -289,6 +289,8 @@ def admin_settings(request: Request):
         listings = db.scalars(select(ImportedEvent).order_by(ImportedEvent.starts_at.desc()).limit(50)).all()
     return templates.TemplateResponse(request, 'admin_settings.html', context(request,
         public_base_url=BASE_URL, sources=sources, collection=collection, website=website,
+        collection_weekday=calendar.day_name[SITE.get("calendar_collection", {"weekday": 1})["weekday"]],
+        collection_hour=SITE.get("calendar_collection", {"hour": 9})["hour"], calendar_timezone=CALENDAR_ZONE,
         worker_seen=worker_seen, listings=listings))
 
 

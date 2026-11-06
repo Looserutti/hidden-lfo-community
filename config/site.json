@@ -9,5 +9,9 @@
     "youtube": "https://www.youtube.com/channel/UCvB-KFUXtsPyk8hsy3Cj7vQ"
   },
   "gallery_folder": "images/gallery",
-  "calendar_timezone": "America/Los_Angeles"
+  "calendar_timezone": "America/Los_Angeles",
+  "calendar_collection": {
+    "weekday": 1,
+    "hour": 9
+  }
 }

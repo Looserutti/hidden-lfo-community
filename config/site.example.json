@@ -9,5 +9,9 @@
     "youtube": ""
   },
   "gallery_folder": "images/gallery",
-  "calendar_timezone": "UTC"
+  "calendar_timezone": "UTC",
+  "calendar_collection": {
+    "weekday": 1,
+    "hour": 9
+  }
 }

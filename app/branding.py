@@ -21,6 +21,11 @@ def load_site(path=None):
     if folder.is_absolute() or '..' in folder.parts or not folder.parts:
         raise ValueError('gallery_folder must be a relative folder inside static/')
     ZoneInfo(site.get("calendar_timezone", "UTC"))
+    schedule = site.get('calendar_collection', {'weekday': 1, 'hour': 9})
+    if (not isinstance(schedule, dict) or type(schedule.get('weekday')) is not int
+            or type(schedule.get('hour')) is not int or not 0 <= schedule['weekday'] <= 6
+            or not 0 <= schedule['hour'] <= 23):
+        raise ValueError('calendar_collection requires weekday 0–6 and hour 0–23')
     return site
 
 

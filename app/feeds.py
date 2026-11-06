@@ -15,6 +15,7 @@ import httpx
 from sqlalchemy import select, func
 from sqlalchemy.dialects.sqlite import insert
 from app.config import GUILD_ID
+from app.branding import SITE
 from app.db import Session, Setting, ImportedEvent, now
 
 
@@ -173,9 +174,25 @@ async def collect_source(source_id):
     return not error
 
 
+def automatic_pull_due(db, source, stamp):
+    """Source pulls run once each configured weekday; manual pulls bypass this gate."""
+    if not collection_enabled(db, source['id']):
+        return False
+    local = stamp.astimezone(ZoneInfo(SITE.get('calendar_timezone', 'UTC')))
+    schedule = SITE.get('calendar_collection', {'weekday': 1, 'hour': 9})
+    if local.weekday() != schedule['weekday'] or local.hour < schedule['hour']:
+        return False
+    previous = db.get(Setting, 'feeds.result.' + source['id'])
+    attempted = json.loads(previous.value).get('attempted_at') if previous else None
+    return not attempted or datetime.fromisoformat(attempted).astimezone(local.tzinfo).date() != local.date()
+
+
 async def collect_enabled_sources():
     for source in SOURCES:
-        await collect_source(source['id'])
+        with Session() as db:
+            due = automatic_pull_due(db, source, now())
+        if due:
+            await collect_source(source['id'])
 
 
 def calendar_events(db, start, end):

@@ -6,7 +6,7 @@
 <label class="setting-check"><input type="checkbox" name="collection" value="true" {% if collection %}checked{% endif %}><span>Enable automatic collection<small>Allow enabled sources to update stored listings. Pausing keeps existing records.</small></span></label>
 <label class="setting-check"><input type="checkbox" name="website" value="true" {% if website %}checked{% endif %}><span>Publish imported listings on the website<small>Show listings from sources enabled for publishing. Turning this off hides imported listings without deleting them.</small></span></label>
 <button>Save calendar controls</button></form>
-<p class="note">Scheduled collection runs every 15 minutes while the separate calendar collector is running. Last worker check: {{ worker_seen or 'No worker check recorded' }}. “Pull now” works without the worker.</p>
+<p class="note">Enabled sources, including Discord and external venues, pull once on {{ collection_weekday }} at or after {{ "%02d"|format(collection_hour) }}:00 {{ calendar_timezone }} while the separate collector is running. A failed attempt waits until the next scheduled day; “Pull now” can retry sooner. Last worker check: {{ worker_seen or 'No worker check recorded' }}. “Pull now” works without the worker.</p>
 <p class="note">Imported Discord event titles, start times and locations become public when website publishing and Discord source publishing are enabled. Recurring Discord events currently import the next scheduled occurrence only.</p>
 </section>
 <section id="sources"><div class="admin-heading"><h2>Source registry</h2><span>{{ sources|length }} configured sources</span></div>

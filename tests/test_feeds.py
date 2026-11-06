@@ -100,3 +100,34 @@ def test_discord_snapshot_retires_deleted_events(store):
         feeds.save_events(db, source, [])
     with store() as db:
         assert db.get(ImportedEvent, ('example', '12')).cancelled
+
+
+def test_weekly_source_schedule_timezone_restart_failure_and_manual_pull(store, monkeypatch):
+    import json
+    monkeypatch.setattr(feeds, 'SITE', {'calendar_timezone': 'America/Los_Angeles',
+                                      'calendar_collection': {'weekday': 1, 'hour': 9}})
+    with store.begin() as db:
+        feeds.set_enabled(db, 'collection', True)
+        feeds.set_enabled(db, 'example.collect', True)
+    with store() as db:
+        assert not feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 10, 16, 59, tzinfo=timezone.utc))
+        assert feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 10, 17, tzinfo=timezone.utc))
+        assert not feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 11, 17, tzinfo=timezone.utc))
+        # Summer Tuesday at 09:00 Pacific is 16:00 UTC.
+        assert feeds.automatic_pull_due(db, SOURCE, datetime(2027, 7, 6, 16, tzinfo=timezone.utc))
+    with store.begin() as db:
+        db.add(Setting(key='feeds.result.example', value=json.dumps({
+            'attempted_at': '2026-11-10T17:00:00+00:00', 'error': 'HTTP 503'})))
+    with store() as db:
+        assert not feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 11, 2, tzinfo=timezone.utc))
+        assert feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 17, 17, tzinfo=timezone.utc))
+        assert not feeds.automatic_pull_due(db, {**SOURCE, 'adapter': 'discord'}, datetime(2026, 11, 11, 2, tzinfo=timezone.utc))
+    async def fetch(source):
+        return [sample_event()]
+    monkeypatch.setattr(feeds, 'fetch_source', fetch)
+    # Manual pulls bypass automatic weekday restrictions.
+    assert asyncio.run(feeds.collect_source('example'))
+    with store.begin() as db:
+        feeds.set_enabled(db, 'collection', False)
+    with store() as db:
+        assert not feeds.automatic_pull_due(db, SOURCE, datetime(2026, 11, 17, 17, tzinfo=timezone.utc))
