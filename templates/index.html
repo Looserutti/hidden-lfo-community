@@ -1,6 +1,8 @@
 
 {% extends 'base.html' %}
 
+{% block footer_message %}{% endblock %}
+
 {% block content %}
 
 <!-- HIDDEN LFO INTRODUCTION -->
@@ -109,6 +111,7 @@
       {% endfor %}
     </div>
   </div>
+  <p class="home-community-note">{{ site.footer_text }}</p>
 </section>
 <script src="/static/gallery.js" defer></script>
 {% endblock %}

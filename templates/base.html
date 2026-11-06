@@ -14,7 +14,7 @@
     {% if is_preview %}<aside class="preview-notice" aria-label="Preview environment">PREVIEW · Test site — changes here do not affect the live site.</aside>{% endif %}
     <main>{% block content %}{% endblock %}</main>
     <footer class="site-footer">
-        <span>{{ site.footer_text }}</span>
+        {% block footer_message %}<span>{{ site.footer_text }}</span>{% endblock %}
         <nav class="footer-socials" aria-label="{{ site.name }} social media">
             {% for platform, url in site.socials.items() if url %}
             <a href="{{ url }}" target="_blank" rel="noopener noreferrer"
