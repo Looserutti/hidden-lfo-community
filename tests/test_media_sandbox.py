@@ -38,7 +38,7 @@ def test_kernel_blocks_other_files_and_network(tmp_path):
     from app import media_sandbox
     job=tmp_path/'job';job.mkdir()
     outside=tmp_path/'private.env';outside.write_text('fake-secret')
-    code='''import os,socket,json
+    code='''import os,socket,json,threading
 from pathlib import Path
 result={}
 for name,path,mode in [('read',os.environ['OUTSIDE'],'r'),('write',os.environ['OUTSIDE'],'w')]:
@@ -48,13 +48,16 @@ for name,path,mode in [('read',os.environ['OUTSIDE'],'r'),('write',os.environ['O
  except PermissionError:result[name]=True
 try:socket.socket();result['network']=False
 except PermissionError:result['network']=True
+try:os.fork();result['fork']=False
+except PermissionError:result['fork']=True
+thread=threading.Thread(target=lambda:None);thread.start();thread.join()
 Path('allowed.txt').write_text('ok')
 print(json.dumps(result))
 '''
     result=subprocess.run([sys.executable,'-I',str(Path(media_sandbox.__file__).resolve()),str(job),sys.executable,'-I','-c',code],
                           env={'PATH':'/usr/bin:/bin','LANG':'C','OUTSIDE':str(outside)},capture_output=True,text=True)
     assert result.returncode==0,result.stderr
-    assert json.loads(result.stdout)=={'read':True,'write':True,'network':True}
+    assert json.loads(result.stdout)=={'read':True,'write':True,'network':True,'fork':True}
     assert outside.read_text()=='fake-secret'
     assert (job/'allowed.txt').read_text()=='ok'
 
