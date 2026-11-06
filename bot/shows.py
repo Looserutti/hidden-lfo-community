@@ -1,5 +1,6 @@
 """Verified-member /shows command. Replies are private to the requester."""
 import discord
+from datetime import timedelta
 from discord import app_commands
 from app.branding import SITE
 from app.calendar_utils import calendar_time
@@ -16,10 +17,15 @@ def verified_member(interaction):
             and any(role.id == VERIFIED_ROLE_ID for role in interaction.user.roles))
 
 
-def shows_embed(rows, page):
+def shows_embed(rows, page, start=None):
     pages = max(1, (len(rows) + PAGE_SIZE - 1) // PAGE_SIZE)
     zone = SITE.get('calendar_timezone', 'UTC')
-    embed = discord.Embed(title='Concerts · next 7 days', url=BASE_URL + '/calendar')
+    start = start or now()
+    first = calendar_time(start, zone).strftime('%b %d')
+    last = calendar_time(start + timedelta(days=7), zone).strftime('%b %d')
+    embed = discord.Embed(title='THE NEXT 7 DAYS', url=BASE_URL + '/calendar',
+                          description=f'{first} — {last} · Published concerts', colour=0xD9D9D9)
+    embed.set_author(name=SITE.get('name', 'Your Community').upper() + ' / COMMUNITY CALENDAR')
     if not rows:
         embed.description = 'No published concerts are listed for the next seven days. Check the calendar again soon.'
     elif page > pages:
@@ -36,6 +42,12 @@ def shows_embed(rows, page):
     return embed
 
 
+def calendar_link():
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label='Open community calendar', url=BASE_URL + '/calendar'))
+    return view
+
+
 def register_shows(bot):
     @bot.tree.command(name='shows', description='See published concerts for the next seven days',
                       guild=discord.Object(id=GUILD_ID) if GUILD_ID else None)
@@ -45,8 +57,9 @@ def register_shows(bot):
             return await interaction.response.send_message(
                 'This command is available to verified community members inside the server.', ephemeral=True)
         await interaction.response.defer(ephemeral=True)
+        start = now()
         with Session() as db:
-            rows = upcoming_shows(db, now())
-        await interaction.followup.send(embed=shows_embed(rows, page), ephemeral=True,
+            rows = upcoming_shows(db, start)
+        await interaction.followup.send(embed=shows_embed(rows, page, start), view=calendar_link(), ephemeral=True,
                                         allowed_mentions=discord.AllowedMentions.none())
     return shows

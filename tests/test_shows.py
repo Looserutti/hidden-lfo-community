@@ -39,6 +39,8 @@ def test_private_shows_reply_role_guard_and_pagination(monkeypatch):
                           source_name='Venue',external_url='https://example.com/show') for i in range(17)]
     embed=shows.shows_embed(rows,2)
     assert len(embed.fields)==8 and embed.fields[0].name=='Show 8'
+    assert embed.title == 'THE NEXT 7 DAYS' and embed.colour.value == 0xD9D9D9
+    assert embed.author.name.endswith('/ COMMUNITY CALENDAR')
     assert '06:00 PM PST' in embed.fields[0].value
     assert len(shows.shows_embed(rows,3).fields)==1
     assert 'No published concerts' in shows.shows_embed([],1).description
@@ -73,4 +75,6 @@ def test_command_denies_unverified_and_sends_private_reply(monkeypatch):
     asyncio.run(command(interaction))
     assert interaction.response.defer.call_args.kwargs['ephemeral'] is True
     assert interaction.followup.send.call_args.kwargs['ephemeral'] is True
+    view=interaction.followup.send.call_args.kwargs['view']
+    assert view.children[0].url.endswith('/calendar')
     assert interaction.followup.send.call_args.kwargs['allowed_mentions'].everyone is False
