@@ -4,7 +4,7 @@ from uuid import uuid4
 from urllib.parse import urlsplit
 from datetime import datetime, timezone
 import calendar
-from app.calendar_utils import month_grid, calendar_navigation, calendar_time, month_bounds
+from app.calendar_utils import month_grid, calendar_navigation, calendar_time, month_bounds, local_event_start
 from urllib.parse import urlencode
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Form, Query
@@ -140,22 +140,16 @@ def dashboard(request: Request):
         upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= datetime.now(timezone.utc) for e in events)
         return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
             activity_totals=activity_totals, member_total=sum(activity_totals.values()),
-            upcoming_total=upcoming_total, draft_total=sum(not e.published for e in events)))
+            upcoming_total=upcoming_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
 
 @app.post('/admin/events')
-def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(...), location: str = Form('Discord'), capacity: str = Form('')):
+def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(''), location: str = Form('Discord'), capacity: str = Form(''), start_date: str = Form(''), start_time: str = Form('')):
     admin(request)
     csrf_check(request, csrf)
-    start = datetime.fromisoformat(starts_at)
-    if start.tzinfo is None:
-        raise HTTPException(400, 'Start date must include a timezone offset')
-    if not title.strip() or len(title) > 200:
-        raise HTTPException(400, 'Invalid title')
-    cap = int(capacity) if capacity.strip() else None
-    if cap is not None and cap < 1:
-        raise HTTPException(400, 'Capacity must be positive')
+    stamp = picker_start(start_date, start_time, starts_at)
+    fields = parse_event_fields(title, description, stamp, location, capacity)
     with Session.begin() as db:
-        db.add(Event(title=title.strip(), description=description, starts_at=start, location=location, capacity=cap, published=False))
+        db.add(Event(**fields, published=False))
     return RedirectResponse('/admin', status_code=303)
 
 @app.post('/admin/events/{event_id}/publish')
@@ -170,6 +164,15 @@ def publish_event(request: Request, event_id: int, csrf: str = Form(...)):
     return RedirectResponse('/admin', status_code=303)
 from fastapi.staticfiles import StaticFiles
 app.mount('/static', StaticFiles(directory='static'), name='static')
+
+
+def picker_start(date, time, legacy):
+    if date or time:
+        try:
+            return local_event_start(date, time, CALENDAR_ZONE).isoformat()
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+    return legacy
 
 
 def parse_event_fields(title: str, description: str, starts_at: str, location: str, capacity: str):
@@ -189,18 +192,18 @@ def parse_event_fields(title: str, description: str, starts_at: str, location: s
         raise HTTPException(400, 'Capacity must be an integer')
     if cap is not None and cap < 1:
         raise HTTPException(400, 'Capacity must be positive')
-    return dict(title=title.strip(), description=description, starts_at=start,
+    return dict(title=title.strip(), description=description, starts_at=start.astimezone(timezone.utc),
                 location=location.strip() or 'Discord', capacity=cap)
 
 
 @app.post('/admin/events/{event_id}/edit')
 def edit_event(request: Request, event_id: int, csrf: str = Form(...),
                title: str = Form(...), description: str = Form(''),
-               starts_at: str = Form(...), location: str = Form('Discord'),
-               capacity: str = Form('')):
+               starts_at: str = Form(''), location: str = Form('Discord'),
+               capacity: str = Form(''), start_date: str = Form(''), start_time: str = Form('')):
     admin(request)
     csrf_check(request, csrf)
-    changes = parse_event_fields(title, description, starts_at, location, capacity)
+    changes = parse_event_fields(title, description, picker_start(start_date, start_time, starts_at), location, capacity)
     with Session.begin() as db:
         e = db.get(Event, event_id)
         if e is None:

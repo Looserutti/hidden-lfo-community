@@ -118,3 +118,22 @@ def test_calendar_control_switches_and_manual_show(dashboard):
     assert client.post('/admin/settings/listings', data={**form, 'starts_at': '2026-11-14T20:00:00'}).status_code == 400
     client.cookies.clear()
     assert client.post('/admin/settings/feeds', data={'csrf': 'test-csrf'}).status_code == 403
+
+
+def test_draft_date_picker_and_edit_store_utc(dashboard, monkeypatch):
+    from app import web
+    monkeypatch.setattr(web,'CALENDAR_ZONE','America/Los_Angeles')
+    client,sessions=dashboard
+    form={'csrf':'test-csrf','title':'Date picker draft','start_date':'2026-11-06','start_time':'18:00'}
+    assert client.post('/admin/events',data=form,follow_redirects=False).status_code==303
+    with sessions() as db:
+        event=db.query(Event).one()
+        event_id=event.id
+        assert event.starts_at == datetime(2026,11,7,2) and not event.published
+    assert client.post(f'/admin/events/{event_id}/edit',data={**form,'start_date':'2027-07-06'},follow_redirects=False).status_code==303
+    with sessions() as db:
+        assert db.get(Event,event_id).starts_at == datetime(2027,7,7,1)
+    assert client.post('/admin/events',data={**form,'start_time':'bad'}).status_code==400
+    assert client.post('/admin/events',data={**form,'csrf':'invalid'}).status_code==403
+    html=client.get('/admin').text
+    assert 'type="date"' in html and 'type="time"' in html

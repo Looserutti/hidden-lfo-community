@@ -160,3 +160,7 @@ For individual imported listings, check **Exclude from publishing** and click **
 ### Member concert lookup
 
 Verified members can run `/shows` inside the configured Discord server for published calendar listings starting now through the next seven days (the exact upper boundary is excluded). Replies are private to the requester. The command respects website/source publication switches, individual exclusions, and cancelled listings; it includes published community events too. Dates use the community `calendar_timezone`. Lists show eight events per page; use `/shows page:2` for additional results. No automatic channel post is sent. The bot syncs the guild command at startup.
+
+Admin event creation and editing use date/time pickers interpreted in `calendar_timezone`, with UTC storage and automatic daylight-saving offsets. Invalid or ambiguous daylight-saving times are rejected rather than silently shifted.
+
+For a main-domain cutover, set the server `SITE_DOMAIN`, `PUBLIC_BASE_URL`, and `DISCORD_REDIRECT_URI` to the canonical host; register its OAuth callback first. Optional `SITE_ALIASES` is a comma-prefixed list (for example `", www.community.example.com, preview.community.example.com"`). Point each alias DNS record to the server. Caddy obtains certificates and redirects aliases to the canonical HTTPS host while preserving the path and query. Recreate Caddy and app services after changing environment values.

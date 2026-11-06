@@ -12,7 +12,7 @@
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Title <input name="title" required maxlength="200"></label>
 <label>Description <textarea name="description"></textarea></label>
-<label>Start time with timezone offset (ISO 8601) <input name="starts_at" required placeholder="2026-11-14T19:00:00-08:00"></label>
+<div class="event-date-fields"><label>Event date <input name="start_date" type="date" required></label><label>Start time <input name="start_time" type="time" required></label></div><p class="note">Times use {{ calendar_timezone }}. Daylight-saving offsets are applied automatically.</p>
 <label>Location <input name="location" value="Discord"></label>
 <label>Capacity (optional) <input name="capacity" type="number" min="1"></label>
 <button>Create draft</button></form></article>
@@ -24,7 +24,7 @@
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Title <input name="title" required maxlength="200" value="{{ event.title }}"></label>
 <label>Description <textarea name="description">{{ event.description }}</textarea></label>
-<label>Start (ISO 8601 with offset) <input name="starts_at" required value="{{ event.starts_at.isoformat() }}"></label>
+{% set local_start = event.starts_at|calendar_time %}<div class="event-date-fields"><label>Event date <input name="start_date" type="date" required value="{{ local_start.strftime('%Y-%m-%d') }}"></label><label>Start time <input name="start_time" type="time" required value="{{ local_start.strftime('%H:%M') }}"></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
 <label>Location <input name="location" value="{{ event.location }}"></label>
 <label>Capacity <input name="capacity" type="number" min="1" value="{{ event.capacity if event.capacity is not none else '' }}"></label>
 <button>Save changes</button></form></details>

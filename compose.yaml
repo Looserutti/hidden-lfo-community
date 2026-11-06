@@ -52,6 +52,7 @@ services:
     restart: unless-stopped
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN in .env}
+      SITE_ALIASES: ${SITE_ALIASES:-}
     ports:
       - "80:80"
       - "443:443"

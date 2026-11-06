@@ -1,4 +1,6 @@
-{$SITE_DOMAIN} {
+{$SITE_DOMAIN}{$SITE_ALIASES:} {
+    @alternate not host {$SITE_DOMAIN}
+    redir @alternate https://{$SITE_DOMAIN}{uri} permanent
     encode zstd gzip
     reverse_proxy web:8000
 }

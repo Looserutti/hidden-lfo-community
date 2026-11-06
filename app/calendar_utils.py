@@ -27,3 +27,21 @@ def calendar_navigation(year: int, month: int):
     previous = (year - 1, 12) if month == 1 else (year, month - 1)
     following = (year + 1, 1) if month == 12 else (year, month + 1)
     return previous, following
+
+
+def local_event_start(date, time, zone):
+    """Convert date/time picker values to UTC; reject DST gaps and overlaps."""
+    naive = datetime.fromisoformat(date + 'T' + time)
+    if naive.tzinfo is not None:
+        raise ValueError('Use a date and local time without a timezone offset')
+    tz = ZoneInfo(zone)
+    candidates = set()
+    for fold in (0, 1):
+        candidate = naive.replace(tzinfo=tz, fold=fold).astimezone(timezone.utc)
+        if candidate.astimezone(tz).replace(tzinfo=None) == naive:
+            candidates.add(candidate)
+    if not candidates:
+        raise ValueError('This time does not exist because of the daylight-saving change; choose another time')
+    if len(candidates) > 1:
+        raise ValueError('This time occurs twice during the daylight-saving change; choose an unambiguous time')
+    return candidates.pop()

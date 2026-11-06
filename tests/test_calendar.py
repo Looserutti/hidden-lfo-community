@@ -30,3 +30,13 @@ def test_pacific_calendar_groups_utc_next_day_on_local_date():
     assert end == datetime(2026, 12, 1, 8, tzinfo=timezone.utc)
     boundary = SimpleNamespace(starts_at=datetime(2026, 12, 1, 2, tzinfo=timezone.utc))
     assert next(d for w in month_grid(2026, 11, [boundary], 'America/Los_Angeles') for d in w if str(d['date']) == '2026-11-30')['events'] == [boundary]
+
+
+def test_date_picker_converts_winter_summer_and_rejects_dst_gaps():
+    from app.calendar_utils import local_event_start
+    assert local_event_start('2026-11-06','18:00','America/Los_Angeles') == datetime(2026,11,7,2,tzinfo=timezone.utc)
+    assert local_event_start('2027-07-06','18:00','America/Los_Angeles') == datetime(2027,7,7,1,tzinfo=timezone.utc)
+    with pytest.raises(ValueError, match='does not exist'):
+        local_event_start('2027-03-14','02:30','America/Los_Angeles')
+    with pytest.raises(ValueError, match='occurs twice'):
+        local_event_start('2027-11-07','01:30','America/Los_Angeles')

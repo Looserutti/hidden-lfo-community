@@ -58,3 +58,6 @@
 .source-card h3 { margin-top: 0; }
 
 .listing-exclusion { min-width: 180px; font-size: .8rem; margin-bottom: .65rem; }
+
+.event-date-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 480px) { .event-date-fields { grid-template-columns: 1fr; } }
