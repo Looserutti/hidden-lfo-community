@@ -95,3 +95,11 @@ def test_unpublish_and_delete_remove_post_assets_and_preserve_carousel(project_a
     assert client.post(path+'/delete',data={'csrf':'project-csrf'},follow_redirects=False).status_code==303
     with sessions() as db:
         assert not store.all_posts(db) and gallery.storage_bytes(db)==0 and not gallery.active_id(db)
+
+
+def test_project_upload_respects_shared_photo_storage_cap(project_app,monkeypatch):
+    client,sessions=project_app
+    monkeypatch.setattr(gallery,'MAX_STORAGE',1)
+    assert save(client).status_code==400
+    with sessions() as db:assert not store.all_posts(db) and gallery.storage_bytes(db)==0
+    assert not list(store.ROOT.glob('.staging-*'))

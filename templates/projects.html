@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block page_title %}{{ site.projects_title|default('Member projects') }} · {{ site.name }}{% endblock %}
+{% block footer_message %}{% endblock %}
 {% block content %}
 <section class="home-intro projects-intro"><p class="eyebrow">COMMUNITY SPOTLIGHT</p><h1>{{ site.projects_title|default('Member projects') }}</h1><p class="intro-description">{{ site.projects_description|default('Ideas, releases and work in progress from our community.') }}</p></section>
 {% if draft_preview %}<aside class="project-draft-note">Private draft preview · This version is visible only to admins. <a href="/admin/projects/{{ posts[0].id }}">Back to editor →</a></aside>{% elif single %}<p class="project-back"><a href="/projects">← All member projects</a></p>{% endif %}

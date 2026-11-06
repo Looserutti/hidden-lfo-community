@@ -30,7 +30,7 @@ def project_routes(session,admin,csrf_check,render):
     @router.get('/admin/projects')
     def manager(request: Request):
         admin(request)
-        with session() as db:return render(request,'admin_projects.html',posts=store.all_posts(db),used_mb=round(gallery.storage_bytes(db)/1024**2,1))
+        with session() as db:return render(request,'admin_projects.html',posts=store.all_posts(db),used_mb=round(gallery.storage_bytes(db)/1024**2,1),storage_mb=gallery.MAX_STORAGE//1024**2)
 
     @router.get('/admin/projects/{post_id}')
     def editor(request: Request,post_id: str):
