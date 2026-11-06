@@ -10,8 +10,8 @@
   <div class="intro-community">
     <p class="intro-description">{{ site.description }}</p>
     {% if invite_url %}
-    <a class="cta discord-invite" href="{{ invite_url }}" target="_blank" rel="noopener noreferrer">
-      Join the Discord <span aria-hidden="true">↗</span>
+    <a class="cta home-primary-link discord-invite" href="{{ invite_url }}" target="_blank" rel="noopener noreferrer">
+      Join the Discord
     </a>
     {% endif %}
   </div>
@@ -43,7 +43,7 @@
     &#8594;
   </button>
 
-  <button class="gallery-expand" type="button" aria-haspopup="dialog">Expand photo</button>
+  <button class="gallery-expand" type="button" aria-haspopup="dialog" aria-label="Expand photo">Expand</button>
 
   <div class="gallery-counter" aria-live="polite">
     <span id="gallery-current">01</span> / {{ '%02d' | format(site.gallery | length) }}
@@ -70,7 +70,7 @@
     </div>
 
     <div class="actions">
-      <a class="cta" href="/calendar">Monthly calendar</a>
+      <a class="cta home-primary-link" href="/calendar">Monthly calendar</a>
 
     </div>
   </div>

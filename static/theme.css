@@ -42,22 +42,11 @@
   font-size: 1rem;
 }
 
-.discord-invite {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-  min-height: 56px;
-  padding: 16px 24px;
-  border-radius: 0;
-  font-size: 0.9rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.discord-invite span {
-  font-size: 1.4rem;
-  line-height: 1;
+.home-primary-link {
+  width: 11rem;
+  max-width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Photo carousel container */
@@ -91,10 +80,6 @@
 @media (max-width: 700px) {
   .home-intro {
     padding: 48px 0 40px;
-  }
-
-  .discord-invite {
-    width: 100%;
   }
 
   .home-gallery {
@@ -199,9 +184,10 @@
 
 /* Photo counter */
 
-.gallery-counter {
+.gallery-counter,
+.gallery-expand {
   position: absolute;
-  right: 16px;
+  width: 84px;
   bottom: 16px;
   z-index: 2;
   padding: 8px 12px;
@@ -209,7 +195,15 @@
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
   font-size: 12px;
+  line-height: 1.6;
+  font-weight: 400;
   letter-spacing: 0.15em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gallery-counter {
+  right: 16px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -235,15 +229,8 @@
 
 /* Fullscreen photo viewer */
 .gallery-expand {
-  position: absolute;
   left: 16px;
-  bottom: 16px;
-  z-index: 2;
-  min-height: 44px;
   border-radius: 0;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  font-size: 12px;
 }
 
 .photo-viewer {
