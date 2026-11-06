@@ -1,0 +1,7 @@
+{% extends 'admin_base.html' %}{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">MEMBER SPOTLIGHTS</p><h1>Member projects</h1><p>Feature the work your community is creating.</p></div><a href="/projects">View public page ↗</a></div>
+<section class="admin-panel"><h2>New project post</h2><form class="project-editor-form" method="post" action="/admin/projects" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{ csrf }}">{% set values = {} %}{% include '_project_fields.html' %}<button>Save draft</button><p class="project-save-status note" role="status" aria-live="polite"></p></form></section>
+<section class="admin-panel"><h2>Saved posts</h2><p class="note">{{ used_mb }} / 500 MB shared photo storage used, including carousel photos. Replaced project images remain with their post until it is deleted.</p>
+{% for post in posts %}<article class="photo-batch-row"><div><h3><a href="/admin/projects/{{ post.id }}">{{ post.draft.title }}</a></h3><p>{{ 'Published · edits save privately until republished' if post.published else 'Draft · not public' }}</p></div><a href="/admin/projects/{{ post.id }}">Edit / preview →</a></article>{% else %}<p>No project posts yet.</p>{% endfor %}</section>
+<script src="/static/project-editor.js?v=1" defer></script>
+{% endblock %}

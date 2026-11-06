@@ -41,3 +41,15 @@ def test_saved_photo_batches_are_backed_up_and_verified(tmp_path):
     assert verify(output)==2
     (output/'gallery-photos'/key/'00-full.jpg').write_bytes(b'changed')
     with pytest.raises(ValueError):verify(output)
+
+
+def test_project_photos_are_included_with_matching_post_database(tmp_path):
+    import json
+    source=tmp_path/'live.db';root=tmp_path/'projects';key='d'*32;folder=root/key;folder.mkdir(parents=True)
+    (folder/'00-full.jpg').write_bytes(b'photo')
+    with sqlite3.connect(source) as db:
+        db.execute('CREATE TABLE settings(key TEXT,value TEXT)')
+        db.execute('INSERT INTO settings VALUES (?,?)',('projects.photo.'+key,json.dumps({'files':{'00-full.jpg':5}})))
+    output=tmp_path/'backup'
+    assert snapshot(source,tmp_path/'audio',output,project_photos=root)==1
+    assert verify(output)==2 and (output/'project-photos'/key/'00-full.jpg').read_bytes()==b'photo'

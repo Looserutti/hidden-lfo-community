@@ -30,15 +30,20 @@ def batches(db):
     return sorted([json.loads(row.value) for row in db.scalars(select(Setting).where(Setting.key.like('gallery.batch.%')))],key=lambda b:b['created_at'],reverse=True)
 
 
+def storage_bytes(db):
+    project_photos=db.scalars(select(Setting).where(Setting.key.like('projects.photo.%')))
+    return sum(b['bytes'] for b in batches(db))+sum(json.loads(row.value)['bytes'] for row in project_photos)
+
+
 def active_id(db):
     row=db.get(Setting,'gallery.active_batch')
     return row.value if row else ''
 
 
-def photos(record, name):
+def photos(record, name, base_path='/media/photos'):
     result=[]
     for index,item in enumerate(record['photos']):
-        base=f"/media/photos/{record['id']}/{index:02d}-"
+        base=f"{base_path}/{record['id']}/{index:02d}-"
         # Sizes describe the image width, including portrait images constrained on their long edge.
         candidates=[]
         for size in (480,960,1600):
@@ -64,7 +69,8 @@ def serialize_writes(db):
 def prepare(staging, filenames):
     if sys.platform!='linux':raise ValueError('Photo processing requires the supported Linux deployment.')
     import fcntl
-    with (staging.parent/'.processing.lock').open('a') as lock:
+    ROOT.mkdir(parents=True,exist_ok=True,mode=0o700)
+    with (ROOT/'.processing.lock').open('a') as lock:
         try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         except BlockingIOError:raise ValueError('Another photo batch is being prepared. Try again shortly.')
         return _prepare(staging,filenames)
@@ -100,7 +106,7 @@ def _prepare(staging, filenames):
 
 def save_batch(db, staging, dimensions, files, captions, label):
     serialize_writes(db)
-    if sum(b['bytes'] for b in batches(db))+sum(files.values())>MAX_STORAGE:raise ValueError('Photo storage is full. Delete an unused batch before uploading more.')
+    if storage_bytes(db)+sum(files.values())>MAX_STORAGE:raise ValueError('Photo storage is full. Delete an unused batch before uploading more.')
     key=uuid4().hex
     record={'id':key,'label':label,'created_at':now().isoformat(),'published_at':None,
             'photos':[{**item,'caption':caption} for item,caption in zip(dimensions,captions)],'files':files,'bytes':sum(files.values())}

@@ -17,7 +17,7 @@ def gallery_routes(session, require_admin, csrf_check, render, site_name):
         require_admin(request)
         with session() as db:
             records=store.batches(db);active=store.active_id(db)
-            return render(request,batches=records,active=active,used_mb=round(sum(b['bytes'] for b in records)/1024**2,1),max_storage_mb=store.MAX_STORAGE//1024**2,
+            return render(request,batches=records,active=active,used_mb=round(store.storage_bytes(db)/1024**2,1),max_storage_mb=store.MAX_STORAGE//1024**2,
                           max_files=store.MAX_FILES,max_file_mb=store.MAX_FILE//1024**2,max_batch_mb=store.MAX_BATCH//1024**2)
 
     @router.post('/admin/photos/upload')

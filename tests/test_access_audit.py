@@ -49,7 +49,9 @@ def test_every_admin_mutation_rejects_invalid_csrf(monkeypatch):
     with TestClient(web.app) as client:
         client.cookies.set('session',cookie(123),domain='testserver.local',path='/')
         for route,path in admin_routes('POST'):
-            if path.endswith('/upload'):
+            if path.startswith('/admin/projects') and (path=='/admin/projects' or path.endswith('/save')):
+                response=client.post(path,data={'csrf':'invalid'},files={'photo':('test.jpg',b'test','image/jpeg')},follow_redirects=False)
+            elif path.endswith('/upload'):
                 response=client.post(path,data={'csrf':'invalid'},files={'audio':('test.mp3',b'ID3test','audio/mpeg')},follow_redirects=False)
             else:
                 response=client.post(path,data=form(route),follow_redirects=False)

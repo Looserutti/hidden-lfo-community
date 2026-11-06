@@ -1,0 +1,6 @@
+<label>Project title<input name="title" required maxlength="160" value="{{ values.title|default('') }}"></label>
+<label>Member / artist name<input name="member" maxlength="160" value="{{ values.member|default('') }}"></label>
+<label>Write-up<textarea name="body" rows="12" maxlength="12000" required>{{ values.body|default('') }}</textarea></label><p class="note">Use blank lines between paragraphs. Text is displayed as written; HTML is not supported.</p>
+<label>External links<textarea name="links" rows="4" placeholder="Listen | https://example.com/music&#10;Project website | https://example.com">{% for link in values.links|default([]) %}{{ link.label }} | {{ link.url }}{{ '\n' }}{% endfor %}</textarea></label><p class="note">One link per line: label | HTTPS URL. Up to eight links, shown below the write-up.</p>
+<label>Feature photo{% if photo %} — choose a file only to replace it{% endif %}<input name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/avif"></label><p class="note">One still JPEG, PNG, WebP or AVIF, up to 20 MB. HEIC must be exported as JPEG first. A photo is required to publish. Web-ready copies are made automatically; keep camera originals separately.</p>
+<label>Photo description<input name="photo_alt" maxlength="250" value="{{ values.photo_alt|default('') }}" placeholder="Describe what’s in the photograph"></label>

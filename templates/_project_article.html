@@ -1,0 +1,6 @@
+<article class="project-story">
+<header class="project-story-heading"><p class="eyebrow">{% if post.member %}{{ post.member }}{% else %}COMMUNITY FEATURE{% endif %}{% if post.published_stamp %} · <time datetime="{{ post.published_at }}">{{ (post.published_stamp|calendar_time).strftime('%B %d, %Y') }}</time>{% endif %}</p><h2><a href="/projects/{{ post.id }}">{{ post.title }}</a></h2></header>
+{% if post.image %}<button class="project-photo-toggle" type="button" aria-pressed="false" data-label="{{ post.image.alt }}" aria-label="{{ post.image.alt }} — show in color"><img src="{{ post.image.display_src }}" srcset="{{ post.image.srcset }}" sizes="(max-width: 800px) 100vw, 1100px" width="{{ post.image.width }}" height="{{ post.image.height }}" alt="{{ post.image.alt }}" decoding="async" loading="{{ 'eager' if first_photo else 'lazy' }}"></button>{% endif %}
+<div class="project-writeup">{% for paragraph in post.body.replace('\r\n','\n').split('\n\n') %}{% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}{% endfor %}
+{% if post.links %}<footer class="project-links"><p class="eyebrow">EXPLORE THE PROJECT</p><div>{% for link in post.links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} <span aria-hidden="true">↗</span></a>{% endfor %}</div></footer>{% endif %}</div>
+</article>

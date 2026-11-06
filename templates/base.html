@@ -4,14 +4,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>{{ site.name }}</title>
+    <title>{% block page_title %}{{ site.name }}{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/theme.css?v=b8fcc6f166">
+    <link rel="stylesheet" href="/static/theme.css?v=projects1">
     {% block head %}{% endblock %}
 </head>
 
 <body>
     {% if is_preview %}<aside class="preview-notice" aria-label="Preview environment">PREVIEW · Test site — changes here do not affect the live site.</aside>{% endif %}
+    {% if request and (request.url.path == '/' or request.url.path.startswith('/projects')) %}{% include '_public_menu.html' %}{% endif %}
     <main>{% block content %}{% endblock %}</main>
     <footer class="site-footer">
         {% block footer_message %}<span>{{ site.footer_text }}</span>{% endblock %}
@@ -39,6 +40,7 @@
         </div>
     </footer>
     <script src="/static/local-time.js?v=2" defer></script>
+    <script src="/static/public-pages.js?v=1" defer></script>
 </body>
 
 </html>

@@ -35,3 +35,5 @@ var/system-health/
 static/gallery-optimized/
 
 var/gallery-photos/
+
+var/project-photos/

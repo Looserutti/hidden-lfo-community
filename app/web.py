@@ -434,3 +434,8 @@ app.include_router(audio_routes(lambda: Session(), admin, csrf_check,
 from app.gallery_admin import gallery_routes
 app.include_router(gallery_routes(lambda: Session(), admin, csrf_check,
     lambda request, **fields: templates.TemplateResponse(request, 'admin_photos.html', context(request, **fields)), SITE['name']))
+
+
+from app.project_routes import project_routes
+app.include_router(project_routes(lambda: Session(), admin, csrf_check,
+    lambda request, template, **fields: templates.TemplateResponse(request, template, context(request, **fields))))

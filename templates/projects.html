@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ site.projects_title|default('Member projects') }} · {{ site.name }}{% endblock %}
+{% block content %}
+<section class="home-intro projects-intro"><p class="eyebrow">COMMUNITY SPOTLIGHT</p><h1>{{ site.projects_title|default('Member projects') }}</h1><p class="intro-description">{{ site.projects_description|default('Ideas, releases and work in progress from our community.') }}</p></section>
+{% if draft_preview %}<aside class="project-draft-note">Private draft preview · This version is visible only to admins. <a href="/admin/projects/{{ posts[0].id }}">Back to editor →</a></aside>{% elif single %}<p class="project-back"><a href="/projects">← All member projects</a></p>{% endif %}
+{% for post in posts %}{% set first_photo=loop.first %}{% include '_project_article.html' %}{% else %}<section class="projects-empty"><h2>More from the community, soon.</h2><p>Member projects and stories will appear here.</p></section>{% endfor %}
+{% if not single and (page>1 or has_more) %}<nav class="project-pagination" aria-label="Project pages">{% if page>1 %}<a href="/projects?page={{ page-1 }}">← Newer posts</a>{% endif %}{% if has_more %}<a href="/projects?page={{ page+1 }}">Older posts →</a>{% endif %}</nav>{% endif %}
+{% endblock %}
