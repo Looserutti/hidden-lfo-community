@@ -1,6 +1,6 @@
 {% extends 'admin_base.html' %}
 {% block admin_content %}
-<div class="page-heading"><div><p class="eyebrow">GALLERY SOUNDTRACK</p><h1>Gallery audio</h1><p>Music appears only in the expanded photo viewer. Visitors press Play; closing the viewer pauses playback.</p></div><a href="/">Open gallery ↗</a></div>
+<div class="page-heading"><div><p class="eyebrow">GALLERY SOUNDTRACK</p><h1>Gallery audio</h1><p>Music appears only in the expanded photo viewer. Visitors press Play; closing the viewer pauses playback.</p></div><div class="actions"><a href="/admin/music">Refresh status</a><a href="/">Open gallery ↗</a></div></div>
 <article>
   <h2>Upload a track</h2>
   <p>MP3, WAV or M4A · up to {{ upload_mb }} MB per file. {{ used_mb }} / {{ storage_mb }} MB used.</p>
@@ -21,6 +21,11 @@
     <label>Title<input name="title" value="{{ track.title }}" maxlength="200" required></label>
     <label>Artist<input name="artist" value="{{ track.artist }}" maxlength="160"></label>
     <label class="audio-publish"><input type="checkbox" name="published" value="true" {% if track.published %}checked{% endif %}> Available in gallery</label>
+    <label class="audio-publish"><input type="checkbox" name="normalize" value="true" {% if track.normalization_enabled %}checked{% endif %} {% if not normalization_available %}disabled{% endif %}> Normalize playback volume</label>
+    <label>Playback loudness<select name="target_lufs">{% for value in [-14,-16,-18] %}<option value="{{ value }}" {% if track.target_lufs == value %}selected{% endif %}>{{ value }} LUFS{% if value == -14 %} · Spotify Normal target{% endif %}</option>{% endfor %}</select></label>
+    <p class="hint">Originals stay unchanged. Peaks stay at or below −1 dBTP; very dynamic tracks may remain quieter to preserve their dynamics.</p>
+    <p class="hint">Volume processing: {{ track.normalization_status }}{% if track.output_lufs is not none %} · playback copy {{ '%.1f'|format(track.output_lufs) }} LUFS{% endif %}{% if not normalization_available %} · unavailable on this installation{% endif %}</p>
+    {% if track.normalization_error %}<p role="status">{{ track.normalization_error }}</p>{% endif %}
     <div class="actions"><button>Save track</button><button name="move" value="up" {% if loop.first %}disabled{% endif %}>Move up</button><button name="move" value="down" {% if loop.last %}disabled{% endif %}>Move down</button></div>
   </form>
   <details><summary>Remove track</summary><form action="/admin/music/{{ track.id }}/delete" method="post" onsubmit="return confirm('Delete this track and its audio file?')"><input type="hidden" name="csrf" value="{{ csrf }}"><p>This removes the file from this environment.</p><button>Delete audio file</button></form></details>

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import create_engine, ForeignKey, String, Integer, DateTime, Boolean, UniqueConstraint, Text
+from sqlalchemy import create_engine, ForeignKey, String, Integer, DateTime, Boolean, UniqueConstraint, Text, Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from app.config import DATABASE_URL
 
@@ -106,3 +106,11 @@ class GalleryTrack(Base):
     position: Mapped[int] = mapped_column(Integer, default=0)
     published: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+    normalized_filename: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    normalized_byte_size: Mapped[int] = mapped_column(Integer, default=0)
+    normalization_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    normalization_status: Mapped[str] = mapped_column(String(20), default='original')
+    normalization_error: Mapped[str] = mapped_column(String(240), default='')
+    target_lufs: Mapped[float] = mapped_column(Float, default=-14)
+    output_lufs: Mapped[float | None] = mapped_column(Float, nullable=True)

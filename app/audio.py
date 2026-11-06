@@ -3,11 +3,12 @@ import os
 import re
 from pathlib import Path
 from uuid import uuid4
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse, FileResponse
 from starlette.datastructures import UploadFile
 from sqlalchemy import select, text
 from app.db import GalleryTrack
+from app import normalization
 
 AUDIO_ROOT = Path(os.getenv('GALLERY_AUDIO_DIR') or ('/data/gallery-audio' if Path('/data').is_dir() else 'var/gallery-audio'))
 MAX_UPLOAD = int(os.getenv('GALLERY_AUDIO_MAX_UPLOAD_MB', '50')) * 1024 * 1024
@@ -44,7 +45,7 @@ def audio_routes(session, require_admin, csrf_check, render):
         with session() as db:
             tracks = db.scalars(select(GalleryTrack).order_by(GalleryTrack.position, GalleryTrack.id)).all()
             return render(request, tracks=tracks, upload_mb=MAX_UPLOAD//1024//1024,
-                          storage_mb=MAX_STORAGE//1024//1024, used_mb=round(sum(t.byte_size for t in tracks)/1024/1024,1))
+                          storage_mb=MAX_STORAGE//1024//1024, used_mb=round(sum(t.byte_size+(t.normalized_byte_size or 0) for t in tracks)/1024/1024,1), normalization_available=normalization.available())
 
     @router.post('/admin/music/upload')
     async def upload(request: Request):
@@ -91,7 +92,7 @@ def audio_routes(session, require_admin, csrf_check, render):
                     # Serialize final quota check and file publication on SQLite.
                     if db.bind.dialect.name == 'sqlite': db.execute(text('BEGIN IMMEDIATE'))
                     tracks = db.scalars(select(GalleryTrack)).all()
-                    if sum(t.byte_size for t in tracks) + total > MAX_STORAGE:
+                    if sum(t.byte_size+(t.normalized_byte_size or 0) for t in tracks) + total > MAX_STORAGE:
                         raise HTTPException(413, 'Audio library storage limit reached')
                     temporary.replace(destination)
                     moved = True
@@ -106,18 +107,31 @@ def audio_routes(session, require_admin, csrf_check, render):
         return RedirectResponse('/admin/music', status_code=303)
 
     @router.post('/admin/music/{track_id}')
-    async def edit(request: Request, track_id: int):
+    async def edit(request: Request, track_id: int, background_tasks: BackgroundTasks):
         require_admin(request)
         form = await request.form()
         csrf_check(request, str(form.get('csrf', '')))
         title, artist = str(form.get('title','')).strip(), str(form.get('artist','')).strip()
         if not 1 <= len(title) <= 200 or len(artist) > 160:
             raise HTTPException(400, 'Enter a title (up to 200 characters) and artist (up to 160)')
+        normalize = form.get('normalize') == 'true'
+        try: target_lufs = float(form.get('target_lufs', '-14'))
+        except ValueError: raise HTTPException(400, 'Choose a loudness target')
+        if target_lufs not in normalization.TARGETS: raise HTTPException(400, 'Choose a listed loudness target')
+        if normalize and not normalization.available(): raise HTTPException(409, 'Volume processing is unavailable')
         with session() as db:
             track = db.get(GalleryTrack, track_id)
             if not track: raise HTTPException(404, 'Track not found')
             track.title, track.artist = title, artist
             track.published = form.get('published') == 'true'
+            changed_target = target_lufs != track.target_lufs
+            if changed_target and track.normalization_status in ('queued','processing'):
+                raise HTTPException(409, 'Wait for the current volume processing to finish before changing its target')
+            track.normalization_enabled = normalize
+            track.target_lufs = target_lufs
+            if normalize and (changed_target or track.normalization_status not in ('queued','processing','ready')):
+                track.normalization_status='queued';track.normalization_error=''
+                background_tasks.add_task(normalization.enqueue,track_id,session)
             tracks = db.scalars(select(GalleryTrack).order_by(GalleryTrack.position, GalleryTrack.id)).all()
             index = next(i for i,t in enumerate(tracks) if t.id == track_id)
             direction = str(form.get('move',''))
@@ -137,9 +151,11 @@ def audio_routes(session, require_admin, csrf_check, render):
             track = db.get(GalleryTrack, track_id)
             if not track: raise HTTPException(404, 'Track not found')
             path = track_path(track.filename)
+            normalized = track_path(track.normalized_filename) if track.normalized_filename else None
             db.delete(track)
             db.commit()
             path.unlink(missing_ok=True)
+            if normalized: normalized.unlink(missing_ok=True)
         return RedirectResponse('/admin/music', status_code=303)
 
     @router.get('/media/audio/{track_id}')
@@ -147,8 +163,17 @@ def audio_routes(session, require_admin, csrf_check, render):
         with session() as db:
             track = db.get(GalleryTrack, track_id)
             if not track or not track.published: raise HTTPException(404, 'Audio not found')
-            path = track_path(track.filename)
+            filename = track.normalized_filename if track.normalization_enabled and track.normalized_filename else track.filename
+            path = track_path(filename)
             if not path.is_file(): raise HTTPException(404, 'Audio not found')
             return FileResponse(path, media_type=MIMES[path.suffix], headers={'Cache-Control':'no-store'})
+
+    @router.on_event('startup')
+    def interrupted_jobs():
+        with session() as db:
+            for track in db.scalars(select(GalleryTrack).where(GalleryTrack.normalization_status.in_(['queued','processing']))):
+                track.normalization_status='failed'
+                track.normalization_error='Processing was interrupted. Save normalization again to retry.'
+            db.commit()
 
     return router

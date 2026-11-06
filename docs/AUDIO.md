@@ -26,3 +26,14 @@ Back up **both** the SQLite database and the audio directory. The existing SQLit
 Admin writes require the existing allowlist and CSRF token. Uploads have bounded size and quota checks; original filenames never become storage paths. Published media supports HTTP byte ranges for seeking and uses `Cache-Control: no-store` so publication changes are checked on new requests. Playing audio consumes server outbound bandwidth; media uses `preload="none"` and does not autoplay.
 
 This phase does not add external embeds, photo-specific tracks, automatic music generation or automatic public deployment. Review uploaded tracks and the player on preview before promoting it.
+
+
+## Optional loudness matching
+
+Each track has **Normalize playback volume** and a target selector in Gallery audio. The default is −14 LUFS integrated (Spotify's Normal playback target); −16 and −18 are available. Save to queue processing, then use **Refresh status** to see queued, processing, ready or failed. Uncheck normalization and save to serve the original again. Changing the target generates a new copy from the original, not from a previously compressed copy.
+
+The supplied Docker image includes FFmpeg. Local development needs FFmpeg installed separately for processing; uploads/playback still work without it. A single background worker processes tracks serially to limit CPU use. Interrupted work is marked failed on startup and can be retried by saving the option again; this initial queue is not a distributed worker service.
+
+Processing measures integrated loudness and true peak, applies a fixed gain, and encodes a separate 192 kbps MP3 playback copy. It verifies the encoded file's loudness/peak and makes corrections as needed; successful copies have true peaks at or below −1 dBTP. It does not apply EQ or heavy dynamics processing. If reaching the selected LUFS would exceed available headroom, the copy remains quieter to preserve dynamics; the measured output LUFS is shown in admin. This is playback matching, not full mastering or guaranteed perceptual equality between every recording. Original and normalized files both count toward the library quota and both belong in backups.
+
+Existing public players may retain buffered audio until refreshed; new media requests use the selected version. The original is used while a first normalization job is queued/processing or fails. If a normalized copy already exists, it remains available until its replacement completes. Artist recordings used in preview are not bundled with source or examples.
