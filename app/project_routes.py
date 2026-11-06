@@ -98,6 +98,11 @@ def project_routes(session,admin,csrf_check,render):
         with session() as db:
             gallery.serialize_writes(db);record=store.get(db,post_id)
             if not record:raise HTTPException(404)
+            for photo_id in record['assets']:
+                photo=store.asset(db,photo_id)
+                if photo:
+                    photo['published_at']=None
+                    db.merge(Setting(key='projects.photo.'+photo_id,value=json.dumps(photo)))
             record.update(published=None,updated_at=now().isoformat());db.merge(Setting(key='projects.post.'+post_id,value=json.dumps(record)));db.commit()
         return RedirectResponse('/admin/projects/'+post_id,status_code=303)
 

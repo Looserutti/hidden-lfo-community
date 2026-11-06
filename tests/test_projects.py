@@ -90,7 +90,11 @@ def test_unpublish_and_delete_remove_post_assets_and_preserve_carousel(project_a
     path=save(client).headers['location'];key=path.rsplit('/',1)[-1]
     client.post(path+'/publish',data={'csrf':'project-csrf'})
     assert client.post(path+'/delete',data={'csrf':'project-csrf'}).status_code==409
+    with sessions() as db:photo_id=store.get(db,key)['published']['photo']
     client.post(path+'/unpublish',data={'csrf':'project-csrf'})
+    anonymous=TestClient(web.app)
+    assert anonymous.get(f'/media/project-photos/{photo_id}/00-full.jpg').status_code==403
+    anonymous.close()
     assert client.get('/projects/'+key).status_code==404
     assert client.post(path+'/delete',data={'csrf':'project-csrf'},follow_redirects=False).status_code==303
     with sessions() as db:

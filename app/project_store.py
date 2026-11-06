@@ -83,10 +83,14 @@ def publish(db,key):
     if not photo:raise ValueError('Upload a feature photo before publishing.')
     if any(not (ROOT/photo['id']/name).is_file() for name in photo['files']):raise ValueError('The feature photo is missing. Upload it again before publishing.')
     stamp=now().isoformat()
-    photo['published_at']=photo['published_at'] or stamp
+    # Only the currently published feature photo is public at the origin.
+    for photo_id in record['assets']:
+        saved=asset(db,photo_id)
+        if saved:
+            saved['published_at']=stamp if photo_id==photo['id'] else None
+            db.merge(Setting(key='projects.photo.'+photo_id,value=json.dumps(saved)))
     record['published']={**record['draft'],'published_at':record.get('first_published_at') or stamp}
     record['first_published_at']=record['published']['published_at'];record['updated_at']=stamp
-    db.merge(Setting(key='projects.photo.'+photo['id'],value=json.dumps(photo)))
     db.merge(Setting(key='projects.post.'+key,value=json.dumps(record)));db.commit()
 
 
