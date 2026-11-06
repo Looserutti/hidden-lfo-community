@@ -3,6 +3,8 @@ import base64
 import json
 import re
 import time
+import os
+os.environ.setdefault("SESSION_SECRET", "isolated-access-audit-test-secret")
 from fastapi.testclient import TestClient
 from itsdangerous import TimestampSigner
 from app import web
