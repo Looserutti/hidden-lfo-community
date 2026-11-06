@@ -19,13 +19,29 @@ flock -n 9 || { echo 'Another backup or restore check is running' >&2; exit 1; }
 image=$(docker inspect "$APP_CONTAINER" --format '{{.Image}}')
 stage="$BACKUP_STATE/staging"
 cleanup() { rm -rf "$stage"; }
+BACKUP_MODE=${1:-backup}
 finish() {
     result=$?
     cleanup
     if [ "$result" -ne 0 ]; then
-        date -u +%FT%TZ > "$BACKUP_STATE/last-failure"
+        if [ "$BACKUP_MODE" = verify ]; then
+            date -u +%FT%TZ > "$BACKUP_STATE/last-verify-failure"
+        else
+            date -u +%FT%TZ > "$BACKUP_STATE/last-failure"
+        fi
         echo 'Backup/verification failed; inspect systemd journal. Last good snapshots remain.' >&2
     fi
+    # Publish timestamp-only status; no credentials or backup contents enter the web container.
+    export BACKUP_STATE
+    export BACKUP_HEALTH_DIR=${BACKUP_HEALTH_DIR:-/opt/hidden-lfo/shared/system-health}
+    python3 - <<'HEALTH' || true
+import json,os
+from pathlib import Path
+state=Path(os.environ['BACKUP_STATE']); target=Path(os.environ['BACKUP_HEALTH_DIR'])
+target.mkdir(parents=True,exist_ok=True);target.chmod(0o755)
+values={p.name:p.read_text().strip() for p in state.glob('last-*') if p.is_file()}
+tmp=target/'backup.json.tmp';tmp.write_text(json.dumps(values));tmp.chmod(0o644);tmp.replace(target/'backup.json')
+HEALTH
     exit "$result"
 }
 trap finish EXIT

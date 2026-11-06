@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy import select, func
 from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED
-from app.db import Session, Member, Event, Registration, init_db, now
+from app.db import Session, Member, Event, Registration, Setting, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
 from bot import onboarding
@@ -194,6 +194,8 @@ async def on_presence_update(before, after):
 @bot.event
 async def on_ready():
     logging.info('Bot logged in as %s', bot.user)
+    if not health_heartbeat.is_running():
+        health_heartbeat.start()
     guild = bot.get_guild(GUILD_ID)
     if guild:
         with Session() as db:
@@ -241,6 +243,13 @@ async def refresh_event_message(event_id: int):
             if e and not e.published and e.discord_message_id == message_id:
                 e.discord_message_id = None
                 e.discord_channel_id = None
+
+
+@tasks.loop(minutes=1)
+async def health_heartbeat():
+    if bot.is_ready():
+        with Session.begin() as db:
+            db.merge(Setting(key='bot.worker_seen', value=now().isoformat()))
 
 
 @tasks.loop(seconds=30)

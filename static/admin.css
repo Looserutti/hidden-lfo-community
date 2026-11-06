@@ -66,3 +66,6 @@
 .submission-card > form + form { margin-top: .75rem; }
 .audio-publish { display: flex; align-items: center; gap: 10px; }
 .audio-publish input { width: auto; margin: 0; }
+
+/* Subtle, text-labelled operational status accents. */
+.health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.health-card{margin:0;padding:14px;border:1px solid #454545;border-left:3px solid #777;border-radius:8px;background:#202020;min-width:0}.health-card h3{font-size:15px;margin:0 0 8px}.health-card p{margin:0 0 8px}.health-card small{display:block;color:#c0c0c0;overflow-wrap:anywhere}.health-ok{border-left-color:#79bd99;background:#202823}.health-ok .health-label{color:#a0d5b6}.health-error{border-left-color:#d48686;background:#2b2222}.health-error .health-label{color:#edaaaa}.health-neutral .health-label{color:#c0c0c0}

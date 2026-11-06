@@ -145,6 +145,7 @@ def logout(request: Request, csrf: str = Form(...)):
 
 @app.get('/admin', response_class=HTMLResponse)
 def dashboard(request: Request):
+    from app.system_health import summary
     admin(request)
     with Session() as db:
         submissions = db.scalars(select(EventSubmission).where(EventSubmission.status == 'pending').order_by(EventSubmission.submitted_at)).all()
@@ -159,7 +160,7 @@ def dashboard(request: Request):
         venue_total = len(imported) - discord_total
         return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
             submissions=submissions, activity_totals=activity_totals, member_total=sum(activity_totals.values()),
-            upcoming_total=upcoming_total, venue_total=venue_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
+            system_health=summary(db), upcoming_total=upcoming_total, venue_total=venue_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
 
 @app.post('/admin/events')
 def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(''), location: str = Form('Discord'), capacity: str = Form(''), start_date: str = Form(''), start_time: str = Form('')):

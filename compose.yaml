@@ -7,6 +7,7 @@ x-app: &app
   volumes:
     - community_data:/data
     - ./config:/srv/app/config:ro
+    - ${SYSTEM_HEALTH_DIR:-./var/system-health}:/run/community-health:ro
   restart: unless-stopped
   init: true
   logging:

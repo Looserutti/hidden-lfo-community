@@ -11,6 +11,7 @@ x-preview: &preview
   volumes:
     - preview_data:/data
     - ./config:/srv/app/config:ro
+    - ${SYSTEM_HEALTH_DIR:-./var/system-health}:/run/community-health:ro
   init: true
   logging:
     driver: json-file

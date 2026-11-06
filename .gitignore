@@ -29,3 +29,5 @@ var/gallery-audio/
 
 # Private deployment calendar registry; mounted at runtime, never bundled.
 config/sources.local.json
+
+var/system-health/
