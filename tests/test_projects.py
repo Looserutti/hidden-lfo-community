@@ -107,3 +107,39 @@ def test_project_upload_respects_shared_photo_storage_cap(project_app,monkeypatc
     assert save(client).status_code==400
     with sessions() as db:assert not store.all_posts(db) and gallery.storage_bytes(db)==0
     assert not list(store.ROOT.glob('.staging-*'))
+
+
+def test_first_publication_notification_retries_and_does_not_repeat(project_app):
+    import asyncio
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+    import discord
+    from app.db import Setting
+    from app.project_announcements import deliver_pending
+    client,sessions=project_app
+    channel=SimpleNamespace(id=456,send=AsyncMock(return_value=SimpleNamespace(id=789)))
+    path=save(client,title='A new @everyone **project**').headers['location'];key=path.rsplit('/',1)[-1]
+    run=lambda:asyncio.run(deliver_pending(sessions,channel,'https://community.example'))
+    run();channel.send.assert_not_called()  # Drafts do not announce.
+    client.post(path+'/publish',data={'csrf':'project-csrf'})
+    with sessions() as db:assert db.get(Setting,'projects.announcement.'+key)
+    client.post(path+'/unpublish',data={'csrf':'project-csrf'})
+    run();channel.send.assert_not_called()  # Withdrawing before delivery pauses it.
+    client.post(path+'/publish',data={'csrf':'project-csrf'})
+    failure=discord.HTTPException(SimpleNamespace(status=503,reason='Unavailable'),'Try later')
+    channel.send.side_effect=failure
+    run()
+    with sessions() as db:assert json.loads(db.get(Setting,'projects.announcement.'+key).value)['message_id'] is None
+    channel.send.side_effect=None;channel.send.reset_mock()
+    run()
+    assert channel.send.call_count==1
+    content=channel.send.call_args.args[0]
+    assert f'https://community.example/projects/{key}' in content
+    assert '@everyone' not in content and '\\*\\*project\\*\\*' in content
+    assert channel.send.call_args.kwargs['allowed_mentions'].everyone is False
+    with sessions() as db:assert json.loads(db.get(Setting,'projects.announcement.'+key).value)['message_id']==789
+    assert save(client,path+'/save',title='Edited title',photo=False).status_code==303
+    client.post(path+'/publish',data={'csrf':'project-csrf'})
+    client.post(path+'/unpublish',data={'csrf':'project-csrf'})
+    client.post(path+'/publish',data={'csrf':'project-csrf'})
+    run();assert channel.send.call_count==1

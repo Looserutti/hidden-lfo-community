@@ -6,12 +6,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy import select, func
-from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_SINCE
+from app.config import PROJECT_ANNOUNCEMENTS_CHANNEL_ID, BASE_URL, GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_SINCE
 from app.db import Session, Member, Event, Registration, Setting, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
 from bot import onboarding
 from app.announcements import approved_member_event, announcement_content
+from app.project_announcements import deliver_pending
 
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
@@ -102,6 +103,8 @@ class CommunityBot(commands.Bot):
             await self.tree.sync(guild=discord.Object(id=GUILD_ID))
         if (EVENT_PUBLISHING_ENABLED or MEMBER_EVENT_ANNOUNCEMENTS_ENABLED) and not publish_events.is_running():
             publish_events.start()
+        if PROJECT_ANNOUNCEMENTS_CHANNEL_ID and not publish_projects.is_running():
+            publish_projects.start()
         if STAFF_REPORTS_ENABLED and not weekly_report.is_running():
             weekly_report.start()
 
@@ -282,6 +285,17 @@ async def publish_events():
 
 @publish_events.before_loop
 async def before_publish():
+    await bot.wait_until_ready()
+
+@tasks.loop(seconds=30)
+async def publish_projects():
+    channel = bot.get_channel(PROJECT_ANNOUNCEMENTS_CHANNEL_ID)
+    if not isinstance(channel, discord.TextChannel) or channel.guild.id != GUILD_ID:
+        return
+    await deliver_pending(Session, channel, BASE_URL)
+
+@publish_projects.before_loop
+async def before_publish_projects():
     await bot.wait_until_ready()
 
 @tasks.loop(hours=168)

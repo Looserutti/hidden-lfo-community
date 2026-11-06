@@ -29,3 +29,6 @@ INTRO_CHANNEL_ID = env_int('INTRO_CHANNEL_ID')
 
 MEMBER_EVENT_ANNOUNCEMENTS_ENABLED = os.getenv('MEMBER_EVENT_ANNOUNCEMENTS_ENABLED', 'false').lower() == 'true'
 MEMBER_EVENT_ANNOUNCEMENTS_SINCE = os.getenv('MEMBER_EVENT_ANNOUNCEMENTS_SINCE', '')
+
+# Optional first-publication notifications; configure each community's channel.
+PROJECT_ANNOUNCEMENTS_CHANNEL_ID = env_int('PROJECT_ANNOUNCEMENTS_CHANNEL_ID')

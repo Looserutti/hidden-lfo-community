@@ -89,6 +89,8 @@ def publish(db,key):
         if saved:
             saved['published_at']=stamp if photo_id==photo['id'] else None
             db.merge(Setting(key='projects.photo.'+photo_id,value=json.dumps(saved)))
+    if not record.get('first_published_at'):
+        db.add(Setting(key='projects.announcement.'+key,value=json.dumps({'post_id':key,'queued_at':stamp,'message_id':None})))
     record['published']={**record['draft'],'published_at':record.get('first_published_at') or stamp}
     record['first_published_at']=record['published']['published_at'];record['updated_at']=stamp
     db.merge(Setting(key='projects.post.'+key,value=json.dumps(record)));db.commit()
