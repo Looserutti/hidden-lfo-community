@@ -137,3 +137,29 @@ def test_draft_date_picker_and_edit_store_utc(dashboard, monkeypatch):
     assert client.post('/admin/events',data={**form,'csrf':'invalid'}).status_code==403
     html=client.get('/admin').text
     assert 'type="date"' in html and 'type="time"' in html
+
+
+def test_submission_review_admin_csrf_and_publication(dashboard):
+    from app.submissions import submit_event
+    from app.db import EventSubmission
+    client,sessions=dashboard
+    start=datetime.now(timezone.utc)+timedelta(days=2)
+    with sessions.begin() as db:
+        submission=submit_event(db,interaction_id='admin-review-test',submitted_by=987,submitted_name='Member Artist',
+            title='Proposed Show',description='Music',starts_at=start,location='Venue')
+        key=submission.id
+    assert 'Proposed Show' in client.get('/admin').text
+    assert 'Proposed Show' not in client.get('/calendar').text
+    path=f'/admin/submissions/{key}/approve'
+    form={'csrf':'test-csrf','title':'Reviewed Show','description':'Reviewed details',
+          'start_date':start.strftime('%Y-%m-%d'),'start_time':'18:00','location':'Reviewed venue'}
+    assert client.post(path,data={**form,'csrf':'invalid'}).status_code==403
+    assert client.post(path,data=form,follow_redirects=False).status_code==303
+    assert client.post(path,data=form).status_code==409
+    with sessions() as db:
+        record=db.get(EventSubmission,key)
+        assert record.reviewed_by==123 and record.status=='approved'
+        assert db.get(Event,record.event_id).title=='Reviewed Show'
+        assert db.query(Event).count()==1
+    client.cookies.clear()
+    assert client.post(f'/admin/submissions/{key}/reject',data={'csrf':'test-csrf'}).status_code==403

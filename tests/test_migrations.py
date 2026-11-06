@@ -25,9 +25,10 @@ def test_upgrade_fresh_and_existing_database(tmp_path, legacy):
         cwd=Path(__file__).resolve().parent.parent, env=env, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     with sqlite3.connect(database) as db:
-        assert db.execute('SELECT version_num FROM alembic_version').fetchone()[0] == '0003'
+        assert db.execute('SELECT version_num FROM alembic_version').fetchone()[0] == '0004'
         columns = {r[1] for r in db.execute('PRAGMA table_info(members)')}
         assert {'discord_username', 'server_display_name'} <= columns
         assert 'suppressed' in {r[1] for r in db.execute('PRAGMA table_info(imported_events)')}
+        assert 'submitted_by' in {r[1] for r in db.execute('PRAGMA table_info(event_submissions)')}
         if legacy:
             assert db.execute('SELECT exempt, discord_username FROM members WHERE discord_id=123456789').fetchone() == (1, None)

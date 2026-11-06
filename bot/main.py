@@ -303,6 +303,8 @@ async def before_report():
 
 from bot.shows import register_shows
 register_shows(bot)
+from bot.events import register_events
+register_events(bot)
 
 if __name__ == '__main__':
     token = os.getenv('DISCORD_BOT_TOKEN', '')

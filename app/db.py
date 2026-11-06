@@ -75,3 +75,21 @@ class ImportedEvent(Base):
     suppressed: Mapped[bool] = mapped_column(Boolean, default=False)
     cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class EventSubmission(Base):
+    """Member proposals remain separate from public events until approval."""
+    __tablename__ = 'event_submissions'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    interaction_id: Mapped[str] = mapped_column(String(32), unique=True)
+    submitted_by: Mapped[int] = mapped_column()
+    submitted_name: Mapped[str] = mapped_column(String(128))
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default='')
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    location: Mapped[str] = mapped_column(String(250))
+    status: Mapped[str] = mapped_column(String(20), default='pending')
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    reviewed_by: Mapped[int | None] = mapped_column(nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    event_id: Mapped[int | None] = mapped_column(ForeignKey('events.id'), nullable=True)

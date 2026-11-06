@@ -7,6 +7,14 @@
   <a class="metric" href="/calendar"><span>Upcoming events</span><strong>{{ upcoming_total }}</strong><small>Published on the public calendar</small></a>
 </section>
 <p class="admin-notice">Staff access only. Activity reflects observations, not attendance. No members are automatically removed. <a href="/admin/activity#status-guide">How activity statuses work →</a></p>
+<section id="member-submissions" class="admin-panel"><h2>Member event submissions <span>({{ submissions|length }} pending)</span></h2><p>Verified members submit events with /event. Review and edit the details below before publishing to the website calendar.</p>
+{% for submission in submissions %}{% set local_start = submission.starts_at|calendar_time %}<article class="submission-card"><h3>{{ submission.title }}</h3><p class="note">Submitted by {{ submission.submitted_name }} · Discord ID {{ submission.submitted_by }} · #{{ submission.id }}</p>
+<form method="post" action="/admin/submissions/{{ submission.id }}/approve"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Title<input name="title" maxlength="200" value="{{ submission.title }}" required></label>
+<label>Description<textarea name="description">{{ submission.description }}</textarea></label>
+<div class="event-date-fields"><label>Event date<input name="start_date" type="date" value="{{ local_start.strftime('%Y-%m-%d') }}" required></label><label>Start time<input name="start_time" type="time" value="{{ local_start.strftime('%H:%M') }}" required></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
+<label>Venue or location<input name="location" maxlength="250" value="{{ submission.location }}" required></label><button>Approve &amp; publish to calendar</button></form>
+<form method="post" action="/admin/submissions/{{ submission.id }}/reject"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="table-action">Reject submission</button></form></article>{% else %}<p class="note">No member events awaiting review.</p>{% endfor %}</section>
 <div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Plan what’s next</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
 <article id="create-event" class="admin-panel"><h2>Create draft event</h2><form method="post" action="/admin/events">
 <input type="hidden" name="csrf" value="{{ csrf }}">

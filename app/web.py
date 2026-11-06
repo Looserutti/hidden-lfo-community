@@ -16,7 +16,8 @@ from app.branding import site_context, SITE
 from app import feeds
 from app.config import ADMIN_IDS, BASE_URL
 from app.config import DISCORD_INVITE_URL
-from app.db import init_db, Session, Event, Registration, Member, Setting, ImportedEvent
+from app.db import init_db, Session, Event, Registration, Member, Setting, ImportedEvent, EventSubmission
+from app.submissions import review_submission
 from app.activity import report
 
 app = FastAPI(title='Community Platform')
@@ -134,12 +135,13 @@ def logout(request: Request, csrf: str = Form(...)):
 def dashboard(request: Request):
     admin(request)
     with Session() as db:
+        submissions = db.scalars(select(EventSubmission).where(EventSubmission.status == 'pending').order_by(EventSubmission.submitted_at)).all()
         events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         _, activity_totals = report(db)
         upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= datetime.now(timezone.utc) for e in events)
         return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
-            activity_totals=activity_totals, member_total=sum(activity_totals.values()),
+            submissions=submissions, activity_totals=activity_totals, member_total=sum(activity_totals.values()),
             upcoming_total=upcoming_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
 
 @app.post('/admin/events')
@@ -371,3 +373,30 @@ def set_listing_visibility(request: Request, source_id: str, external_id: str, c
             raise HTTPException(404, 'Listing not found')
         listing.suppressed = hidden
     return RedirectResponse(f'/admin/settings?page={page}#listings', status_code=303)
+
+
+@app.post('/admin/submissions/{submission_id}/approve')
+def approve_submission(request: Request, submission_id: int, csrf: str = Form(...),
+                       title: str = Form(...), description: str = Form(''), start_date: str = Form(...),
+                       start_time: str = Form(...), location: str = Form(...)):
+    admin(request)
+    csrf_check(request, csrf)
+    fields = parse_event_fields(title, description, picker_start(start_date, start_time, ''), location, '')
+    try:
+        with Session.begin() as db:
+            review_submission(db, submission_id, int(request.session['discord_id']), True, fields)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc))
+    return RedirectResponse('/admin#member-submissions', status_code=303)
+
+
+@app.post('/admin/submissions/{submission_id}/reject')
+def reject_submission(request: Request, submission_id: int, csrf: str = Form(...)):
+    admin(request)
+    csrf_check(request, csrf)
+    try:
+        with Session.begin() as db:
+            review_submission(db, submission_id, int(request.session['discord_id']), False)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc))
+    return RedirectResponse('/admin#member-submissions', status_code=303)
