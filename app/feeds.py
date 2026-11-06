@@ -213,15 +213,21 @@ async def collect_enabled_sources():
             await collect_source(source['id'])
 
 
-def calendar_events(db, start, end):
+def calendar_events(db, start, end=None, limit=None):
     if not enabled(db, 'website'):
         return []
     sources = {s['id']: s for s in SOURCES if enabled(db, s['id'] + '.publish')}
-    records = db.scalars(select(ImportedEvent).where(ImportedEvent.cancelled == False, ImportedEvent.suppressed == False,
-        ImportedEvent.starts_at >= start, ImportedEvent.starts_at < end)).all()
+    query = select(ImportedEvent).where(ImportedEvent.cancelled == False, ImportedEvent.suppressed == False,
+        ImportedEvent.starts_at >= start, ImportedEvent.source_id.in_(sources))
+    if end is not None:
+        query = query.where(ImportedEvent.starts_at < end)
+    query = query.order_by(ImportedEvent.starts_at, ImportedEvent.source_id, ImportedEvent.external_id)
+    if limit is not None:
+        query = query.limit(limit)
+    records = db.scalars(query).all()
     return [SimpleNamespace(id=None, title=e.title, starts_at=e.starts_at,
             external_url=e.source_url, source_name=sources[e.source_id]['name'], location=e.location)
-            for e in records if e.source_id in sources]
+            for e in records]
 
 
 async def run_worker():

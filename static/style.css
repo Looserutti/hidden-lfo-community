@@ -286,9 +286,19 @@ footer {
 @media (max-width: 700px) {
   .calendar-grid { display: none; }
   .calendar-agenda { display: block; }
-  .calendar-toolbar { gap: 0.75rem; }
+  .calendar-toolbar { display: none; }
   .calendar-toolbar a { font-size: 0.85rem; white-space: nowrap; }
   .calendar-toolbar h2 { font-size: 1.1rem; text-align: center; }
+  .agenda-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .agenda-heading h2 { margin: 0; font-size: 1.3rem; }
+  .agenda-today-link { padding: 8px 16px; font-size: 0.85rem; }
+  .agenda-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0; font-size: 0.85rem; }
+  .agenda-toolbar [aria-disabled] { color: #666; }
+  .agenda-range { font-weight: 650; text-align: center; }
+  .agenda-load-more { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 24px; }
+  .agenda-load-more span { font-size: 1.4rem; }
+  .agenda-status:empty { display: none; }
+  #calendar-agenda { scroll-margin-top: 16px; }
   .agenda-day { margin: 28px 0; }
   .agenda-date { display: flex; align-items: center; gap: 16px; margin: 0 0 12px; }
   .agenda-date > time { display: flex; align-items: center; gap: 12px; }

@@ -6,10 +6,19 @@
 {% for name in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}<div class="weekday">{{ name }}</div>{% endfor %}
 {% for week in weeks %}{% for day in week %}<div class="calendar-day{% if not day.in_month %} outside{% endif %}" role="gridcell"><span class="day-number">{{ day.date.day }}</span>{% for event in day.events %}<a class="calendar-event" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}><strong>{{ event.title }}</strong>{% if event.source_name %}<small>{{ event.source_name }} ↗</small>{% endif %}<small>{% set calendar_start = event.starts_at|calendar_time %}<time datetime="{{ calendar_start.isoformat() }}">{{ calendar_start.strftime('%I:%M %p %Z') }}</time></small></a>{% endfor %}</div>{% endfor %}{% endfor %}
 </div>
-<div class="calendar-agenda" aria-label="{{ month_name }} {{ year }} events by date">
-  {% set agenda = namespace(has_events=false) %}
-  {% for week in weeks %}{% for day in week if day.in_month and day.events %}
-  {% set agenda.has_events = true %}
+<div class="calendar-agenda" id="calendar-agenda" aria-label="Upcoming events by date">
+  <div class="agenda-heading">
+    <h2>Upcoming events</h2>
+    <a class="cta secondary agenda-today-link" href="/calendar#calendar-agenda">Today</a>
+  </div>
+  <p class="hint agenda-count" data-first="{{ agenda.first }}" data-last="{{ agenda.last }}">{% if agenda.count %}Events {{ agenda.first }}–{{ agenda.last }} · starting today{% else %}Starting today{% endif %}</p>
+  <nav class="agenda-toolbar" aria-label="Browse groups of ten events">
+    {% if agenda_page > 0 %}<a href="/calendar?agenda_page={{ agenda_page - 1 }}#calendar-agenda" aria-label="Previous 10 events">← Previous</a>{% else %}<span aria-disabled="true">← Previous</span>{% endif %}
+    <span class="agenda-range">{% if agenda.days %}{{ agenda.days[0].date.strftime('%b %-d') }} – {{ agenda.days[-1].date.strftime('%b %-d') }}{% endif %}</span>
+    {% if agenda.has_next %}<a class="agenda-next" href="/calendar?agenda_page={{ agenda_page + 1 }}#calendar-agenda" aria-label="Next 10 events">Next →</a>{% else %}<span aria-disabled="true">Next →</span>{% endif %}
+  </nav>
+  <div class="agenda-list">
+  {% for day in agenda.days %}
   <section class="agenda-day{% if day.date == today %} is-today{% endif %}" aria-labelledby="agenda-{{ day.date.isoformat() }}">
     <h2 class="agenda-date" id="agenda-{{ day.date.isoformat() }}">
       <time datetime="{{ day.date.isoformat() }}">
@@ -32,8 +41,12 @@
       {% endfor %}
     </div>
   </section>
-  {% endfor %}{% endfor %}
-  {% if not agenda.has_events %}<p class="agenda-empty">No events published for {{ month_name }} yet. Check another month or visit our Discord for community updates.</p>{% endif %}
+  {% endfor %}
+  </div>
+  {% if not agenda.count %}<p class="agenda-empty">No upcoming events published{% if agenda_page %} in this group{% endif %}. Use Today to reset the view or visit our Discord for updates.</p>{% endif %}
+  {% if agenda.has_next %}<a class="cta secondary agenda-load-more" href="/calendar?agenda_page={{ agenda_page + 1 }}#calendar-agenda">Load next 10 events <span aria-hidden="true">↓</span></a>{% endif %}
+  <p class="hint agenda-status" role="status" aria-live="polite"></p>
 </div>
 <p class="hint">Calendar dates and times use {{ calendar_timezone }}.</p>
+<script src="/static/calendar.js" defer></script>
 {% endblock %}

@@ -45,7 +45,7 @@ def test_date_picker_converts_winter_summer_and_rejects_dst_gaps():
 def test_agenda_groups_on_local_date_and_handles_empty_month(with_event):
     from datetime import date
     from jinja2 import Environment, FileSystemLoader, select_autoescape
-    from app.calendar_utils import calendar_time
+    from app.calendar_utils import calendar_time, agenda_page
     env = Environment(loader=FileSystemLoader('templates'), autoescape=select_autoescape())
     env.filters['calendar_time'] = lambda stamp: calendar_time(stamp, 'America/Los_Angeles')
     event = SimpleNamespace(id=42, title='A concert with a longer readable title',
@@ -53,7 +53,7 @@ def test_agenda_groups_on_local_date_and_handles_empty_month(with_event):
     html = env.get_template('calendar.html').render(
         site={'name':'Community','socials':{},'footer_text':''},
         weeks=month_grid(2026,11,[event] if with_event else [],'America/Los_Angeles'),
-        today=date(2026,11,6), month_name='November', year=2026,
+        today=date(2026,11,6), agenda=agenda_page([event] if with_event else [], 'America/Los_Angeles', datetime(2026,11,6,12,tzinfo=timezone.utc)), agenda_page=0, month_name='November', year=2026,
         previous=(2026,10), following=(2026,12), calendar_timezone='America/Los_Angeles')
     agenda = html.split('<div class="calendar-agenda"',1)[1]
     if with_event:
@@ -63,5 +63,25 @@ def test_agenda_groups_on_local_date_and_handles_empty_month(with_event):
         assert event.title in agenda and 'Local venue' in agenda and 'href="/events/42"' in agenda
         assert 'agenda-empty' not in agenda
     else:
-        assert 'No events published for November yet.' in agenda
+        assert 'No upcoming events published' in agenda
         assert 'class="agenda-day' not in agenda
+
+
+def test_rolling_agenda_counts_events_includes_today_and_crosses_months():
+    from datetime import timedelta
+    from app.calendar_utils import agenda_page
+    reference = datetime(2026,12,1,7,tzinfo=timezone.utc)  # Nov 30, 11pm Pacific
+    earlier_today = datetime(2026,11,30,9,tzinfo=timezone.utc)
+    events = [SimpleNamespace(id=i, starts_at=earlier_today+timedelta(days=i//2,hours=i%2)) for i in range(23)]
+    yesterday = SimpleNamespace(id=99, starts_at=earlier_today-timedelta(days=1))
+    candidates = list(reversed([yesterday,*events]))
+    first = agenda_page(candidates,'America/Los_Angeles',reference)
+    second = agenda_page(candidates,'America/Los_Angeles',reference,page=1)
+    third = agenda_page(candidates,'America/Los_Angeles',reference,page=2)
+    ids = lambda batch: [e.id for d in batch['days'] for e in d['events']]
+    assert ids(first)==list(range(10)) and first['has_next']
+    assert first['days'][0]['date'].isoformat()=='2026-11-30'
+    assert any(d['date'].month==12 for d in first['days'])
+    assert ids(second)==list(range(10,20)) and second['has_next']
+    assert ids(third)==[20,21,22] and not third['has_next']
+    assert second['first']==11 and second['last']==20

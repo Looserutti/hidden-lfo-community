@@ -2,9 +2,9 @@ import os
 import secrets
 from uuid import uuid4
 from urllib.parse import urlsplit
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 import calendar
-from app.calendar_utils import month_grid, calendar_navigation, calendar_time, month_bounds, local_event_start
+from app.calendar_utils import month_grid, calendar_navigation, calendar_time, month_bounds, local_event_start, agenda_page as build_agenda_page
 from urllib.parse import urlencode
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Form, Query
@@ -72,7 +72,7 @@ def home(request: Request):
         return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL))
 
 @app.get('/calendar', response_class=HTMLResponse)
-def calendar_page(request: Request, year: int | None = None, month: int | None = None):
+def calendar_page(request: Request, year: int | None = None, month: int | None = None, agenda_page: int = Query(0, ge=0, le=100)):
     today = calendar_time(datetime.now(timezone.utc), CALENDAR_ZONE)
     year = today.year if year is None else year
     month = today.month if month is None else month
@@ -83,8 +83,14 @@ def calendar_page(request: Request, year: int | None = None, month: int | None =
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start, Event.starts_at < next_month).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         events = sorted([*events, *feeds.calendar_events(db, start, next_month)], key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))
+        agenda_start = datetime.combine(today.date(), time.min, tzinfo=today.tzinfo).astimezone(timezone.utc)
+        fetch_limit = (agenda_page + 1) * 10 + 1
+        agenda_events = db.scalars(select(Event).where(Event.published == True,
+            Event.starts_at >= agenda_start).order_by(Event.starts_at, Event.id).limit(fetch_limit)).all()
+        agenda_events = [*agenda_events, *feeds.calendar_events(db, agenda_start, limit=fetch_limit)]
+        agenda = build_agenda_page(agenda_events, CALENDAR_ZONE, today, agenda_page)
         prev, nxt = calendar_navigation(year, month)
-        return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events, CALENDAR_ZONE), today=today, calendar_timezone=CALENDAR_ZONE, month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events, CALENDAR_ZONE), today=today.date(), agenda=agenda, agenda_page=agenda_page, calendar_timezone=CALENDAR_ZONE, month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
 
 
 @app.get('/events/{event_id}', response_class=HTMLResponse)

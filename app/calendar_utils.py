@@ -45,3 +45,19 @@ def local_event_start(date, time, zone):
     if len(candidates) > 1:
         raise ValueError('This time occurs twice during the daylight-saving change; choose an unambiguous time')
     return candidates.pop()
+
+
+def agenda_page(events, zone, reference, page=0, size=10):
+    """Chronological event batches from local midnight today, across months."""
+    today = calendar_time(reference, zone).date()
+    eligible = sorted((e for e in events if calendar_time(e.starts_at, zone).date() >= today),
+                      key=lambda e: calendar_time(e.starts_at, 'UTC'))
+    offset = page * size
+    selected = eligible[offset:offset + size]
+    days = {}
+    for event in selected:
+        date = calendar_time(event.starts_at, zone).date()
+        days.setdefault(date, []).append(event)
+    return {'days': [{'date': date, 'events': items} for date,items in days.items()],
+            'has_next': len(eligible) > offset + size, 'count': len(selected),
+            'first': offset + 1 if selected else 0, 'last': offset + len(selected)}
