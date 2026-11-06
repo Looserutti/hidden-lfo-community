@@ -6,11 +6,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy import select, func
-from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED
+from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_SINCE
 from app.db import Session, Member, Event, Registration, Setting, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
 from bot import onboarding
+from app.announcements import approved_member_event, announcement_content
 
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
@@ -99,7 +100,7 @@ class CommunityBot(commands.Bot):
                 self.add_view(RSVPView(e.id), message_id=e.discord_message_id)
         if GUILD_ID:
             await self.tree.sync(guild=discord.Object(id=GUILD_ID))
-        if EVENT_PUBLISHING_ENABLED and not publish_events.is_running():
+        if (EVENT_PUBLISHING_ENABLED or MEMBER_EVENT_ANNOUNCEMENTS_ENABLED) and not publish_events.is_running():
             publish_events.start()
         if STAFF_REPORTS_ENABLED and not weekly_report.is_running():
             weekly_report.start()
@@ -220,8 +221,8 @@ async def refresh_event_message(event_id: int):
             return
         channel_id, message_id = e.discord_channel_id, e.discord_message_id
         published = e.published
-        content = event_announcement(e, db.scalar(select(func.count()).select_from(Registration).where(
-            Registration.event_id == e.id, Registration.status == 'going')) or 0)
+        content = announcement_content(e, db.scalar(select(func.count()).select_from(Registration).where(
+            Registration.event_id == e.id, Registration.status == 'going')) or 0, approved_member_event(db, e.id))
     channel = bot.get_channel(channel_id)
     if not isinstance(channel, discord.TextChannel):
         return
@@ -229,7 +230,7 @@ async def refresh_event_message(event_id: int):
         message = await channel.fetch_message(message_id)
         if published:
             if message.content != content:
-                await message.edit(content=content, view=RSVPView(event_id))
+                await message.edit(content=content, view=RSVPView(event_id), allowed_mentions=discord.AllowedMentions.none())
         else:
             await message.delete()
     except discord.NotFound:
@@ -262,11 +263,15 @@ async def publish_events():
     for event_id in ids:
         with Session() as db:
             e = db.get(Event, event_id)
-            if e.published and e.discord_message_id is None:
+            is_member = approved_member_event(db, e.id)
+            member_enabled = MEMBER_EVENT_ANNOUNCEMENTS_ENABLED and approved_member_event(db, e.id, MEMBER_EVENT_ANNOUNCEMENTS_SINCE)
+            if not EVENT_PUBLISHING_ENABLED and not member_enabled:
+                continue
+            if e.published and e.discord_message_id is None and e.starts_at.replace(tzinfo=timezone.utc) > now():
                 count = db.scalar(select(func.count()).select_from(Registration).where(
                     Registration.event_id == e.id, Registration.status == 'going')) or 0
                 try:
-                    message = await channel.send(event_announcement(e, count), view=RSVPView(e.id))
+                    message = await channel.send(announcement_content(e, count, is_member), view=RSVPView(e.id), allowed_mentions=discord.AllowedMentions.none())
                     e.discord_message_id = message.id
                     e.discord_channel_id = channel.id
                     db.commit()

@@ -7,6 +7,7 @@ x-preview: &preview
     SITE_ENVIRONMENT: preview
     DISCORD_BOT_TOKEN: ""
     EVENT_PUBLISHING_ENABLED: "false"
+    MEMBER_EVENT_ANNOUNCEMENTS_ENABLED: "false"
     STAFF_REPORTS_ENABLED: "false"
   volumes:
     - preview_data:/data
