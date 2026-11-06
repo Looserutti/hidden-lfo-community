@@ -109,6 +109,11 @@ def test_calendar_control_switches_and_manual_show(dashboard):
         assert not feeds.enabled(db, 'collection')
     client.post(path, data={'csrf': 'test-csrf', 'hidden': 'true'})
     assert 'Example Soda Bar Show' not in client.get('/calendar?year=2026&month=11').text
+    assert 'Exclude from publishing' in client.get('/admin/settings').text
+    # An unchecked checkbox is omitted from form data and must restore eligibility.
+    assert client.post(path, data={'csrf': 'test-csrf'}, follow_redirects=False).status_code == 303
+    assert 'Example Soda Bar Show' in client.get('/calendar?year=2026&month=11').text
+    assert client.post(path, data={'csrf': 'invalid', 'hidden': 'true'}).status_code == 403
     assert client.post('/admin/settings/listings', data={**form, 'source_url': 'javascript:alert(1)'}).status_code == 400
     assert client.post('/admin/settings/listings', data={**form, 'starts_at': '2026-11-14T20:00:00'}).status_code == 400
     client.cookies.clear()

@@ -56,3 +56,5 @@
 .source-error { color: #f2ce8f; font-size: .85rem; }
 .admin-shell button:disabled { opacity: .5; cursor: not-allowed; }
 .source-card h3 { margin-top: 0; }
+
+.listing-exclusion { min-width: 180px; font-size: .8rem; margin-bottom: .65rem; }

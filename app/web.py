@@ -278,7 +278,7 @@ def event_registrations(request: Request, event_id: int):
         return templates.TemplateResponse(request, 'registrations.html', context(request, event=e, registrations=regs))
 
 @app.get('/admin/settings', response_class=HTMLResponse)
-def admin_settings(request: Request):
+def admin_settings(request: Request, page: int = Query(1, ge=1)):
     admin(request)
     with Session() as db:
         sources = [feeds.source_state(db, source) for source in feeds.SOURCES]
@@ -286,12 +286,13 @@ def admin_settings(request: Request):
         website = feeds.enabled(db, 'website')
         worker = db.get(Setting, 'feeds.worker_seen')
         worker_seen = worker.value if worker else None
-        listings = db.scalars(select(ImportedEvent).order_by(ImportedEvent.starts_at.desc()).limit(50)).all()
+        listing_total = db.scalar(select(func.count()).select_from(ImportedEvent))
+        listings = db.scalars(select(ImportedEvent).order_by(ImportedEvent.starts_at.desc(), ImportedEvent.source_id, ImportedEvent.external_id).offset((page - 1) * 50).limit(50)).all()
     return templates.TemplateResponse(request, 'admin_settings.html', context(request,
         public_base_url=BASE_URL, sources=sources, collection=collection, website=website,
         collection_weekday=calendar.day_name[SITE.get("calendar_collection", {"weekday": 1})["weekday"]],
         collection_hour=SITE.get("calendar_collection", {"hour": 9})["hour"], calendar_timezone=CALENDAR_ZONE,
-        worker_seen=worker_seen, listings=listings))
+        worker_seen=worker_seen, listings=listings, listing_page=page, listing_total=listing_total))
 
 
 @app.post('/admin/settings/feeds')
@@ -355,7 +356,7 @@ def add_source_listing(request: Request, csrf: str = Form(...), source_id: str =
 
 
 @app.post('/admin/settings/listings/{source_id}/{external_id}/visibility')
-def set_listing_visibility(request: Request, source_id: str, external_id: str, csrf: str = Form(...), hidden: bool = Form(...)):
+def set_listing_visibility(request: Request, source_id: str, external_id: str, csrf: str = Form(...), hidden: bool = Form(False), page: int = Form(1, ge=1)):
     admin(request)
     csrf_check(request, csrf)
     with Session.begin() as db:
@@ -363,4 +364,4 @@ def set_listing_visibility(request: Request, source_id: str, external_id: str, c
         if not listing:
             raise HTTPException(404, 'Listing not found')
         listing.suppressed = hidden
-    return RedirectResponse('/admin/settings#listings', status_code=303)
+    return RedirectResponse(f'/admin/settings?page={page}#listings', status_code=303)
