@@ -1,5 +1,9 @@
 # Community Hub & Discord Bot releases
 
+## Audio-processing isolation — November 6, 2026
+
+Runtime `8f7a9e1` confines normalization to a credential-free Linux child with Landlock file restrictions, seccomp network/process restrictions, bounded resources and explicit audio container/decoder/protocol allowlists. Real MP3/WAV/AAC-M4A/ALAC-M4A processing and kernel denial checks passed in a 107-test release-image suite. Preview's deployed normalizer was checked with synthetic audio before production promotion. Existing source audio/playback files and LUFS targets remain intact; no database migration or bot/collector restart. Unsupported sandbox environments fail closed for normalization while playback remains available. This mitigates exposure; it does not resolve the underlying FFmpeg advisories. See docs/AUDIO.md for hosting requirements.
+
 ## Private calendar source configuration — November 6, 2026
 
 Fresh installations now start with an empty source registry. Fictional examples are provided separately; deployment-specific registries belong in ignored `config/sources.local.json`, excluded from Docker images and mounted read-only at runtime. `CALENDAR_SOURCES_FILE` supports alternative locations. Existing source IDs and database publication settings remain unchanged during migration. Backup tooling includes the private registry. Historical commits still contain the previously public venue definitions; this change removes active defaults rather than rewriting Git history.
