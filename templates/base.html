@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{{ site.name }}</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/theme.css?v=016ebd03fc">
+    <link rel="stylesheet" href="/static/theme.css?v=9f2a6914c1">
     {% block head %}{% endblock %}
 </head>
 
@@ -32,6 +32,9 @@
             </form>
             {% else %}
             <a href="/login">Admin sign in</a>
+            {% endif %}
+            {% if site.privacy_notice_url and request and request.url.path == '/' %}
+            <a class="footer-privacy" href="{{ site.privacy_notice_url }}">Privacy notice</a>
             {% endif %}
         </div>
     </footer>

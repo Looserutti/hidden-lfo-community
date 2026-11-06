@@ -15,5 +15,6 @@
     "hour": 9
   },
   "venue_retention_days": 30,
-  "radio_name": "Hidden LFO Radio"
+  "radio_name": "Hidden LFO Radio",
+  "privacy_notice_url": "/static/backup-privacy.html"
 }
