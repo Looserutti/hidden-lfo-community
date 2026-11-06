@@ -163,3 +163,15 @@ def test_submission_review_admin_csrf_and_publication(dashboard):
         assert db.query(Event).count()==1
     client.cookies.clear()
     assert client.post(f'/admin/submissions/{key}/reject',data={'csrf':'test-csrf'}).status_code==403
+
+
+def test_preview_banner_and_search_exclusion_are_environment_specific(dashboard,monkeypatch):
+    client,_=dashboard
+    monkeypatch.setenv('SITE_ENVIRONMENT','preview')
+    response=client.get('/admin')
+    assert 'PREVIEW · Test site' in response.text
+    assert response.headers['x-robots-tag']=='noindex, nofollow, noarchive'
+    monkeypatch.delenv('SITE_ENVIRONMENT')
+    response=client.get('/admin')
+    assert 'PREVIEW · Test site' not in response.text
+    assert 'x-robots-tag' not in response.headers

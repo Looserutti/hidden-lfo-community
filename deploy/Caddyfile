@@ -4,3 +4,6 @@
     encode zstd gzip
     reverse_proxy web:8000
 }
+
+# Optional independent test-site routes; an empty directory leaves preview disabled.
+import /etc/caddy/preview/*.caddy

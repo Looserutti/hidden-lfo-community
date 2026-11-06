@@ -32,6 +32,8 @@ templates.env.filters['calendar_time'] = lambda stamp: calendar_time(stamp, CALE
 @app.middleware('http')
 async def secure_response_headers(request: Request, call_next):
     response = await call_next(request)
+    if os.getenv('SITE_ENVIRONMENT') == 'preview':
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow, noarchive'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Frame-Options'] = 'DENY'
@@ -60,7 +62,7 @@ def csrf_check(request: Request, token: str):
 def context(request: Request, **kwargs):
     if 'csrf' not in request.session:
         request.session['csrf'] = secrets.token_urlsafe(32)
-    return {'site': site_context(), 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
+    return {'site': site_context(), 'is_preview': os.getenv('SITE_ENVIRONMENT') == 'preview', 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
 
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):

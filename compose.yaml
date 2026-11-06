@@ -59,6 +59,7 @@ services:
       - "443:443/udp"
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${PREVIEW_ROUTES_DIR:-./deploy/preview}:/etc/caddy/preview:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

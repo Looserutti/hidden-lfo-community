@@ -1,0 +1,43 @@
+name: community-preview
+x-preview: &preview
+  image: ${PREVIEW_IMAGE:?Set a versioned PREVIEW_IMAGE in .env.preview}
+  env_file: .env.preview
+  environment:
+    DATABASE_URL: sqlite:////data/community.db
+    SITE_ENVIRONMENT: preview
+    DISCORD_BOT_TOKEN: ""
+    EVENT_PUBLISHING_ENABLED: "false"
+    STAFF_REPORTS_ENABLED: "false"
+  volumes:
+    - preview_data:/data
+  init: true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  networks: [proxy]
+services:
+  preview-migrate:
+    <<: *preview
+    command: ["alembic", "upgrade", "head"]
+    restart: 'no'
+  preview-web:
+    <<: *preview
+    restart: unless-stopped
+    command: ["uvicorn", "app.web:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    depends_on:
+      preview-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:?Set the existing reverse proxy network}
+volumes:
+  preview_data:

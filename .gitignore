@@ -21,3 +21,5 @@ backups/
 
 # Editor settings
 .vscode/
+# Server-specific optional reverse proxy routes
+deploy/preview/*.caddy

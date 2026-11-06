@@ -11,6 +11,7 @@
 </head>
 
 <body>
+    {% if is_preview %}<aside class="preview-notice" aria-label="Preview environment">PREVIEW · Test site — changes here do not affect the live site.</aside>{% endif %}
     <main>{% block content %}{% endblock %}</main>
     <footer class="site-footer">
         <span>{{ site.footer_text }}</span>

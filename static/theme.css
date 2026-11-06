@@ -296,3 +296,5 @@
 
 .footer-socials a:hover { color: var(--white); }
 .footer-socials svg { width: 22px; height: 22px; }
+
+.preview-notice { padding: .75rem 1rem; text-align: center; font: 600 .75rem/1.5 system-ui, sans-serif; letter-spacing: .06em; background: #ddd; color: #111; }
