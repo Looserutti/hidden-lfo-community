@@ -425,3 +425,6 @@
 @media (max-width: 700px) and (orientation: portrait) {
   .gallery-player .player-info-label { display: none; }
 }
+
+/* Optional community-owned privacy notice, beside homepage admin access. */
+.footer-admin .footer-privacy { font-size: .7rem; white-space: nowrap; }
