@@ -59,12 +59,12 @@
     <audio class="player-audio" controls preload="none" aria-label="Gallery music"></audio>
     <button class="player-next" type="button" aria-label="Next track">›</button>
     <details class="player-details">
-      <summary aria-label="Track info and playlist"><span class="player-info-label">Tracks</span><span aria-hidden="true">⌃</span></summary>
+      <summary aria-label="Track info and playlist" title="Tracks and artist info"><span class="player-info-label">Tracks</span><span aria-hidden="true">⌃</span></summary>
       <div class="player-details-panel">
         <div class="player-track"><span class="eyebrow">SELECTED TRACK</span><strong class="player-title"></strong><span class="player-artist"></span></div>
         <ol class="player-playlist" aria-label="Choose a track">
         {% for track in gallery_audio %}
-          <li><button type="button" class="player-track-choice" data-track-index="{{ loop.index0 }}"><span class="player-track-number" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span><span>{{ track.title }}{% if track.artist %}<small>{{ track.artist }}</small>{% endif %}</span></button></li>
+          <li><button type="button" class="player-track-choice" data-track-index="{{ loop.index0 }}" aria-label="{{ track.title }}{% if track.artist %} — {{ track.artist }}{% endif %}"><span class="player-track-number" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span><span>{{ track.title }}{% if track.artist %}<small>{{ track.artist }}</small>{% endif %}</span></button></li>
         {% endfor %}
         </ol>
       </div>
