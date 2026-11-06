@@ -17,5 +17,8 @@
   "venue_retention_days": 30,
   "privacy_notice_url": "",
   "projects_title": "Member projects",
-  "projects_description": "Ideas, releases and work in progress from our community."
+  "projects_description": "Ideas, releases and work in progress from our community.",
+  "share_description": "",
+  "share_image": "",
+  "share_image_alt": ""
 }

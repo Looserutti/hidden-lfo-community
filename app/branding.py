@@ -17,6 +17,13 @@ def load_site(path=None):
             raise ValueError(f'Unsupported social platform: {platform}')
         if url and (urlsplit(url).scheme != 'https' or not urlsplit(url).netloc):
             raise ValueError(f'{platform} requires a full HTTPS URL or an empty string')
+    for key in ('share_description', 'share_image', 'share_image_alt'):
+        if key in site and not isinstance(site[key], str):
+            raise ValueError(f'Site setting {key} must be text')
+    image = site.get('share_image', '')
+    if image and (not image.startswith('/static/') or '..' in image
+                  or any(c in image for c in ('?', '#', '\\'))):
+        raise ValueError('share_image must be a public /static/ path without traversal, query or fragment')
     folder = Path(site.get('gallery_folder', 'images/gallery'))
     if folder.is_absolute() or '..' in folder.parts or not folder.parts:
         raise ValueError('gallery_folder must be a relative folder inside static/')

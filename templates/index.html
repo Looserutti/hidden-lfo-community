@@ -1,6 +1,30 @@
 
 {% extends 'base.html' %}
 
+{% block head %}
+{% if share_url %}
+{% set share_description = site.share_description|default(site.description, true) %}
+<link rel="canonical" href="{{ share_url }}">
+<meta name="description" content="{{ share_description }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site.name }}">
+<meta property="og:title" content="{{ site.name }}">
+<meta property="og:description" content="{{ share_description }}">
+<meta property="og:url" content="{{ share_url }}">
+<meta name="twitter:title" content="{{ site.name }}">
+<meta name="twitter:description" content="{{ share_description }}">
+{% if site.share_image %}
+<meta property="og:image" content="{{ share_url.rstrip('/') }}{{ site.share_image }}">
+<meta property="og:image:alt" content="{{ site.share_image_alt|default(site.name, true) }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ share_url.rstrip('/') }}{{ site.share_image }}">
+<meta name="twitter:image:alt" content="{{ site.share_image_alt|default(site.name, true) }}">
+{% else %}
+<meta name="twitter:card" content="summary">
+{% endif %}
+{% endif %}
+{% endblock %}
+
 {% block footer_message %}{% endblock %}
 
 {% block content %}

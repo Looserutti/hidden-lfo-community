@@ -219,3 +219,10 @@ Project photos use `/data/project-photos` (or `PROJECT_PHOTO_DIR` in a persisten
 Set `PROJECT_ANNOUNCEMENTS_CHANNEL_ID` to your community's Discord text channel ID to announce newly published member highlights. Leave it blank to disable; no destination is bundled with a fresh install. The gateway bot must belong to the configured guild and have View Channel and Send Messages permission there. Preview overrides the destination to blank and runs no gateway bot.
 
 First publication creates a persistent notification alongside the published snapshot. The bot checks every 30 seconds, sends a short title/byline and the public post link without mentions, and records the message ID. Drafts, already published legacy posts, edits, and repeat publication do not create new notifications. Unpublished/deleted posts are not sent. Discord HTTP errors are retried later. As with event notifications, a process crash after Discord accepts a message but before the database records its ID can produce a duplicate; routine retries/restarts after a recorded send do not. No notification is sent for existing posts when enabling this option.
+
+
+## Homepage link previews
+
+The homepage includes server-rendered Open Graph and social-card metadata, using `PUBLIC_BASE_URL` for its canonical homepage URL. Configure optional `share_description`, `share_image` and `share_image_alt` in `config/site.json`. A blank sharing description uses the site description; a blank image omits image tags. The image must be a public `/static/` path (for example `/static/images/share/homepage-v1.jpg`); use your own photo and descriptive alternative text. The generic example has no bundled sharing image selected. Rebuild/redeploy when adding a source image, and restart web after configuration changes.
+
+This currently applies only to the homepage; event and project pages do not receive homepage preview metadata. Shared previews are controlled and cached by the destination service, so previously posted links may retain an older preview. The link card does not embed the site's audio player.

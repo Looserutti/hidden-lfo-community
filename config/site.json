@@ -16,5 +16,8 @@
   },
   "venue_retention_days": 30,
   "radio_name": "Hidden LFO Radio",
-  "privacy_notice_url": "/static/backup-privacy.html"
+  "privacy_notice_url": "/static/backup-privacy.html",
+  "share_description": "electronic music and art collective",
+  "share_image": "/static/images/share/homepage-v1.jpg",
+  "share_image_alt": "Electronic musicians performing with modular synthesizers and colorful projected art."
 }
