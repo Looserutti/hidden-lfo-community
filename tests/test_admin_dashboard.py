@@ -88,31 +88,32 @@ def test_calendar_settings_require_staff_access(dashboard):
     assert client.get('/admin/settings').status_code == 403
 
 
-def test_calendar_control_switches_and_manual_show(dashboard):
+def test_calendar_control_switches_and_manual_show(dashboard, monkeypatch):
     from app import feeds
     from app.db import ImportedEvent
+    monkeypatch.setattr(feeds, "SOURCES", [{"id": "example-venue", "name": "Example Venue", "adapter": "ticketweb_calendar", "url": "https://venue.example/calendar", "timezone": "America/Los_Angeles"}])
     client, sessions = dashboard
     response = client.post('/admin/settings/feeds', data={'csrf': 'invalid', 'website': 'true'})
     assert response.status_code == 403
-    assert client.post('/admin/settings/sources/casbah/pull', data={'csrf': 'test-csrf'}).status_code == 409
-    form = {'csrf': 'test-csrf', 'source_id': 'casbah', 'title': 'Example Soda Bar Show',
-            'starts_at': '2026-11-14T20:00:00-08:00', 'source_url': 'https://example.com/show', 'location': 'Soda Bar'}
+    assert client.post('/admin/settings/sources/example-venue/pull', data={'csrf': 'test-csrf'}).status_code == 409
+    form = {'csrf': 'test-csrf', 'source_id': 'example-venue', 'title': 'Example Concert',
+            'starts_at': '2026-11-14T20:00:00-08:00', 'source_url': 'https://example.com/show', 'location': 'Example Venue'}
     assert client.post('/admin/settings/listings', data=form, follow_redirects=False).status_code == 303
-    assert 'Example Soda Bar Show' not in client.get('/calendar?year=2026&month=11').text
+    assert 'Example Concert' not in client.get('/calendar?year=2026&month=11').text
     client.post('/admin/settings/feeds', data={'csrf': 'test-csrf', 'website': 'true'})
-    client.post('/admin/settings/sources/casbah', data={'csrf': 'test-csrf', 'publish': 'true'})
+    client.post('/admin/settings/sources/example-venue', data={'csrf': 'test-csrf', 'publish': 'true'})
     html = client.get('/calendar?year=2026&month=11').text
-    assert 'Example Soda Bar Show' in html and 'Casbah Presents / Soda Bar' in html
+    assert 'Example Concert' in html and 'Example Venue' in html
     with sessions() as db:
         event = db.query(ImportedEvent).one()
-        path = f'/admin/settings/listings/casbah/{event.external_id}/visibility'
+        path = f'/admin/settings/listings/example-venue/{event.external_id}/visibility'
         assert not feeds.enabled(db, 'collection')
     client.post(path, data={'csrf': 'test-csrf', 'hidden': 'true'})
-    assert 'Example Soda Bar Show' not in client.get('/calendar?year=2026&month=11').text
+    assert 'Example Concert' not in client.get('/calendar?year=2026&month=11').text
     assert 'Exclude from publishing' in client.get('/admin/settings').text
     # An unchecked checkbox is omitted from form data and must restore eligibility.
     assert client.post(path, data={'csrf': 'test-csrf'}, follow_redirects=False).status_code == 303
-    assert 'Example Soda Bar Show' in client.get('/calendar?year=2026&month=11').text
+    assert 'Example Concert' in client.get('/calendar?year=2026&month=11').text
     assert client.post(path, data={'csrf': 'invalid', 'hidden': 'true'}).status_code == 403
     assert client.post('/admin/settings/listings', data={**form, 'source_url': 'javascript:alert(1)'}).status_code == 400
     assert client.post('/admin/settings/listings', data={**form, 'starts_at': '2026-11-14T20:00:00'}).status_code == 400
