@@ -4,7 +4,7 @@ Music is optional and appears only inside the expanded photo viewer. Opening a p
 
 ## Manage from the website
 
-Sign in as an allowlisted administrator and open **Gallery audio** (`/admin/music`).
+Sign in as an allowlisted administrator and choose **Radio** (`/admin/music`).
 
 1. Upload MP3, WAV or M4A, optionally entering a title and artist. New uploads are drafts and cannot be streamed publicly.
 2. Check **Available in gallery** and **Save track** to publish it.
@@ -30,7 +30,7 @@ This phase does not add external embeds, photo-specific tracks, automatic music 
 
 ## Optional loudness matching
 
-Each track has **Normalize playback volume** and a target selector in Gallery audio. The default is −14 LUFS integrated (Spotify's Normal playback target); −16 and −18 are available. Save to queue processing, then use **Refresh status** to see queued, processing, ready or failed. Uncheck normalization and save to serve the original again. Changing the target generates a new copy from the original, not from a previously compressed copy.
+Each track has **Normalize playback volume** and a target selector in the Radio interface. The default is −14 LUFS integrated (Spotify's Normal playback target); −16 and −18 are available. Save to queue processing, then use **Refresh status** to see queued, processing, ready or failed. Uncheck normalization and save to serve the original again. Changing the target generates a new copy from the original, not from a previously compressed copy.
 
 The supplied Docker image includes FFmpeg. Local development needs FFmpeg installed separately for processing; uploads/playback still work without it. A single background worker processes tracks serially to limit CPU use. Interrupted work is marked failed on startup and can be retried by saving the option again; this initial queue is not a distributed worker service.
 
@@ -38,7 +38,7 @@ Processing measures integrated loudness and true peak, applies a fixed gain, and
 
 Existing public players may retain buffered audio until refreshed; new media requests use the selected version. The original is used while a first normalization job is queued/processing or fails. If a normalized copy already exists, it remains available until its replacement completes. Artist recordings used in preview are not bundled with source or examples.
 
-Artist social links: edit a track in Gallery audio, enter a full HTTP(S) profile URL, and enable “Show artist link in track details.” Links are off by default and appear only for the selected track in expanded details. Turning the option off preserves the saved URL while omitting it from the public playlist. Links open in a new tab. No social credentials or API services are needed.
+Artist social links: edit a track in the Radio interface, enter a full HTTP(S) profile URL, and enable “Show artist link in track details.” Links are off by default and appear only for the selected track in expanded details. Turning the option off preserves the saved URL while omitting it from the public playlist. Links open in a new tab. No social credentials or API services are needed.
 
 ## Isolated normalization
 

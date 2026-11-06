@@ -1,5 +1,11 @@
 # Community Hub & Discord Bot releases
 
+## Admin control hub — November 6, 2026
+
+Runtime `6a9131c` replaces the long combined admin overview with six management interfaces: Homepage/carousel photos, Community Calendar, Member projects, Radio, Community activity and System health. Desktop has a section sidebar; mobile uses a collapsed native section switcher. Calendar events/approvals live at `/admin/calendar`, with a separate sources/imports tab preserving `/admin/settings`; health details move to `/admin/health`. Existing action/upload routes remain valid, event actions return to the calendar interface, and old root event-fragment bookmarks redirect appropriately. No public-page, publication-state, permission, media or schema changes.
+
+Validation: 123 complete release-image tests passed, followed by targeted checks for the final health-label copy adjustment. Preview browser checks verified desktop cards, calendar/health separation, mobile 390px layout without overflow, Radio section switching with audio paused, and the legacy create-event bookmark. Previous web image `hidden-lfo-before-admin-hub:44f1e06` retained. Web-only deployment; bot/collector unchanged.
+
 ## Member projects and public navigation — November 6, 2026
 
 Runtime `44f1e06` adds a compact top-right homepage hamburger menu and public `/projects` stories. Each feature has one responsive photo with an accessible monochrome/color toggle, plain-text paragraphs and external HTTPS links below the write-up. No carousel, player or new service. Optional site configuration controls the public section title/description.
