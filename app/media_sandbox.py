@@ -45,7 +45,7 @@ def restrict(workdir):
     context=sec.seccomp_init(0x7fff0000)
     if not context:raise RuntimeError('seccomp initialization failed')
     try:
-        for name in ('socket','socketpair','connect','bind','listen','accept','accept4','sendto','recvfrom','sendmsg','recvmsg','sendmmsg','recvmmsg','ptrace','process_vm_readv','process_vm_writev','io_uring_setup','unshare','setns','mount','open_by_handle_at','keyctl','bpf','fork','vfork'):
+        for name in ('socket','socketpair','connect','bind','listen','accept','accept4','sendto','recvfrom','sendmsg','recvmsg','sendmmsg','recvmmsg','ptrace','process_vm_readv','process_vm_writev','io_uring_setup','unshare','setns','mount','open_by_handle_at','keyctl','bpf','fork','vfork','kill','tkill','tgkill','pidfd_send_signal','chmod','fchmod','fchmodat','fchmodat2','chown','fchown','lchown','fchownat','utime','utimes','futimesat','utimensat'):
             number=sec.seccomp_syscall_resolve_name(name.encode())
             if number>=0 and sec.seccomp_rule_add(context,0x00050000|errno.EPERM,number,0):raise RuntimeError('seccomp rule failed')
         # Allow worker threads, but prevent spawning additional processes.
