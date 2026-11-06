@@ -412,3 +412,6 @@
   .photo-viewer.has-player .player-info-label { display: none; }
   .photo-viewer.has-player .player-details-panel { max-height: calc(100dvh - 150px); }
 }
+
+/* Compact photo navigation inside the expanded viewer. */
+.photo-viewer > .gallery-arrow { width: 32px; height: 32px; font-size: 18px; }
