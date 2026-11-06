@@ -47,9 +47,11 @@ def test_every_admin_mutation_rejects_invalid_csrf(monkeypatch):
     with TestClient(web.app) as client:
         client.cookies.set('session',cookie(123),domain='testserver.local',path='/')
         for route,path in admin_routes('POST'):
-            response=client.post(path,data=form(route),follow_redirects=False)
-            # Upload validates its declared body size before parsing the CSRF field.
-            assert response.status_code in ({403,411,413} if path.endswith('/upload') else {403}),path
+            if path.endswith('/upload'):
+                response=client.post(path,data={'csrf':'invalid'},files={'audio':('test.mp3',b'ID3test','audio/mpeg')},follow_redirects=False)
+            else:
+                response=client.post(path,data=form(route),follow_redirects=False)
+            assert response.status_code==403,path
 
 
 def test_tampered_and_expired_sessions_are_denied(monkeypatch):
