@@ -1,10 +1,14 @@
 {% extends 'base.html' %}{% block content %}
 <a class="back-home" href="/">← Back to homepage</a>
 <div class="page-heading"><div><p class="eyebrow">COMMUNITY SCHEDULE</p><h1>Event calendar</h1><p>All events are public. RSVP in Discord after joining and verifying.</p></div>{% if invite_url %}<a class="cta" href="{{ invite_url }}" target="_blank" rel="noopener noreferrer">Join our Discord</a>{% endif %}</div>
+<div class="calendar-key" aria-label="Calendar event key">
+  <span><i class="calendar-key-swatch community" aria-hidden="true"></i><strong>Community events</strong><small>Our events + Discord scheduled events</small></span>
+  <span><i class="calendar-key-swatch venue" aria-hidden="true"></i><strong>Venue listings</strong><small>Imported from external calendars</small></span>
+</div>
 <div class="calendar-toolbar"><a href="/calendar?year={{ previous[0] }}&month={{ previous[1] }}" aria-label="Previous month">← Previous</a><h2>{{ month_name }} {{ year }}</h2><a href="/calendar?year={{ following[0] }}&month={{ following[1] }}" aria-label="Next month">Next →</a></div>
 <div class="calendar-grid" role="grid" aria-label="{{ month_name }} {{ year }} event calendar">
 {% for name in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}<div class="weekday">{{ name }}</div>{% endfor %}
-{% for week in weeks %}{% for day in week %}<div class="calendar-day{% if not day.in_month %} outside{% endif %}" role="gridcell"><span class="day-number">{{ day.date.day }}</span>{% for event in day.events %}<a class="calendar-event" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}><strong>{{ event.title }}</strong>{% if event.source_name %}<small>{{ event.source_name }} ↗</small>{% endif %}<small>{% set calendar_start = event.starts_at|calendar_time %}<time datetime="{{ calendar_start.isoformat() }}">{{ calendar_start.strftime('%I:%M %p %Z') }}</time></small></a>{% endfor %}</div>{% endfor %}{% endfor %}
+{% for week in weeks %}{% for day in week %}<div class="calendar-day{% if not day.in_month %} outside{% endif %}" role="gridcell"><span class="day-number">{{ day.date.day }}</span>{% for event in day.events %}<a class="calendar-event {{ 'event-community' if event.is_community or not event.external_url else 'event-venue' }}" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>{% if event.is_community or not event.external_url %}<small class="event-kind">Community event</small>{% endif %}<strong>{{ event.title }}</strong>{% if event.source_name %}<small>{{ event.source_name }} ↗</small>{% endif %}<small>{% set calendar_start = event.starts_at|calendar_time %}<time datetime="{{ calendar_start.isoformat() }}">{{ calendar_start.strftime('%I:%M %p %Z') }}</time></small></a>{% endfor %}</div>{% endfor %}{% endfor %}
 </div>
 <div class="calendar-agenda" id="calendar-agenda" aria-label="Upcoming events by date">
   <div class="agenda-heading">
@@ -30,10 +34,10 @@
     <div class="agenda-events">
       {% for event in day.events %}
       {% set calendar_start = event.starts_at|calendar_time %}
-      <a class="agenda-event" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>
+      <a class="agenda-event {{ 'event-community' if event.is_community or not event.external_url else 'event-venue' }}" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>
         <time class="agenda-time" datetime="{{ calendar_start.isoformat() }}">{{ calendar_start.strftime('%I:%M %p').lstrip('0') }}<small>{{ calendar_start.strftime('%Z') }}</small></time>
         <span class="agenda-details">
-          <strong>{{ event.title }}</strong>
+          {% if event.is_community or not event.external_url %}<small class="event-kind">Community event</small>{% endif %}<strong>{{ event.title }}</strong>
           {% if event.location %}<span class="agenda-location">{{ event.location }}</span>{% endif %}
           {% if event.source_name %}<small>{{ event.source_name }} <span aria-hidden="true">↗</span></small>{% endif %}
         </span>

@@ -226,7 +226,7 @@ def calendar_events(db, start, end=None, limit=None):
         query = query.limit(limit)
     records = db.scalars(query).all()
     return [SimpleNamespace(id=None, title=e.title, starts_at=e.starts_at,
-            external_url=e.source_url, source_name=sources[e.source_id]['name'], source_id=e.source_id, location=e.location)
+            external_url=e.source_url, source_name=sources[e.source_id]['name'], source_id=e.source_id, is_community=sources[e.source_id]['adapter'] == 'discord', location=e.location)
             for e in records]
 
 

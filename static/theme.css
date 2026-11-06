@@ -428,3 +428,23 @@
 
 /* Optional community-owned privacy notice, beside homepage admin access. */
 .footer-admin .footer-privacy { font-size: .7rem; white-space: nowrap; }
+
+/* Event categories: one accent token to rebrand community-owned events. */
+:root { --community-event-accent: #65e0d0; }
+.calendar-key { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 20px 0 24px; font-size: .8rem; }
+.calendar-key > span { display: grid; grid-template-columns: 12px auto; column-gap: 9px; align-items: center; }
+.calendar-key small { grid-column: 2; color: var(--light-grey); font-size: .72rem; }
+.calendar-key-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.calendar-key-swatch.community { background: var(--community-event-accent); }
+.calendar-key-swatch.venue { background: #555; border: 1px solid #aaa; }
+.calendar-event.event-community, .agenda-event.event-community {
+  border-color: var(--community-event-accent); border-left-width: 4px; background: #132c29;
+}
+.calendar-event.event-community:hover, .agenda-event.event-community:hover { background: #1b3c37; }
+.calendar-event.event-community strong, .agenda-event.event-community strong,
+.calendar-event.event-community .event-kind, .agenda-event.event-community .event-kind {
+  color: var(--community-event-accent);
+}
+.event-kind { display: block; font-size: .65rem; font-weight: 650; letter-spacing: .04em; margin: 0 0 4px; }
+.events-panel article.event-community { border-left: 3px solid var(--community-event-accent); padding-left: 14px; }
+.events-panel article.event-community h2 a, .events-panel article.event-community > .eyebrow { color: var(--community-event-accent); }

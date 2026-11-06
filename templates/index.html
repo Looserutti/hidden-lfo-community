@@ -98,8 +98,8 @@
 
     <div class="grid">
       {% for event in events %}
-      <article>
-        <p class="eyebrow">UPCOMING EVENT</p>
+      <article class="{{ 'event-community' if event.is_community or not event.external_url else 'event-venue' }}">
+        <p class="eyebrow">{{ 'COMMUNITY EVENT' if event.is_community or not event.external_url else 'VENUE LISTING' }}</p>
         <h2>
           <a href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ event.title }}</a>
         </h2>

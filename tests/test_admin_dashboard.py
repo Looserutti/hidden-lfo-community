@@ -238,3 +238,24 @@ def test_overview_counts_discord_as_community_and_venues_separately(dashboard,mo
     assert '<span>Upcoming venue listings</span><strong>1</strong>' in html
     with sessions.begin() as db:db.get(Setting,'feeds.venue.publish').value='false'
     assert '<span>Upcoming venue listings</span><strong>0</strong>' in client.get('/admin').text
+
+
+def test_calendar_distinguishes_community_discord_and_venues(dashboard,monkeypatch):
+    from app import feeds
+    from app.db import ImportedEvent,Setting
+    client,sessions=dashboard
+    monkeypatch.setattr(feeds,'SOURCES',[{'id':'discord-source','name':'Discord','adapter':'discord'},
+        {'id':'venue','name':'Venue','adapter':'ticketweb_calendar'}])
+    start=datetime.now(timezone.utc)+timedelta(days=1)
+    with sessions.begin() as db:
+        for key in ('website','discord-source.publish','venue.publish'):db.add(Setting(key='feeds.'+key,value='true'))
+        db.add(Event(title='Our show',published=True,starts_at=start))
+        for source in ('discord-source','venue'):
+            db.add(ImportedEvent(source_id=source,external_id='1',title=source,starts_at=start,
+                source_url='https://example.org/'+source,location='Venue'))
+    html=client.get(f'/calendar?year={start.year}&month={start.month}').text
+    assert 'Calendar event key' in html and 'Venue listings' in html
+    for css in ('calendar-event','agenda-event'):
+        assert f'class="{css} event-community" href="https://example.org/discord-source"' in html
+        assert f'class="{css} event-venue" href="https://example.org/venue"' in html
+        assert f'class="{css} event-community" href="/events/' in html
