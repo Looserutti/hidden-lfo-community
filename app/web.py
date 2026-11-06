@@ -4,7 +4,7 @@ from uuid import uuid4
 from urllib.parse import urlsplit
 from datetime import datetime, timezone
 import calendar
-from app.calendar_utils import month_grid, calendar_navigation
+from app.calendar_utils import month_grid, calendar_navigation, calendar_time, month_bounds
 from urllib.parse import urlencode
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Form, Query
@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select, func
-from app.branding import site_context
+from app.branding import site_context, SITE
 from app import feeds
 from app.config import ADMIN_IDS, BASE_URL
 from app.config import DISCORD_INVITE_URL
@@ -25,6 +25,8 @@ if not secret or secret == 'replace-with-long-random-value':
     raise RuntimeError('Set a strong SESSION_SECRET in .env before starting the website')
 app.add_middleware(SessionMiddleware, secret_key=secret, same_site='lax', https_only=BASE_URL.startswith('https://'), max_age=60 * 60 * 8)
 templates = Jinja2Templates(directory='templates')
+CALENDAR_ZONE = SITE.get('calendar_timezone', 'UTC')
+templates.env.filters['calendar_time'] = lambda stamp: calendar_time(stamp, CALENDAR_ZONE)
 
 @app.middleware('http')
 async def secure_response_headers(request: Request, call_next):
@@ -68,20 +70,18 @@ def home(request: Request):
 
 @app.get('/calendar', response_class=HTMLResponse)
 def calendar_page(request: Request, year: int | None = None, month: int | None = None):
-    today = datetime.now(timezone.utc)
+    today = calendar_time(datetime.now(timezone.utc), CALENDAR_ZONE)
     year = today.year if year is None else year
     month = today.month if month is None else month
     if not (2000 <= year <= 2100 and 1 <= month <= 12):
         raise HTTPException(400, 'Invalid calendar month')
-    from datetime import timedelta
-    start = datetime(year, month, 1, tzinfo=timezone.utc)
-    next_month = datetime(year + 1, 1, 1, tzinfo=timezone.utc) if month == 12 else datetime(year, month + 1, 1, tzinfo=timezone.utc)
+    start, next_month = month_bounds(year, month, CALENDAR_ZONE)
     with Session() as db:
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start, Event.starts_at < next_month).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         events = sorted([*events, *feeds.calendar_events(db, start, next_month)], key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))
         prev, nxt = calendar_navigation(year, month)
-        return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events), month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events, CALENDAR_ZONE), calendar_timezone=CALENDAR_ZONE, month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
   
 
 @app.get('/events/{event_id}', response_class=HTMLResponse)

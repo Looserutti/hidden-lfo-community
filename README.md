@@ -27,7 +27,7 @@ Never commit `.env`. Never post your bot token or client secret in chat. Keep th
 - Database tables use `create_all` for first-run setup; add Alembic migrations before production schema changes.
 - Registration capacity checks should use transactional locking or PostgreSQL for high concurrency. Current SQLite logic may race under simultaneous clicks.
 - A production deployment needs stronger operational controls, rate limiting, backup automation, OAuth error handling, privacy policy, and tests.
-- Events have UTC display on the public site; add browser-local timezone rendering and calendar month view later.
+- Calendar grouping and display use the community’s configurable IANA time zone; stored timestamps remain UTC.
 - For public event pages, the link points to the bot announcement when posted; newcomers need a separate server invite link (future enhancement).
 
 ## Version 3: public calendar and event discovery
@@ -101,7 +101,7 @@ python -m compileall -q app bot scripts
 
 This platform is intended for other communities and artists to build on. Hidden LFO is the current example community; Discord, calendar, event and authentication behavior remain separate from presentation.
 
-- Edit **`config/site.json`** for the community name, location eyebrow, description, footer wording, social URLs, and gallery folder. No template or Python edits are needed. Restart the website after changing this JSON file.
+- Edit **`config/site.json`** for the community name, location eyebrow, description, footer wording, social URLs, gallery folder, and `calendar_timezone` (an IANA zone such as `America/Los_Angeles`). No template or Python edits are needed. Restart the website after changing this JSON file.
 - To start fresh, copy `config/site.example.json` to `config/site.json`. The example has generic wording, no social accounts. Blank social URLs hide their icons; an empty gallery folder hides the carousel and viewer. Any number of photos is supported, with counters generated automatically.
 - **Drag and drop photos into `static/images/gallery/`**, then refresh the homepage. Delete photos from that folder to remove them. No JSON edits or server restart are needed for photo changes. The folder is scanned on each page request; an already-open page needs a refresh.
 - Supported formats: JPG/JPEG, PNG, WebP, GIF, and AVIF (browser support varies). Convert HEIC photos to JPEG first. Hidden files, subfolders, and symlinks are ignored. Photos sort naturally by filename: use `01-stage.jpg`, `02-crowd.jpg`, etc. Filenames also supply the generated image descriptions, so use descriptive names.

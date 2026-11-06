@@ -8,5 +8,6 @@
     "tiktok": "https://www.tiktok.com/@hiddenlfo",
     "youtube": "https://www.youtube.com/channel/UCvB-KFUXtsPyk8hsy3Cj7vQ"
   },
-  "gallery_folder": "images/gallery"
+  "gallery_folder": "images/gallery",
+  "calendar_timezone": "America/Los_Angeles"
 }

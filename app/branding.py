@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit, quote
 import re
+from zoneinfo import ZoneInfo
 
 
 def load_site(path=None):
@@ -19,6 +20,7 @@ def load_site(path=None):
     folder = Path(site.get('gallery_folder', 'images/gallery'))
     if folder.is_absolute() or '..' in folder.parts or not folder.parts:
         raise ValueError('gallery_folder must be a relative folder inside static/')
+    ZoneInfo(site.get("calendar_timezone", "UTC"))
     return site
 
 

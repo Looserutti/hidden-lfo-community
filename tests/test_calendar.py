@@ -16,3 +16,17 @@ def test_navigation_year_boundary():
 def test_reject_invalid_month():
     with pytest.raises(ValueError):
         month_grid(2026, 13, [])
+
+
+def test_pacific_calendar_groups_utc_next_day_on_local_date():
+    from app.calendar_utils import calendar_time, month_bounds
+    event = SimpleNamespace(starts_at=datetime(2026, 11, 7, 2))
+    weeks = month_grid(2026, 11, [event], 'America/Los_Angeles')
+    assert next(d for w in weeks for d in w if str(d['date']) == '2026-11-06')['events'] == [event]
+    assert calendar_time(event.starts_at, 'America/Los_Angeles').hour == 18
+    # A month boundary crosses UTC dates; DST changes the UTC offset in November.
+    start, end = month_bounds(2026, 11, 'America/Los_Angeles')
+    assert start == datetime(2026, 11, 1, 7, tzinfo=timezone.utc)
+    assert end == datetime(2026, 12, 1, 8, tzinfo=timezone.utc)
+    boundary = SimpleNamespace(starts_at=datetime(2026, 12, 1, 2, tzinfo=timezone.utc))
+    assert next(d for w in month_grid(2026, 11, [boundary], 'America/Los_Angeles') for d in w if str(d['date']) == '2026-11-30')['events'] == [boundary]
