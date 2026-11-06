@@ -164,7 +164,7 @@ def dashboard(request: Request):
         issues=sum(item['state']=='error' for item in checks)
         unknown=any(item['state']=='neutral' and item['label'] not in ('Paused','Not running in preview') for item in checks)
         state='error' if issues else 'neutral' if unknown else 'ok'
-        label=f'{issues} checks need attention' if issues else 'Some checks not yet verified' if unknown else 'Checks up to date'
+        label=f'Needs attention ({issues})' if issues else 'Some checks not yet verified' if unknown else 'Checks up to date'
         return templates.TemplateResponse(request,'admin.html',context(request,
             pending_total=db.scalar(select(func.count()).select_from(EventSubmission).where(EventSubmission.status=='pending')) or 0,
             member_total=db.scalar(select(func.count()).select_from(Member)) or 0,health_state=state,health_label=label))
