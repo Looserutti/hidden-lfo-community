@@ -1,5 +1,11 @@
 # Community Hub & Discord Bot releases
 
+## Homepage sharing previews — November 6, 2026
+
+Runtime `67763af` adds homepage-only Open Graph and social-card metadata. Hidden LFO shares the title “Hidden LFO”, description “electronic music and art collective”, canonical URL `https://hiddenlfo.com/`, and the owner-supplied performance photo at `/static/images/share/homepage-v1.jpg`. Preview uses its own configured origin. Other public routes do not inherit homepage sharing metadata. Defaults remain reusable through optional `share_description`, `share_image` and `share_image_alt` branding settings; the generic example selects no image. Uploaded audio and player behavior are unchanged.
+
+Validation: 130 tests passed in the isolated Linux release image; local checks passed 126 with four platform-dependent skips. Preview and live HTTPS checks verified metadata and image MIME type; live image bytes match the supplied photo. Public homepage/calendar/projects/health checks and unsigned administrator denial passed. A complete encrypted backup succeeded before web-only promotion; prior image `hidden-lfo-before-homepage-sharing:d192988` retained. Bot and collector were not restarted. No database migration. Actual link-card rendering and cache refresh depend on the destination platform; no message was posted to an external service for testing.
+
 ## Admin control hub — November 6, 2026
 
 Runtime `6a9131c` replaces the long combined admin overview with six management interfaces: Homepage/carousel photos, Community Calendar, Member projects, Radio, Community activity and System health. Desktop has a section sidebar; mobile uses a collapsed native section switcher. Calendar events/approvals live at `/admin/calendar`, with a separate sources/imports tab preserving `/admin/settings`; health details move to `/admin/health`. Existing action/upload routes remain valid, event actions return to the calendar interface, and old root event-fragment bookmarks redirect appropriately. No public-page, publication-state, permission, media or schema changes.
