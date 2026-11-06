@@ -124,7 +124,7 @@ def test_published_track_can_switch_back_to_original(library):
         track.published=True;track.normalization_enabled=True
         track.normalized_filename=normalized;track.normalization_status='ready'
     assert c.get(f'/media/audio/{track_id}').content==b'ID3normalized'
-    c.post(f'/admin/music/{track_id}',data={'csrf':'test-csrf','title':'Track','artist':''})
+    c.post(f'/admin/music/{track_id}',data={'csrf':'test-csrf','title':'Track','artist':'','published':'true'})
     assert c.get(f'/media/audio/{track_id}').content==b'ID3'+b'0'*100
 
 
