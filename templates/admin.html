@@ -1,46 +1,12 @@
 {% extends 'admin_base.html' %}{% block admin_content %}
-<div class="admin-heading"><div><p class="eyebrow">COMMUNITY OPERATIONS</p><h1>Community overview</h1><p>Events and member observations, in one place.</p></div><a class="cta" href="#create-event">Create event</a></div>
-<section class="admin-metrics overview-metrics" aria-label="Community summary">
-  <a class="metric" href="/admin/activity"><span>Tracked members</span><strong>{{ member_total }}</strong><small>Members recorded by the bot</small></a>
-  <a class="metric activity-review" href="/admin/activity?status=review"><span>Needs review</span><strong>{{ activity_totals.review }}</strong><small>Older observations to review with care</small></a>
-  <a class="metric" href="/admin/activity?status=unknown"><span>Unknown activity</span><strong>{{ activity_totals.unknown }}</strong><small>Not enough history to classify</small></a>
-  <a class="metric" href="/calendar"><span>Upcoming community events</span><strong>{{ upcoming_total }}</strong><small>Published dashboard + Discord scheduled events</small></a>
-  <a class="metric" href="/admin/settings#listings"><span>Upcoming venue listings</span><strong>{{ venue_total }}</strong><small>External venue events visible on the calendar</small></a>
+<div class="admin-heading"><div><p class="eyebrow">COMMUNITY CONTROL</p><h1>Control hub</h1><p>Choose the area you want to manage.</p></div><a href="/">View website ↗</a></div>
+{% if pending_total %}<p class="admin-notice"><a href="/admin/calendar#member-submissions">{{ pending_total }} member event {{ 'submission needs' if pending_total == 1 else 'submissions need' }} review →</a></p>{% endif %}
+<section class="control-grid" aria-label="Management interfaces">
+<a class="control-card" href="/admin/photos"><span class="eyebrow">PUBLIC HOMEPAGE</span><h2>Homepage</h2><p>Upload and review carousel photo batches, publish a replacement or restore a saved batch.</p><span class="control-card-bottom">Carousel photos <span aria-hidden="true">→</span></span></a>
+<a class="control-card" href="/admin/calendar"><span class="eyebrow">EVENTS &amp; IMPORTS</span><h2>Community Calendar</h2><p>Create events, approve member submissions and manage external calendar sources.</p><span class="control-card-bottom">{{ pending_total }} awaiting review <span aria-hidden="true">→</span></span></a>
+<a class="control-card" href="/admin/projects"><span class="eyebrow">MEMBER SPOTLIGHTS</span><h2>Member projects</h2><p>Write project features, choose their photos and links, and preview before publishing.</p><span class="control-card-bottom">Posts &amp; drafts <span aria-hidden="true">→</span></span></a>
+<a class="control-card" href="/admin/music"><span class="eyebrow">GALLERY SOUNDTRACK</span><h2>Radio</h2><p>Manage tracks, artist links, playback order and volume normalization.</p><span class="control-card-bottom">Audio library <span aria-hidden="true">→</span></span></a>
+<a class="control-card" href="/admin/activity"><span class="eyebrow">MEMBER OBSERVATIONS</span><h2>Community</h2><p>Review member activity, server names and staff exemptions.</p><span class="control-card-bottom">{{ member_total }} tracked members <span aria-hidden="true">→</span></span></a>
+<a class="control-card" href="/admin/health"><span class="eyebrow">SERVER OPERATIONS</span><h2>System health</h2><p>Check backups, restore verification, calendar imports and bot/collector status.</p><span class="control-card-bottom"><span class="hub-health hub-health-{{ health_state }}">{{ health_label }}</span><span aria-hidden="true">→</span></span></a>
 </section>
-<section class="admin-panel system-health" aria-labelledby="system-health-heading"><h2 id="system-health-heading">System health</h2><p class="note">Status as of this page load. Refresh to update. Paused sources are not failures.</p><div class="health-grid">{% for item in system_health %}<article class="health-card health-{{ item.state }}"><h3>{{ item.name }}</h3><p class="health-label">{{ item.label }}</p><small>Last success: {% if item.last_success %}<time datetime="{{ item.last_success }}">{{ item.last_success_label }}</time>{% else %}Not recorded{% endif %}</small>{% if item.detail %}<small>{{ item.detail }}</small>{% endif %}</article>{% endfor %}</div><p class="note">These indicators are visible to administrators only. No external notifications are sent. <a href="/admin/settings">Manage calendar sources →</a></p></section>
-<p class="admin-notice">Staff access only. Activity reflects observations, not attendance. No members are automatically removed. <a href="/admin/activity#status-guide">How activity statuses work →</a></p>
-<section id="member-submissions" class="admin-panel"><h2>Member event submissions <span>({{ submissions|length }} pending)</span></h2><p>Verified members submit events with /event. Review and edit the details below before publishing to the website calendar. If approved-member announcements are enabled, the bot also posts the approved event in the configured Discord announcements channel.</p>
-{% for submission in submissions %}{% set local_start = submission.starts_at|calendar_time %}<article class="submission-card"><h3>{{ submission.title }}</h3><p class="note">Submitted by {{ submission.submitted_name }} · Discord ID {{ submission.submitted_by }} · #{{ submission.id }}</p>
-<form method="post" action="/admin/submissions/{{ submission.id }}/approve"><input type="hidden" name="csrf" value="{{ csrf }}">
-<label>Title<input name="title" maxlength="200" value="{{ submission.title }}" required></label>
-<label>Description<textarea name="description">{{ submission.description }}</textarea></label>
-<div class="event-date-fields"><label>Event date<input name="start_date" type="date" value="{{ local_start.strftime('%Y-%m-%d') }}" required></label><label>Start time<input name="start_time" type="time" value="{{ local_start.strftime('%H:%M') }}" required></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
-<label>Venue or location<input name="location" maxlength="250" value="{{ submission.location }}" required></label><button>Approve &amp; publish to calendar</button></form>
-<form method="post" action="/admin/submissions/{{ submission.id }}/reject"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="table-action">Reject submission</button></form></article>{% else %}<p class="note">No member events awaiting review.</p>{% endfor %}</section>
-<div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Dashboard-created events</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
-<p class="note">Edit events created here or approved from /event below. Manage Discord scheduled events in Discord, and imported venue listings in <a href="/admin/settings#listings">Calendar settings</a>.</p>
-<article id="create-event" class="admin-panel"><h2>Create draft event</h2><form method="post" action="/admin/events">
-<input type="hidden" name="csrf" value="{{ csrf }}">
-<label>Title <input name="title" required maxlength="200"></label>
-<label>Description <textarea name="description"></textarea></label>
-<div class="event-date-fields"><label>Event date <input name="start_date" type="date" required></label><label>Start time <input name="start_time" type="time" required></label></div><p class="note">Times use {{ calendar_timezone }}. Daylight-saving offsets are applied automatically.</p>
-<label>Location <input name="location" value="Discord"></label>
-<label>Capacity (optional) <input name="capacity" type="number" min="1"></label>
-<button>Create draft</button></form></article>
-<h2>Events</h2>
-{% for event in events %}<article>
-<h3>{{ event.title }} — {{ 'Published' if event.published else 'Unpublished / Draft' }}</h3>
-<p><a href="/admin/events/{{ event.id }}/registrations">View registrations</a></p><p>{{ counts[event.id] }} registered{% if event.capacity %} / {{ event.capacity }} capacity{% endif %}</p>
-<details><summary>Edit event</summary><form method="post" action="/admin/events/{{ event.id }}/edit">
-<input type="hidden" name="csrf" value="{{ csrf }}">
-<label>Title <input name="title" required maxlength="200" value="{{ event.title }}"></label>
-<label>Description <textarea name="description">{{ event.description }}</textarea></label>
-{% set local_start = event.starts_at|calendar_time %}<div class="event-date-fields"><label>Event date <input name="start_date" type="date" required value="{{ local_start.strftime('%Y-%m-%d') }}"></label><label>Start time <input name="start_time" type="time" required value="{{ local_start.strftime('%H:%M') }}"></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
-<label>Location <input name="location" value="{{ event.location }}"></label>
-<label>Capacity <input name="capacity" type="number" min="1" value="{{ event.capacity if event.capacity is not none else '' }}"></label>
-<button>Save changes</button></form></details>
-<form action="/admin/events/{{ event.id }}/publish" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ 'Unpublish' if event.published else 'Publish' }}</button></form>
-{% if event.published %}<form action="/admin/events/{{ event.id }}/cancel" method="post" onsubmit="return confirm('Remove this event from the public calendar and Discord announcement?')"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Cancel event</button></form>{% endif %}
-</article>{% else %}<p>No events yet.</p>{% endfor %}
-<p class="note">The Discord bot reconciles event posts about every 30 seconds while online. Unpublishing preserves RSVP history and removes the Discord announcement.</p>
 {% endblock %}

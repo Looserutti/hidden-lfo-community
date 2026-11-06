@@ -1,6 +1,6 @@
 {% extends 'admin_base.html' %}
 {% block admin_content %}
-<div class="page-heading"><div><p class="eyebrow">GALLERY SOUNDTRACK</p><h1>Gallery audio</h1><p>Music appears only in the expanded photo viewer. Visitors press Play; closing the viewer pauses playback.</p></div><div class="actions"><a href="/admin/music">Refresh status</a><a href="/">Open gallery ↗</a></div></div>
+<div class="page-heading"><div><p class="eyebrow">RADIO MANAGEMENT</p><h1>{{ site.radio_name|default(site.name ~ ' Radio') }}</h1><p>Music appears only in the expanded photo viewer. Visitors press Play; closing the viewer pauses playback.</p></div><div class="actions"><a href="/admin/music">Refresh status</a><a href="/">Open gallery ↗</a></div></div>
 <article>
   <h2>Upload a track</h2>
   <p>MP3, WAV or M4A · up to {{ upload_mb }} MB per file. {{ used_mb }} / {{ storage_mb }} MB used.</p>

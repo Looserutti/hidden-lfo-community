@@ -1,0 +1,43 @@
+{% extends 'admin_base.html' %}{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">CALENDAR MANAGEMENT</p><h1>Community Calendar</h1><p>Manage community events and review member submissions.</p></div><a class="cta" href="#create-event">Create event</a></div>
+{% include '_admin_calendar_tabs.html' %}
+<section class="admin-metrics calendar-metrics" aria-label="Calendar summary">
+<a class="metric" href="/calendar"><span>Upcoming community events</span><strong>{{ upcoming_total }}</strong><small>Published dashboard + Discord scheduled events</small></a>
+<a class="metric" href="/admin/settings#listings"><span>Upcoming venue listings</span><strong>{{ venue_total }}</strong><small>External venue events visible on the calendar</small></a>
+</section>
+<p class="admin-notice">Staff access only. Activity reflects observations, not attendance. No members are automatically removed. <a href="/admin/activity#status-guide">How activity statuses work →</a></p>
+<section id="member-submissions" class="admin-panel"><h2>Member event submissions <span>({{ submissions|length }} pending)</span></h2><p>Verified members submit events with /event. Review and edit the details below before publishing to the website calendar. If approved-member announcements are enabled, the bot also posts the approved event in the configured Discord announcements channel.</p>
+{% for submission in submissions %}{% set local_start = submission.starts_at|calendar_time %}<article class="submission-card"><h3>{{ submission.title }}</h3><p class="note">Submitted by {{ submission.submitted_name }} · Discord ID {{ submission.submitted_by }} · #{{ submission.id }}</p>
+<form method="post" action="/admin/submissions/{{ submission.id }}/approve"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Title<input name="title" maxlength="200" value="{{ submission.title }}" required></label>
+<label>Description<textarea name="description">{{ submission.description }}</textarea></label>
+<div class="event-date-fields"><label>Event date<input name="start_date" type="date" value="{{ local_start.strftime('%Y-%m-%d') }}" required></label><label>Start time<input name="start_time" type="time" value="{{ local_start.strftime('%H:%M') }}" required></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
+<label>Venue or location<input name="location" maxlength="250" value="{{ submission.location }}" required></label><button>Approve &amp; publish to calendar</button></form>
+<form method="post" action="/admin/submissions/{{ submission.id }}/reject"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="table-action">Reject submission</button></form></article>{% else %}<p class="note">No member events awaiting review.</p>{% endfor %}</section>
+<div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Dashboard-created events</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
+<p class="note">Edit events created here or approved from /event below. Manage Discord scheduled events in Discord, and imported venue listings in <a href="/admin/settings#listings">Calendar settings</a>.</p>
+<article id="create-event" class="admin-panel"><h2>Create draft event</h2><form method="post" action="/admin/events">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Title <input name="title" required maxlength="200"></label>
+<label>Description <textarea name="description"></textarea></label>
+<div class="event-date-fields"><label>Event date <input name="start_date" type="date" required></label><label>Start time <input name="start_time" type="time" required></label></div><p class="note">Times use {{ calendar_timezone }}. Daylight-saving offsets are applied automatically.</p>
+<label>Location <input name="location" value="Discord"></label>
+<label>Capacity (optional) <input name="capacity" type="number" min="1"></label>
+<button>Create draft</button></form></article>
+<h2>Events</h2>
+{% for event in events %}<article>
+<h3>{{ event.title }} — {{ 'Published' if event.published else 'Unpublished / Draft' }}</h3>
+<p><a href="/admin/events/{{ event.id }}/registrations">View registrations</a></p><p>{{ counts[event.id] }} registered{% if event.capacity %} / {{ event.capacity }} capacity{% endif %}</p>
+<details><summary>Edit event</summary><form method="post" action="/admin/events/{{ event.id }}/edit">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Title <input name="title" required maxlength="200" value="{{ event.title }}"></label>
+<label>Description <textarea name="description">{{ event.description }}</textarea></label>
+{% set local_start = event.starts_at|calendar_time %}<div class="event-date-fields"><label>Event date <input name="start_date" type="date" required value="{{ local_start.strftime('%Y-%m-%d') }}"></label><label>Start time <input name="start_time" type="time" required value="{{ local_start.strftime('%H:%M') }}"></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
+<label>Location <input name="location" value="{{ event.location }}"></label>
+<label>Capacity <input name="capacity" type="number" min="1" value="{{ event.capacity if event.capacity is not none else '' }}"></label>
+<button>Save changes</button></form></details>
+<form action="/admin/events/{{ event.id }}/publish" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ 'Unpublish' if event.published else 'Publish' }}</button></form>
+{% if event.published %}<form action="/admin/events/{{ event.id }}/cancel" method="post" onsubmit="return confirm('Remove this event from the public calendar and Discord announcement?')"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Cancel event</button></form>{% endif %}
+</article>{% else %}<p>No events yet.</p>{% endfor %}
+<p class="note">The Discord bot reconciles event posts about every 30 seconds while online. Unpublishing preserves RSVP history and removes the Discord announcement.</p>
+{% endblock %}

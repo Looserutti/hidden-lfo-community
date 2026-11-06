@@ -70,7 +70,12 @@ def context(request: Request, **kwargs):
     from app.gallery_store import current_gallery
     with Session() as gallery_db:
         gallery=current_gallery(gallery_db,SITE['name'])
-    return {'site': site_context(gallery), 'is_preview': os.getenv('SITE_ENVIRONMENT') == 'preview', 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
+    path=request.url.path
+    admin_section=('calendar' if path.startswith(('/admin/calendar','/admin/settings','/admin/events','/admin/submissions')) else
+                   'homepage' if path.startswith('/admin/photos') else 'projects' if path.startswith('/admin/projects') else
+                   'radio' if path.startswith('/admin/music') else 'community' if path.startswith(('/admin/activity','/admin/members')) else
+                   'health' if path.startswith('/admin/health') else 'hub')
+    return {'admin_section':admin_section, 'site': site_context(gallery), 'is_preview': os.getenv('SITE_ENVIRONMENT') == 'preview', 'request': request, 'user_id': request.session.get('discord_id'), 'is_admin': int(request.session.get('discord_id', 0)) in ADMIN_IDS, 'csrf': request.session['csrf'], **kwargs}
 
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):
@@ -155,19 +160,39 @@ def dashboard(request: Request):
     from app.system_health import summary
     admin(request)
     with Session() as db:
+        checks=summary(db)
+        issues=sum(item['state']=='error' for item in checks)
+        unknown=any(item['state']=='neutral' and item['label'] not in ('Paused','Not running in preview') for item in checks)
+        state='error' if issues else 'neutral' if unknown else 'ok'
+        label=f'{issues} checks need attention' if issues else 'Some checks not yet verified' if unknown else 'Checks up to date'
+        return templates.TemplateResponse(request,'admin.html',context(request,
+            pending_total=db.scalar(select(func.count()).select_from(EventSubmission).where(EventSubmission.status=='pending')) or 0,
+            member_total=db.scalar(select(func.count()).select_from(Member)) or 0,health_state=state,health_label=label))
+
+
+@app.get('/admin/health', response_class=HTMLResponse)
+def health_dashboard(request: Request):
+    from app.system_health import summary
+    admin(request)
+    with Session() as db:
+        return templates.TemplateResponse(request,'admin_health.html',context(request,system_health=summary(db)))
+
+
+@app.get('/admin/calendar', response_class=HTMLResponse)
+def calendar_dashboard(request: Request):
+    admin(request)
+    with Session() as db:
         submissions = db.scalars(select(EventSubmission).where(EventSubmission.status == 'pending').order_by(EventSubmission.submitted_at)).all()
         events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
-        _, activity_totals = report(db)
         start = datetime.now(timezone.utc)
         imported = feeds.calendar_events(db, start)
         discord_sources = {source['id'] for source in feeds.SOURCES if source['adapter'] == 'discord'}
         discord_total = sum(event.source_id in discord_sources for event in imported)
         upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= start for e in events) + discord_total
         venue_total = len(imported) - discord_total
-        return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
-            submissions=submissions, activity_totals=activity_totals, member_total=sum(activity_totals.values()),
-            system_health=summary(db), upcoming_total=upcoming_total, venue_total=venue_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
+        return templates.TemplateResponse(request, 'admin_calendar.html', context(request, events=events, counts=counts,
+            submissions=submissions, upcoming_total=upcoming_total, venue_total=venue_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
 
 @app.post('/admin/events')
 def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(''), location: str = Form('Discord'), capacity: str = Form(''), start_date: str = Form(''), start_time: str = Form('')):
@@ -177,7 +202,7 @@ def create_event(request: Request, csrf: str = Form(...), title: str = Form(...)
     fields = parse_event_fields(title, description, stamp, location, capacity)
     with Session.begin() as db:
         db.add(Event(**fields, published=False))
-    return RedirectResponse('/admin', status_code=303)
+    return RedirectResponse('/admin/calendar', status_code=303)
 
 @app.post('/admin/events/{event_id}/publish')
 def publish_event(request: Request, event_id: int, csrf: str = Form(...)):
@@ -188,7 +213,7 @@ def publish_event(request: Request, event_id: int, csrf: str = Form(...)):
         if not e:
             raise HTTPException(404)
         e.published = not e.published
-    return RedirectResponse('/admin', status_code=303)
+    return RedirectResponse('/admin/calendar', status_code=303)
 from fastapi.staticfiles import StaticFiles
 app.mount('/static', StaticFiles(directory='static'), name='static')
 
@@ -241,7 +266,7 @@ def edit_event(request: Request, event_id: int, csrf: str = Form(...),
             raise HTTPException(400, 'Capacity cannot be below current registration count')
         for key, value in changes.items():
             setattr(e, key, value)
-    return RedirectResponse('/admin', status_code=303)
+    return RedirectResponse('/admin/calendar', status_code=303)
 
 
 @app.post('/admin/events/{event_id}/cancel')
@@ -255,7 +280,7 @@ def cancel_event(request: Request, event_id: int, csrf: str = Form(...)):
         e.published = False
         # Preserve registration history for administrator review.
         # The bot reconciliation loop removes the public Discord announcement.
-    return RedirectResponse('/admin', status_code=303)
+    return RedirectResponse('/admin/calendar', status_code=303)
 
 
 @app.get('/admin/activity', response_class=HTMLResponse)
@@ -412,7 +437,7 @@ def approve_submission(request: Request, submission_id: int, csrf: str = Form(..
             review_submission(db, submission_id, int(request.session['discord_id']), True, fields)
     except ValueError as exc:
         raise HTTPException(409, str(exc))
-    return RedirectResponse('/admin#member-submissions', status_code=303)
+    return RedirectResponse('/admin/calendar#member-submissions', status_code=303)
 
 
 @app.post('/admin/submissions/{submission_id}/reject')
@@ -424,7 +449,7 @@ def reject_submission(request: Request, submission_id: int, csrf: str = Form(...
             review_submission(db, submission_id, int(request.session['discord_id']), False)
     except ValueError as exc:
         raise HTTPException(409, str(exc))
-    return RedirectResponse('/admin#member-submissions', status_code=303)
+    return RedirectResponse('/admin/calendar#member-submissions', status_code=303)
 
 
 app.include_router(audio_routes(lambda: Session(), admin, csrf_check,

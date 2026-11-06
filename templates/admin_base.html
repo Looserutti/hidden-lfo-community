@@ -1,19 +1,12 @@
 {% extends 'base.html' %}
-{% block head %}<link rel="stylesheet" href="/static/admin.css?v=member-projects1">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/admin.css?v=control-hub1"><script src="/static/admin-ui.js?v=1" defer></script>{% endblock %}
 {% block content %}
-<div class="admin-shell">
-  <nav class="admin-nav" aria-label="Administration">
-    <a class="admin-brand" href="/admin">{{ site.name }} <span>ADMIN</span></a>
-    <div class="admin-nav-links">
-      <a href="/admin" {% if request.url.path == '/admin' %}aria-current="page"{% endif %}>Overview &amp; events</a>
-      <a href="/admin/activity" {% if request.url.path == '/admin/activity' %}aria-current="page"{% endif %}>Member activity</a>
-      <a href="/admin/settings" {% if request.url.path == '/admin/settings' %}aria-current="page"{% endif %}>Calendar settings</a>
-      <a href="/admin/projects" {% if request.url.path.startswith("/admin/projects") %}aria-current="page"{% endif %}>Member projects</a>
-      <a href="/admin/photos" {% if request.url.path.startswith("/admin/photos") %}aria-current="page"{% endif %}>Carousel photos</a>
-      <a href="/admin/music" {% if request.url.path == '/admin/music' %}aria-current="page"{% endif %}>Gallery audio</a>
-      <a href="/">View website ↗</a>
-    </div>
-  </nav>
-  {% block admin_content %}{% endblock %}
+<div class="admin-shell admin-workspace">
+<aside class="admin-sidebar" aria-label="Admin sections"><a class="admin-brand" href="/admin">{{ site.name }} <span>ADMIN</span></a>
+<a class="admin-hub-link" href="/admin" {% if admin_section == 'hub' %}aria-current="page"{% endif %}>Control hub</a>
+<div class="admin-desktop-navigation">{% include '_admin_links.html' %}</div>
+<details class="admin-mobile-navigation"><summary>Switch section <span aria-hidden="true">⌄</span></summary>{% include '_admin_links.html' %}</details>
+</aside>
+<div class="admin-main">{% block admin_content %}{% endblock %}</div>
 </div>
 {% endblock %}

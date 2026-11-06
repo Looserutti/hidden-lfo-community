@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}{% block admin_content %}
+{% include '_admin_calendar_tabs.html' %}
 <div class="admin-heading"><div><p class="eyebrow">CALENDAR SOURCES</p><h1>Calendar controls</h1><p>Collect Discord scheduled Events and local venue listings independently.</p></div><a href="/calendar">View public calendar ↗</a></div>
 {% if request.query_params.get('saved') %}<p class="admin-notice" role="status">Settings saved.</p>{% endif %}
 <section class="admin-panel"><h2>Collection &amp; publishing</h2><p>These controls affect imported listings only. Community events created under Overview &amp; events keep their own publish controls.</p>

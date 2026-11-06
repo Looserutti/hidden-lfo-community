@@ -1,0 +1,5 @@
+{% extends 'admin_base.html' %}{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">OPERATIONS</p><h1>System health</h1><p>Backups, recovery checks, imports and service status.</p></div><a href="/admin/health">Refresh status ↻</a></div>
+<section class="admin-panel system-health" aria-labelledby="system-health-heading"><h2 id="system-health-heading">Current checks</h2><p class="note">Status as of this page load. Refresh to update. Paused sources are not failures.</p><div class="health-grid">{% for item in system_health %}<article class="health-card health-{{ item.state }}"><h3>{{ item.name }}</h3><p class="health-label">{{ item.label }}</p><small>Last success: {% if item.last_success %}<time datetime="{{ item.last_success }}">{{ item.last_success_label }}</time>{% else %}Not recorded{% endif %}</small>{% if item.detail %}<small>{{ item.detail }}</small>{% endif %}</article>{% endfor %}</div><p class="note">These indicators are visible to administrators only. No external notifications are sent. <a href="/admin/settings">Manage calendar sources →</a></p></section>
+
+{% endblock %}

@@ -1,0 +1,3 @@
+<nav class="admin-section-links" aria-label="Administration">
+{% for key,label,url in [('homepage','Homepage','/admin/photos'),('calendar','Community Calendar','/admin/calendar'),('projects','Member projects','/admin/projects'),('radio','Radio','/admin/music'),('community','Community','/admin/activity'),('health','System health','/admin/health')] %}<a href="{{ url }}" {% if admin_section == key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+<a class="admin-public-link" href="/">View website ↗</a></nav>

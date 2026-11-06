@@ -37,7 +37,8 @@ def test_overview_and_member_search(dashboard):
         db.add(Event(title='Upcoming', published=True, starts_at=datetime.now(timezone.utc)+timedelta(days=1)))
     response = client.get('/admin')
     assert response.status_code == 200
-    assert 'Community overview' in response.text and 'Upcoming community events' in response.text
+    assert 'Control hub' in response.text and 'Management interfaces' in response.text
+    assert 'Upcoming community events' in client.get('/admin/calendar').text
     assert response.headers['cache-control'] == 'no-store'
     for search in ('STAGE', 'artist', '999'):
         response = client.get('/admin/activity', params={'search': search})
@@ -136,7 +137,7 @@ def test_draft_date_picker_and_edit_store_utc(dashboard, monkeypatch):
         assert db.get(Event,event_id).starts_at == datetime(2027,7,7,1)
     assert client.post('/admin/events',data={**form,'start_time':'bad'}).status_code==400
     assert client.post('/admin/events',data={**form,'csrf':'invalid'}).status_code==403
-    html=client.get('/admin').text
+    html=client.get('/admin/calendar').text
     assert 'type="date"' in html and 'type="time"' in html
 
 
@@ -149,7 +150,7 @@ def test_submission_review_admin_csrf_and_publication(dashboard):
         submission=submit_event(db,interaction_id='admin-review-test',submitted_by=987,submitted_name='Member Artist',
             title='Proposed Show',description='Music',starts_at=start,location='Venue')
         key=submission.id
-    assert 'Proposed Show' in client.get('/admin').text
+    assert 'Proposed Show' in client.get('/admin/calendar').text
     assert 'Proposed Show' not in client.get('/calendar').text
     path=f'/admin/submissions/{key}/approve'
     form={'csrf':'test-csrf','title':'Reviewed Show','description':'Reviewed details',
@@ -196,7 +197,7 @@ def test_home_merges_visible_imports_and_native_events(dashboard, monkeypatch):
     assert 'Imported show 3' not in html and 'Native show' in html
     assert 'href="https://example.org/1"' in html
     assert 'No upcoming events' not in html
-    dashboard_html=client.get('/admin').text
+    dashboard_html=client.get('/admin/calendar').text
     assert '<span>Upcoming community events</span><strong>1</strong>' in dashboard_html
     assert '<span>Upcoming venue listings</span><strong>4</strong>' in dashboard_html
     with sessions.begin() as db:db.get(Setting,'feeds.website').value='false'
@@ -234,11 +235,11 @@ def test_overview_counts_discord_as_community_and_venues_separately(dashboard,mo
                 ('venue','3',True,False),('guild-events','4',False,True)]:
             db.add(ImportedEvent(source_id=source,external_id=external,title='Listing',starts_at=future,
                 source_url='https://example.org/show',location='Venue',suppressed=suppressed,cancelled=cancelled))
-    html=client.get('/admin').text
+    html=client.get('/admin/calendar').text
     assert '<span>Upcoming community events</span><strong>2</strong>' in html
     assert '<span>Upcoming venue listings</span><strong>1</strong>' in html
     with sessions.begin() as db:db.get(Setting,'feeds.venue.publish').value='false'
-    assert '<span>Upcoming venue listings</span><strong>0</strong>' in client.get('/admin').text
+    assert '<span>Upcoming venue listings</span><strong>0</strong>' in client.get('/admin/calendar').text
 
 
 def test_calendar_distinguishes_community_discord_and_venues(dashboard,monkeypatch):
@@ -260,3 +261,26 @@ def test_calendar_distinguishes_community_discord_and_venues(dashboard,monkeypat
         assert f'class="{css} event-community" href="https://example.org/discord-source"' in html
         assert f'class="{css} event-venue" href="https://example.org/venue"' in html
         assert f'class="{css} event-community" href="/events/' in html
+
+
+def test_control_hub_separates_management_interfaces(dashboard):
+    client,_=dashboard
+    hub=client.get('/admin')
+    assert hub.status_code==200
+    for path in ['/admin/photos','/admin/calendar','/admin/projects','/admin/music','/admin/activity','/admin/health']:
+        assert f'href="{path}"' in hub.text
+        assert client.get(path).status_code==200
+    assert 'Create draft event' not in hub.text and 'Current checks' not in hub.text
+    calendar=client.get('/admin/calendar').text
+    assert 'Member event submissions' in calendar and 'Create draft event' in calendar
+    assert 'Current checks' not in calendar
+    health=client.get('/admin/health').text
+    assert 'Current checks' in health and 'Complete backup' in health
+    assert 'Create draft event' not in health
+    assert 'Sources &amp; imports' in client.get('/admin/settings').text
+
+
+def test_calendar_actions_return_to_calendar_interface(dashboard):
+    client,_=dashboard
+    result=client.post('/admin/events',data={'csrf':'test-csrf','title':'Draft','start_date':'2030-01-01','start_time':'18:00'},follow_redirects=False)
+    assert result.status_code==303 and result.headers['location']=='/admin/calendar'
