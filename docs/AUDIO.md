@@ -1,6 +1,6 @@
 # Gallery audio (post-v0.1 development)
 
-Music is optional and appears only inside the expanded photo viewer. Opening a photo does not start playback. The visitor presses Play, photo navigation leaves the track running, and closing the viewer (including Escape) pauses it. Reopening keeps the selected track/progress but never resumes automatically. The player uses native browser audio controls for play, seek and volume, with a shared playlist selector and previous/next tracks. Slider/select arrow keys do not change photographs.
+Music is optional and appears only inside the expanded photo viewer. Opening a photo does not start playback. The visitor presses Play, photo navigation leaves the track running, and closing the viewer (including Escape) pauses it. Reopening keeps the selected track/progress but never resumes automatically. The player uses native browser audio controls for play, seek and volume, with a shared playlist selector and previous/next tracks. The compact strip keeps track metadata hidden by default; use **Track info** to reveal credits, playlist selection and skip controls. Closing the viewer collapses those details again. Slider/select arrow keys do not change photographs.
 
 ## Manage from the website
 

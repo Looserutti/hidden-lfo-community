@@ -381,6 +381,7 @@
 .player-details > summary:hover { background: #303030; }
 .player-details[open] > summary { background: #303030; }
 .player-details[open] > summary > [aria-hidden] { transform: rotate(180deg); }
+.player-details:not([open]) .player-details-panel { display: none; }
 .player-details-panel { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; display: grid; gap: 14px; padding: 16px; max-height: min(50dvh, 320px); overflow: auto; background: #191919; border: 1px solid #444; border-radius: 8px; }
 .player-track { display: grid; gap: 4px; min-width: 0; }
 .player-track .eyebrow { font-size: .65rem; color: #999; }
