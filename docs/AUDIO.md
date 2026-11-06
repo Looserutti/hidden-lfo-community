@@ -39,3 +39,11 @@ Processing measures integrated loudness and true peak, applies a fixed gain, and
 Existing public players may retain buffered audio until refreshed; new media requests use the selected version. The original is used while a first normalization job is queued/processing or fails. If a normalized copy already exists, it remains available until its replacement completes. Artist recordings used in preview are not bundled with source or examples.
 
 Artist social links: edit a track in Gallery audio, enter a full HTTP(S) profile URL, and enable “Show artist link in track details.” Links are off by default and appear only for the selected track in expanded details. Turning the option off preserves the saved URL while omitting it from the public playlist. Links open in a new tab. No social credentials or API services are needed.
+
+## Isolated normalization
+
+Normalization requires Linux x86_64/aarch64 with Landlock ABI 3+ enabled (generally kernel 6.2+) and libseccomp2; the Docker image includes the latter. No privileged container, Docker socket, added capability or relaxed default Docker seccomp profile is needed. Unsupported systems stop normalization safely; original-file playback remains available.
+
+Each FFmpeg invocation receives a private temporary copy of one input, a minimal environment without application credentials, no inherited input/file descriptors, and no network sockets. Landlock permits runtime libraries/executables read-only and confines writable files to the job folder; the member database, application configuration, other audio files and /proc are inaccessible. Seccomp also blocks process spawning (threads remain allowed), process-memory inspection and namespace changes. CPU time, address space, open files, output size and wall-clock time are bounded. Temporary inputs/outputs are removed after success or failure.
+
+Only MP3, WAV and M4A demuxers and a specific supported audio decoder list are accepted; file/pipe are the only FFmpeg protocols. Video, subtitle and data output are disabled. Unusual codecs inside WAV/M4A may be rejected rather than processed unsafely. The sandbox reduces exposure to media-library defects; it does not patch FFmpeg or eliminate kernel/library vulnerabilities. Continue tracking distribution updates.

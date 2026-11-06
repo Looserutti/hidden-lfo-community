@@ -32,7 +32,7 @@ def run_audio(source, options, output=None):
         wrapper=Path(__file__).with_name('media_sandbox.py').resolve()
         with tempfile.TemporaryFile() as log:
             result=subprocess.run([sys.executable,'-I',str(wrapper),directory,*args],env=env,cwd=directory,
-                close_fds=True,stdout=subprocess.DEVNULL,stderr=log,timeout=300)
+                close_fds=True,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=log,timeout=300)
             log.seek(0,2);length=log.tell();log.seek(max(0,length-65536));stderr=log.read().decode('utf-8',errors='replace')
         if result.returncode==125:raise ValueError('Audio isolation is unavailable; volume processing was stopped safely.')
         if result.returncode==0 and output:

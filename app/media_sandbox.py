@@ -45,9 +45,20 @@ def restrict(workdir):
     context=sec.seccomp_init(0x7fff0000)
     if not context:raise RuntimeError('seccomp initialization failed')
     try:
-        for name in ('socket','socketpair','connect','bind','listen','accept','accept4','sendto','recvfrom','sendmsg','recvmsg','sendmmsg','recvmmsg','ptrace','process_vm_readv','process_vm_writev','io_uring_setup','unshare','setns','mount','open_by_handle_at','keyctl','bpf'):
+        for name in ('socket','socketpair','connect','bind','listen','accept','accept4','sendto','recvfrom','sendmsg','recvmsg','sendmmsg','recvmmsg','ptrace','process_vm_readv','process_vm_writev','io_uring_setup','unshare','setns','mount','open_by_handle_at','keyctl','bpf','fork','vfork'):
             number=sec.seccomp_syscall_resolve_name(name.encode())
             if number>=0 and sec.seccomp_rule_add(context,0x00050000|errno.EPERM,number,0):raise RuntimeError('seccomp rule failed')
+        # Allow worker threads, but prevent spawning additional processes.
+        class Comparison(ctypes.Structure):
+            _fields_=[('arg',ctypes.c_uint),('op',ctypes.c_uint),('datum_a',ctypes.c_uint64),('datum_b',ctypes.c_uint64)]
+        sec.seccomp_rule_add_array.argtypes=[ctypes.c_void_p,ctypes.c_uint32,ctypes.c_int,ctypes.c_uint,ctypes.POINTER(Comparison)]
+        clone=sec.seccomp_syscall_resolve_name(b'clone')
+        comparison=Comparison(0,7,0x10000,0)  # SCMP_CMP_MASKED_EQ: no CLONE_THREAD.
+        if clone>=0 and sec.seccomp_rule_add_array(context,0x00050000|errno.EPERM,clone,1,ctypes.byref(comparison)):
+            raise RuntimeError('seccomp process restriction failed')
+        clone3=sec.seccomp_syscall_resolve_name(b'clone3')
+        if clone3>=0 and sec.seccomp_rule_add(context,0x00050000|errno.ENOSYS,clone3,0):
+            raise RuntimeError('seccomp clone3 restriction failed')
         if sec.seccomp_load(context):raise RuntimeError('seccomp enforcement failed')
     finally:sec.seccomp_release(context)
     for limit,value in ((resource.RLIMIT_CPU,240),(resource.RLIMIT_AS,768*1024**2),(resource.RLIMIT_FSIZE,256*1024**2),(resource.RLIMIT_NOFILE,64),(resource.RLIMIT_CORE,0)):
