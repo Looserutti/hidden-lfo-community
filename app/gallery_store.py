@@ -10,7 +10,7 @@ from uuid import uuid4
 from sqlalchemy import select, text
 from app.db import Setting, now
 
-ROOT=Path(os.getenv('GALLERY_PHOTO_DIR') or ('/data/gallery-photos' if Path('/data').is_dir() else 'var/gallery-photos'))
+ROOT=Path(os.getenv('GALLERY_PHOTO_DIR') or ('/data/gallery-photos' if Path('/data').is_dir() else 'var/gallery-photos')).resolve()
 MAX_FILES=20
 MAX_FILE=20*1024**2
 MAX_BATCH=200*1024**2

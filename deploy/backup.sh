@@ -57,7 +57,7 @@ if [ "${1:-backup}" = verify ]; then
     exit 0
 fi
 [ "${1:-backup}" = backup ] || { echo 'Use backup or verify' >&2; exit 1; }
-docker run --rm --network none --read-only --volumes-from "$APP_CONTAINER" -v "$stage:/backups" -v "$SCRIPT_ROOT/scripts/backup_bundle.py:/backup_bundle.py:ro" --entrypoint python "$image" /backup_bundle.py --output /backups
+docker run --rm --network none --read-only --volumes-from "$APP_CONTAINER" -v "$stage:/backups" -v "$SCRIPT_ROOT/scripts/backup_bundle.py:/backup_bundle.py:ro" --entrypoint python "$image" /backup_bundle.py --output /backups --audio "${BACKUP_AUDIO:-/data/gallery-audio}" --photos "${BACKUP_PHOTOS:-/data/gallery-photos}"
 # Trusted private deployment configuration; encrypted by restic with all other files.
 install -d -m 700 "$stage/deployment"
 for file in .env compose.yaml config/site.json config/sources.json config/sources.local.json; do
