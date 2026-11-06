@@ -385,7 +385,7 @@
 .player-details[open] > summary { background: #303030; }
 .player-details[open] > summary > [aria-hidden] { transform: rotate(180deg); }
 .player-details:not([open]) .player-details-panel { display: none; }
-.player-details-panel { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; display: grid; gap: 14px; padding: 16px; max-height: min(50dvh, 320px); overflow: auto; background: #191919; border: 1px solid #444; border-radius: 8px; }
+.player-details-panel { position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; display: grid; gap: 8px; padding: 10px; max-height: min(24dvh, 180px); overflow: auto; background: #191919; border: 1px solid #444; border-radius: 8px; }
 .player-track { display: grid; gap: 4px; min-width: 0; }
 .player-track .eyebrow { font-size: .65rem; color: #999; }
 .player-title { font-size: 1rem; overflow-wrap: anywhere; }
@@ -410,17 +410,12 @@
   .home-gallery { aspect-ratio: 16 / 9; }
   .photo-viewer { padding: 56px 12px 12px; }
   .photo-viewer.has-player {
-    --landscape-player-width: clamp(220px, 34vw, 300px);
-    padding: 56px calc(var(--landscape-player-width) + 24px) 12px 12px;
+    padding: 40px 12px 76px;
   }
-  .photo-viewer.has-player .gallery-player { bottom: 12px; left: auto; right: 12px; width: var(--landscape-player-width); margin: 0; }
-  .photo-viewer.has-player > .gallery-next { right: calc(var(--landscape-player-width) + 24px); }
-  .photo-viewer.has-player .gallery-player { display: grid; grid-template-columns: 28px minmax(0,1fr) 28px; row-gap: 2px; }
-  .photo-viewer.has-player .player-audio { grid-row: 1; grid-column: 1 / -1; }
-  .photo-viewer.has-player .player-previous { grid-row: 2; grid-column: 1; }
-  .photo-viewer.has-player .player-next { grid-row: 2; grid-column: 3; }
-  .photo-viewer.has-player .player-details { grid-row: 2; grid-column: 2; justify-self: center; }
-  .photo-viewer.has-player .player-details-panel { max-height: calc(100dvh - 150px); }
+  .photo-viewer.has-player .gallery-player { bottom: 8px; left: 12px; right: 12px; width: min(100% - 24px, 440px); margin-inline: auto; padding: 4px; }
+  .photo-viewer.has-player .player-audio { height: 40px; }
+  .photo-viewer.has-player .player-details-panel { max-height: min(28dvh, 120px); }
+
 }
 
 /* Compact photo navigation inside the expanded viewer. */
