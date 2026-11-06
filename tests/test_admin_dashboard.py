@@ -175,3 +175,38 @@ def test_preview_banner_and_search_exclusion_are_environment_specific(dashboard,
     response=client.get('/admin')
     assert 'PREVIEW · Test site' not in response.text
     assert 'x-robots-tag' not in response.headers
+
+
+def test_home_merges_visible_imports_and_native_events(dashboard, monkeypatch):
+    from app import feeds
+    from app.db import ImportedEvent, Setting
+    client,sessions=dashboard
+    monkeypatch.setattr(feeds,'SOURCES',[{'id':'venue','name':'Venue'}])
+    start=datetime.now(timezone.utc)+timedelta(days=1)
+    with sessions.begin() as db:
+        for key in ('website','venue.publish'):db.add(Setting(key='feeds.'+key,value='true'))
+        db.add(Event(title='Native show',published=True,starts_at=start+timedelta(hours=1)))
+        for i in range(5):
+            db.add(ImportedEvent(source_id='venue',external_id=str(i),title=f'Imported show {i}',
+                starts_at=start+timedelta(hours=i),location='Venue',source_url=f'https://example.org/{i}',
+                cancelled=False,suppressed=i==0))
+    html=client.get('/').text
+    assert 'Imported show 0' not in html and 'Imported show 1' in html and 'Imported show 2' in html
+    assert 'Imported show 3' not in html and 'Native show' in html
+    assert 'href="https://example.org/1"' in html
+    assert 'No upcoming events' not in html
+    assert '<strong>5</strong>' in client.get('/admin').text
+    with sessions.begin() as db:db.get(Setting,'feeds.website').value='false'
+    assert 'Imported show' not in client.get('/').text
+
+
+def test_native_event_discord_destination_includes_guild(dashboard, monkeypatch):
+    client,sessions=dashboard
+    monkeypatch.setattr(web,'GUILD_ID',111)
+    with sessions.begin() as db:
+        event=Event(title='Posted',published=True,starts_at=datetime.now(timezone.utc),
+                    discord_channel_id=222,discord_message_id=333)
+        db.add(event);db.flush();event_id=event.id
+    assert 'https://discord.com/channels/111/222/333' in client.get(f'/events/{event_id}').text
+    monkeypatch.setattr(web,'GUILD_ID',0)
+    assert 'Register in Discord</a>' not in client.get(f'/events/{event_id}').text

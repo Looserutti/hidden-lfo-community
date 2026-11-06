@@ -101,7 +101,7 @@
       <article>
         <p class="eyebrow">UPCOMING EVENT</p>
         <h2>
-          <a href="/events/{{ event.id }}">{{ event.title }}</a>
+          <a href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ event.title }}</a>
         </h2>
 
         <p>
@@ -115,14 +115,14 @@
 
         <p>{{ event.location }}</p>
 
-        <p>
+        {% if not event.external_url %}<p>
           {{ counts[event.id] }} registered
           {% if event.capacity %}
           / {{ event.capacity }} spots
           {% endif %}
-        </p>
+        </p>{% endif %}
 
-        <a href="/events/{{ event.id }}">View event details →</a>
+        <a href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ 'View ' ~ event.source_name ~ ' listing ↗' if event.external_url else 'View event details →' }}</a>
       </article>
 
       {% else %}

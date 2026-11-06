@@ -15,7 +15,7 @@ from sqlalchemy import select, func
 from app.branding import site_context, SITE
 from app import feeds
 from app.audio import audio_routes, playlist as audio_playlist
-from app.config import ADMIN_IDS, BASE_URL
+from app.config import ADMIN_IDS, BASE_URL, GUILD_ID
 from app.config import DISCORD_INVITE_URL
 from app.db import init_db, Session, Event, Registration, Member, Setting, ImportedEvent, EventSubmission
 from app.submissions import review_submission
@@ -68,8 +68,11 @@ def context(request: Request, **kwargs):
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):
     with Session() as db:
-        events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= datetime.now(timezone.utc)).order_by(Event.starts_at)).all()
-        counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events}
+        start = datetime.now(timezone.utc)
+        native = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start).order_by(Event.starts_at, Event.id).limit(3)).all()
+        events = sorted([*native, *feeds.calendar_events(db, start, limit=3)],
+                        key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))[:3]
+        counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events if e.id is not None}
         return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL, gallery_audio=audio_playlist(db)))
 
 @app.get('/calendar', response_class=HTMLResponse)
@@ -101,7 +104,7 @@ def event_detail(request: Request, event_id: int):
         if not e or not e.published:
             raise HTTPException(404)
         count = db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going'))
-        return templates.TemplateResponse(request, 'event.html', context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(request, 'event.html', context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL, discord_guild_id=GUILD_ID))
 
 @app.get('/login')
 def login(request: Request):
@@ -149,6 +152,7 @@ def dashboard(request: Request):
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         _, activity_totals = report(db)
         upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= datetime.now(timezone.utc) for e in events)
+        upcoming_total += len(feeds.calendar_events(db, datetime.now(timezone.utc)))
         return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
             submissions=submissions, activity_totals=activity_totals, member_total=sum(activity_totals.values()),
             upcoming_total=upcoming_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
