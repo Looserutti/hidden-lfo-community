@@ -7,7 +7,14 @@
 <section class="home-intro">
   <p class="eyebrow">{{ site.eyebrow }}</p>
   <h1>{{ site.name }}</h1>
-  <p>{{ site.description }}</p>
+  <div class="intro-community">
+    <p class="intro-description">{{ site.description }}</p>
+    {% if invite_url %}
+    <a class="cta discord-invite" href="{{ invite_url }}" target="_blank" rel="noopener noreferrer">
+      Join the Discord <span aria-hidden="true">↗</span>
+    </a>
+    {% endif %}
+  </div>
 </section>
 
 <!-- EVENT PHOTOGRAPHY -->
@@ -65,16 +72,6 @@
     <div class="actions">
       <a class="cta" href="/calendar">Monthly calendar</a>
 
-      {% if invite_url %}
-      <a
-        class="cta secondary"
-        href="{{ invite_url }}"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Join Discord
-      </a>
-      {% endif %}
     </div>
   </div>
 
