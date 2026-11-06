@@ -165,7 +165,36 @@ footer {
   border-top: 1px solid var(--dark-grey);
 }
 
-.note, .hint {
+.note, .calendar-agenda {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .calendar-grid { display: none; }
+  .calendar-agenda { display: block; }
+  .calendar-toolbar { gap: 0.75rem; }
+  .calendar-toolbar a { font-size: 0.85rem; white-space: nowrap; }
+  .calendar-toolbar h2 { font-size: 1.1rem; text-align: center; }
+  .agenda-day { margin: 28px 0; }
+  .agenda-date { display: flex; align-items: center; gap: 16px; margin: 0 0 12px; }
+  .agenda-date > time { display: flex; align-items: center; gap: 12px; }
+  .agenda-date-number { font-size: 2rem; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; }
+  .agenda-date-label { font-size: 0.95rem; letter-spacing: 0; }
+  .agenda-date-label small { display: block; margin-top: 4px; color: var(--light-grey); font-size: 0.75rem; font-weight: 400; }
+  .agenda-today { padding: 3px 8px; background: var(--off-white); color: var(--black); font-size: 0.7rem; letter-spacing: 0; }
+  .agenda-events { display: grid; gap: 10px; }
+  .agenda-event { display: grid; grid-template-columns: 4.8rem minmax(0, 1fr); gap: 12px; padding: 16px; background: var(--dark-grey); border: 1px solid #444; border-radius: 6px; text-decoration: none; }
+  .agenda-event:hover { border-color: var(--light-grey); }
+  .agenda-time { padding-top: 2px; font-size: 0.8rem; white-space: nowrap; color: var(--off-white); }
+  .agenda-time small { display: block; margin-top: 3px; color: var(--light-grey); font-size: 0.7rem; }
+  .agenda-details { min-width: 0; overflow-wrap: anywhere; }
+  .agenda-details strong { display: block; font-size: 1rem; line-height: 1.4; }
+  .agenda-location { display: block; margin-top: 6px; color: var(--light-grey); font-size: 0.85rem; }
+  .agenda-details > small { display: block; margin-top: 8px; color: var(--light-grey); font-size: 0.75rem; }
+  .agenda-empty { padding: 24px; border: 1px solid #444; border-radius: 6px; background: var(--dark-grey); }
+}
+
+.hint {
   color: var(--light-grey);
 }
 

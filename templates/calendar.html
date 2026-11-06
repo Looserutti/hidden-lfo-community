@@ -5,5 +5,35 @@
 <div class="calendar-grid" role="grid" aria-label="{{ month_name }} {{ year }} event calendar">
 {% for name in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}<div class="weekday">{{ name }}</div>{% endfor %}
 {% for week in weeks %}{% for day in week %}<div class="calendar-day{% if not day.in_month %} outside{% endif %}" role="gridcell"><span class="day-number">{{ day.date.day }}</span>{% for event in day.events %}<a class="calendar-event" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}><strong>{{ event.title }}</strong>{% if event.source_name %}<small>{{ event.source_name }} ↗</small>{% endif %}<small>{% set calendar_start = event.starts_at|calendar_time %}<time datetime="{{ calendar_start.isoformat() }}">{{ calendar_start.strftime('%I:%M %p %Z') }}</time></small></a>{% endfor %}</div>{% endfor %}{% endfor %}
-</div><p class="hint">Calendar dates and times use {{ calendar_timezone }}.</p>
+</div>
+<div class="calendar-agenda" aria-label="{{ month_name }} {{ year }} events by date">
+  {% set agenda = namespace(has_events=false) %}
+  {% for week in weeks %}{% for day in week if day.in_month and day.events %}
+  {% set agenda.has_events = true %}
+  <section class="agenda-day{% if day.date == today %} is-today{% endif %}" aria-labelledby="agenda-{{ day.date.isoformat() }}">
+    <h2 class="agenda-date" id="agenda-{{ day.date.isoformat() }}">
+      <time datetime="{{ day.date.isoformat() }}">
+        <span class="agenda-date-number">{{ day.date.strftime('%d') }}</span>
+        <span class="agenda-date-label">{{ day.date.strftime('%A') }}<small>{{ day.date.strftime('%B') }}</small></span>
+      </time>
+      {% if day.date == today %}<span class="agenda-today">Today</span>{% endif %}
+    </h2>
+    <div class="agenda-events">
+      {% for event in day.events %}
+      {% set calendar_start = event.starts_at|calendar_time %}
+      <a class="agenda-event" href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>
+        <time class="agenda-time" datetime="{{ calendar_start.isoformat() }}">{{ calendar_start.strftime('%I:%M %p').lstrip('0') }}<small>{{ calendar_start.strftime('%Z') }}</small></time>
+        <span class="agenda-details">
+          <strong>{{ event.title }}</strong>
+          {% if event.location %}<span class="agenda-location">{{ event.location }}</span>{% endif %}
+          {% if event.source_name %}<small>{{ event.source_name }} <span aria-hidden="true">↗</span></small>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}{% endfor %}
+  {% if not agenda.has_events %}<p class="agenda-empty">No events published for {{ month_name }} yet. Check another month or visit our Discord for community updates.</p>{% endif %}
+</div>
+<p class="hint">Calendar dates and times use {{ calendar_timezone }}.</p>
 {% endblock %}

@@ -40,3 +40,28 @@ def test_date_picker_converts_winter_summer_and_rejects_dst_gaps():
         local_event_start('2027-03-14','02:30','America/Los_Angeles')
     with pytest.raises(ValueError, match='occurs twice'):
         local_event_start('2027-11-07','01:30','America/Los_Angeles')
+
+@pytest.mark.parametrize('with_event', [True, False])
+def test_agenda_groups_on_local_date_and_handles_empty_month(with_event):
+    from datetime import date
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from app.calendar_utils import calendar_time
+    env = Environment(loader=FileSystemLoader('templates'), autoescape=select_autoescape())
+    env.filters['calendar_time'] = lambda stamp: calendar_time(stamp, 'America/Los_Angeles')
+    event = SimpleNamespace(id=42, title='A concert with a longer readable title',
+        starts_at=datetime(2026, 11, 7, 2), location='Local venue', external_url='', source_name='')
+    html = env.get_template('calendar.html').render(
+        site={'name':'Community','socials':{},'footer_text':''},
+        weeks=month_grid(2026,11,[event] if with_event else [],'America/Los_Angeles'),
+        today=date(2026,11,6), month_name='November', year=2026,
+        previous=(2026,10), following=(2026,12), calendar_timezone='America/Los_Angeles')
+    agenda = html.split('<div class="calendar-agenda"',1)[1]
+    if with_event:
+        assert 'id="agenda-2026-11-06"' in agenda
+        assert 'id="agenda-2026-11-07"' not in agenda
+        assert 'Today</span>' in agenda and '6:00 PM' in agenda and 'PST' in agenda
+        assert event.title in agenda and 'Local venue' in agenda and 'href="/events/42"' in agenda
+        assert 'agenda-empty' not in agenda
+    else:
+        assert 'No events published for November yet.' in agenda
+        assert 'class="agenda-day' not in agenda

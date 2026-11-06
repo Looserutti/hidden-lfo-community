@@ -220,7 +220,7 @@ def calendar_events(db, start, end):
     records = db.scalars(select(ImportedEvent).where(ImportedEvent.cancelled == False, ImportedEvent.suppressed == False,
         ImportedEvent.starts_at >= start, ImportedEvent.starts_at < end)).all()
     return [SimpleNamespace(id=None, title=e.title, starts_at=e.starts_at,
-            external_url=e.source_url, source_name=sources[e.source_id]['name'])
+            external_url=e.source_url, source_name=sources[e.source_id]['name'], location=e.location)
             for e in records if e.source_id in sources]
 
 
