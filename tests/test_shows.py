@@ -14,7 +14,7 @@ def test_shows_matches_published_calendar_and_seven_day_boundary(monkeypatch):
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     start = datetime(2026, 11, 5, 20, tzinfo=timezone.utc)
-    monkeypatch.setattr(feeds, 'SOURCES', [{'id': 'venue', 'name': 'Venue'}])
+    monkeypatch.setattr(feeds, 'SOURCES', [{'id': 'venue', 'name': 'Venue', 'adapter': 'ticketweb_calendar'}])
     with sessionmaker(engine)() as db:
         feeds.set_enabled(db, 'website', True)
         feeds.set_enabled(db, 'venue.publish', True)
