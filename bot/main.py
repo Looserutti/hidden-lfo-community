@@ -301,6 +301,9 @@ async def activity_summary(interaction: discord.Interaction):
 async def before_report():
     await bot.wait_until_ready()
 
+from bot.shows import register_shows
+register_shows(bot)
+
 if __name__ == '__main__':
     token = os.getenv('DISCORD_BOT_TOKEN', '')
     if not token or not GUILD_ID or not VERIFIED_ROLE_ID:

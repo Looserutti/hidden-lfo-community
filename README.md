@@ -156,3 +156,7 @@ For individual imported listings, check **Exclude from publishing** and click **
 ### Venue listing retention
 
 `venue_retention_days` in `config/site.json` defaults to 30. The collector removes venue listings whose start time is more than that many elapsed days in the past on its 15-minute maintenance cycle, even when collection is paused. Incoming venue records older than the cutoff are skipped, preventing deleted listings from reappearing. Manually added venue listings follow the same rule. Discord imports, community events, RSVPs, and member observations are unaffected. The worker must be running for cleanup. Deleted SQLite space is reusable; the database file does not necessarily shrink immediately. Existing backup copies follow their own retention.
+
+### Member concert lookup
+
+Verified members can run `/shows` inside the configured Discord server for published calendar listings starting now through the next seven days (the exact upper boundary is excluded). Replies are private to the requester. The command respects website/source publication switches, individual exclusions, and cancelled listings; it includes published community events too. Dates use the community `calendar_timezone`. Lists show eight events per page; use `/shows page:2` for additional results. No automatic channel post is sent. The bot syncs the guild command at startup.
