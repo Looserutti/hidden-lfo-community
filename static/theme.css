@@ -41,10 +41,17 @@
 }
 
 .discord-invite {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   width: 100%;
   margin-bottom: 32px;
-  text-align: center;
+}
+
+.discord-invite-arrow {
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
 /* Photo carousel container */
