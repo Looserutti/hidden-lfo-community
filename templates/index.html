@@ -105,11 +105,12 @@
         </h2>
 
         <p>
+          {% set display_start = event.starts_at|calendar_time %}
           <time
             class="local-time"
-            datetime="{{ event.starts_at.isoformat() }}"
+            datetime="{{ display_start.isoformat() }}"
           >
-            {{ event.starts_at.strftime('%B %d, %Y · %H:%M') }} UTC
+            {{ display_start.strftime('%B %d, %Y · %H:%M %Z') }}
           </time>
         </p>
 

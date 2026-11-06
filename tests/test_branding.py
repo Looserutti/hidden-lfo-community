@@ -32,6 +32,8 @@ def test_generic_branding_renders_without_accounts_or_photos(tmp_path):
     site['gallery'] = discover_gallery(site, tmp_path)
     site['name'] = '<Another Community>'
     env = Environment(loader=FileSystemLoader('templates'), autoescape=select_autoescape())
+    from app.calendar_utils import calendar_time
+    env.filters['calendar_time'] = calendar_time
     html = env.get_template('index.html').render(site=site, events=[])
     assert '&lt;Another Community&gt;' in html
     assert 'class="home-gallery"' not in html

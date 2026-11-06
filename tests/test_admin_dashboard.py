@@ -207,6 +207,9 @@ def test_native_event_discord_destination_includes_guild(dashboard, monkeypatch)
         event=Event(title='Posted',published=True,starts_at=datetime.now(timezone.utc),
                     discord_channel_id=222,discord_message_id=333)
         db.add(event);db.flush();event_id=event.id
-    assert 'https://discord.com/channels/111/222/333' in client.get(f'/events/{event_id}').text
+    html=client.get(f'/events/{event_id}').text
+    assert 'https://discord.com/channels/111/222/333' in html
+    import re
+    assert re.search(r'datetime="[^"]+[+-]\d{2}:\d{2}"',html)
     monkeypatch.setattr(web,'GUILD_ID',0)
     assert 'Register in Discord</a>' not in client.get(f'/events/{event_id}').text
