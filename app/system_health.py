@@ -23,7 +23,7 @@ def check(name, success, failure, age, current):
         state, label = 'error', 'Failed — needs attention'
     elif good:
         state, label = ('error', 'Overdue — needs attention') if current-good > age else ('ok', 'Healthy')
-    return dict(name=name, state=state, label=label, last_success=good.isoformat() if good else None)
+    return dict(name=name, state=state, label=label, last_success=good.isoformat() if good else None, last_success_label=good.strftime('%b %d, %Y · %H:%M UTC') if good else None)
 
 
 def summary(db, current=None):
