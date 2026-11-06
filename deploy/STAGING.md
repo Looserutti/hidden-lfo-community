@@ -43,7 +43,7 @@ docker compose --profile shows up -d calendar-collector
 
 Use the complete encrypted host helper and systemd timers described in [docs/BACKUPS.md](../docs/BACKUPS.md). Configure the private host environment/repositories first, then run a backup and isolated restore verification. Snapshots include the consistent SQLite database, referenced audio, all dashboard photo batches, and deployment configuration. The production timer does not include preview data.
 
-For recovery, stop every database writer (website, bot, collector), preserve current data, and restore the database plus matching `gallery-audio/` and `gallery-photos/` directories from one verified snapshot into a new persistent data directory. Provision the app UID and private permissions, run migrations and smoke tests, then deliberately switch services. Do not overwrite an open SQLite database or restore an older member database merely to undo a website design change. Folder-based photos tracked in Git come from the matching source release; untracked custom assets need separate backup coverage.
+For recovery, stop every database writer (website, bot, collector), preserve current data, and restore the database plus matching `gallery-audio/`, `gallery-photos/` and `project-photos/` directories from one verified snapshot into a new persistent data directory. Provision the app UID and private permissions, run migrations and smoke tests, then deliberately switch services. Do not overwrite an open SQLite database or restore an older member database merely to undo a website design change. Folder-based photos tracked in Git come from the matching source release; untracked custom assets need separate backup coverage.
 
 ## Ready for staff review
 

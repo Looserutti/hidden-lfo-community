@@ -1,5 +1,13 @@
 # Community Hub & Discord Bot releases
 
+## Member projects and public navigation — November 6, 2026
+
+Runtime `44f1e06` adds a compact top-right homepage hamburger menu and public `/projects` stories. Each feature has one responsive photo with an accessible monochrome/color toggle, plain-text paragraphs and external HTTPS links below the write-up. No carousel, player or new service. Optional site configuration controls the public section title/description.
+
+Staff manage private drafts, photo uploads, previews, publish/republish, unpublish and deletion under Member projects. Published snapshots stay unchanged while edits are drafted. Project photos use isolated rendering, persistent storage outside Git and the shared 500 MB photo limit; complete backups include matching project photos and metadata. No database migration or bot/collector restart. Fresh installs contain no posts. Preview alone has an explicitly labelled layout sample; no sample was copied to production.
+
+Validation: all 121 isolated release-image tests passed. Preview checks covered menu navigation/Escape focus, mouse/keyboard photo toggles, no mobile overflow, unsaved-edit publication guard and live snapshot isolation. Real preview publication/unpublication and media access checks passed. A complete preview snapshot verified all 21 database/audio/photo files. Previous web image `hidden-lfo-before-projects:9b1cdbf` retained; successful encrypted production backup before promotion.
+
 ## Dashboard carousel batches — November 6, 2026
 
 Runtime `9b1cdbf` adds staff batch photo upload, private review, whole-carousel publication, retained-batch restoration and guarded inactive-batch deletion. Photos live in persistent data outside Git; new installs retain configurable folder-based galleries until staff publish a managed batch. Isolated photo rendering strips metadata, bounds dimensions and creates responsive display copies automatically. Limits: 20 photos, 20 MB each / 200 MB uploaded batch, 500 MB saved library. Camera originals are not retained; keep them separately. The encrypted snapshot helper now includes every saved photo batch with its matching database.
