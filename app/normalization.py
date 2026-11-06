@@ -4,18 +4,14 @@ import logging
 import math
 import re
 import shutil
-import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 from sqlalchemy import select, text
 from app.db import GalleryTrack
+from app.media_process import run_audio, available
 
 TARGETS = (-14.0, -16.0, -18.0)
 _worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix='gallery-audio')
-
-
-def available():
-    return shutil.which('ffmpeg') is not None
 
 
 def read_loudness(stderr):
@@ -28,9 +24,7 @@ def read_loudness(stderr):
 
 
 def measure(path):
-    result=subprocess.run(['ffmpeg','-nostdin','-hide_banner','-nostats','-i',str(path),
-        '-map','0:a:0','-vn','-af','loudnorm=I=-14:TP=-1:print_format=json','-f','null','-'],
-        capture_output=True,text=True,timeout=300)
+    result=run_audio(path,['-af','loudnorm=I=-14:TP=-1:print_format=json','-f','null'])
     if result.returncode:raise ValueError('This file could not be decoded for volume analysis.')
     return read_loudness(result.stderr)
 
@@ -60,10 +54,8 @@ def process(track_id,session):
         gain=initial_gain(lufs,peak,target)
         output=audio.AUDIO_ROOT/(uuid4().hex+'.mp3')
         for _ in range(3):
-            result=subprocess.run(['ffmpeg','-nostdin','-hide_banner','-loglevel','error','-y',
-                '-i',str(source),'-map','0:a:0','-vn','-map_metadata','-1','-af',f'volume={gain:.5f}dB',
-                '-c:a','libmp3lame','-b:a','192k','-ar','44100',str(output)],
-                capture_output=True,text=True,timeout=300)
+            result=run_audio(source,['-loglevel','error','-map_metadata','-1','-af',f'volume={gain:.5f}dB',
+                '-c:a','libmp3lame','-b:a','192k','-ar','44100'],output)
             if result.returncode:raise ValueError('A playback copy could not be created.')
             actual,actual_peak=measure(output)
             correction=min(target-actual,-1.25-actual_peak)
