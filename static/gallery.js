@@ -24,7 +24,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const ticket = ++pendingPhoto;
     const image = images[current];
     const source = image.currentSrc || image.src;
-    if (viewerImage.getAttribute('src') === source) return;
+    if (viewerImage.getAttribute('src') === source) {
+      loading.textContent = '';
+      return;
+    }
     loading.textContent = 'Loading photo…';
     const ready = new Image();
     ready.src = source;
