@@ -28,10 +28,12 @@ def load_sources(path=None):
         if not re.fullmatch(r'[a-z0-9-]{1,80}', key) or key in ids:
             raise ValueError('Source IDs must be unique lowercase identifiers')
         ids.add(key)
-        if source['adapter'] not in ('discord', 'ticketweb_calendar'):
+        if source['adapter'] not in ('discord', 'ticketweb_calendar', 'squarespace_events'):
             raise ValueError('Unsupported calendar adapter')
         if urlsplit(source['url']).scheme != 'https' or not urlsplit(source['url']).netloc:
             raise ValueError('Sources require HTTPS URLs')
+        if type(source.get('concerts_only', False)) is not bool:
+            raise ValueError('concerts_only must be true or false')
         ZoneInfo(source['timezone'])
     return sources
 
@@ -124,6 +126,9 @@ async def fetch_source(source):
                     raise ValueError('Source response exceeds 4 MB limit')
     if source['adapter'] == 'discord':
         return parse_discord_events(json.loads(chunks), GUILD_ID)
+    if source['adapter'] == 'squarespace_events':
+        from app.venue_squarespace import parse_events
+        return parse_events(chunks.decode('utf-8'), source)
     return parse_ticketweb_calendar(chunks.decode('utf-8'), source)
 
 
@@ -150,6 +155,12 @@ def save_events(db, source, events):
         db.execute(statement.on_conflict_do_update(
             index_elements=['source_id', 'external_id'],
             set_={k: v for k, v in values.items() if k not in ('source_id', 'external_id')}))
+    # Retire previously imported concerts that the source has renamed as non-concerts.
+    excluded = getattr(events, 'excluded_ids', set())
+    if source.get('concerts_only') and excluded:
+        for old in db.scalars(select(ImportedEvent).where(ImportedEvent.source_id == source['id'],
+                ImportedEvent.external_id.in_(excluded))):
+            old.cancelled = True
     # Discord returns a complete snapshot: retire removed scheduled Events.
     # Venue pages may be partial, so absence from a venue page never deletes data.
     if source['adapter'] == 'discord':

@@ -12,6 +12,7 @@
 </section>
 <section id="sources"><div class="admin-heading"><h2>Source registry</h2><span>{{ sources|length }} configured sources</span></div>
 {% for source in sources %}<article class="admin-panel source-card"><h3>{{ source.name }}</h3><p><a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">Source website ↗</a> · {{ source.stored_count }} stored listings</p>
+{% if source.concerts_only %}<p class="note">Concerts-only title filter: excludes trivia, karaoke, open mic, DJ nights, fundraisers, markets and other non-concert listings. Review imported selections below; source titles determine filtering.</p>{% endif %}
 <form method="post" action="/admin/settings/sources/{{ source.id }}"><input type="hidden" name="csrf" value="{{ csrf }}">
 <label class="setting-check"><input type="checkbox" name="collect" value="true" {% if source.collect %}checked{% endif %}><span>Collect this source</span></label>
 <label class="setting-check"><input type="checkbox" name="publish" value="true" {% if source.publish %}checked{% endif %}><span>Publish this source on the calendar</span></label><button>Save source settings</button></form>

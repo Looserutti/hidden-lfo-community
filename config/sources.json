@@ -19,5 +19,14 @@
     "adapter": "ticketweb_calendar",
     "url": "https://www.casbahmusic.com/calendar/",
     "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "pour-house",
+    "name": "Pour House Oceanside",
+    "adapter": "squarespace_events",
+    "url": "https://www.pourhouseoceanside.com/events",
+    "timezone": "America/Los_Angeles",
+    "location": "Pour House, Oceanside",
+    "concerts_only": true
   }
 ]
