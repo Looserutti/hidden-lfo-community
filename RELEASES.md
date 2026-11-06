@@ -1,5 +1,11 @@
 # Community Hub & Discord Bot releases
 
+## v0.2.0 — Gallery audio and Hidden LFO Radio
+
+Released November 6, 2026. Adds an admin-managed audio library, optional peak-safe LUFS normalization, a compact photo-viewer player with selectable tracks and optional artist social links, and refined mobile landscape photo layouts. Playback starts only when a visitor presses Play and pauses when the photo viewer closes. Branding remains configurable. Audio files live in persistent storage outside Git.
+
+Production web code: `e5958fc`. Database migration: `0007`. The prior public web release `94ca766` and `v0.1.0` pre-audio milestone remain available. The deployment preserves a pre-audio database backup and web image. Prefer rolling back website code while retaining current data, so new community activity is preserved; database restoration requires a separate deliberate recovery decision. The bot and calendar collector were not restarted for this release.
+
 ## v0.1.0 — First Working Community Hub & Discord Bot
 
 **Release date:** November 5, 2026 (America/Los_Angeles).  
