@@ -41,15 +41,9 @@ docker compose --profile shows up -d calendar-collector
 
 ## Backup and restore rehearsal
 
-Prepare a private, writable backup directory for the current app UID with `sudo install -d -m 700 -o 10001 -g 10001 backups`, then run `sh deploy/backup.sh` on the server. It writes a consistent SQLite backup. Download it through your authenticated SSH connection to a private folder on your Mac; provider server snapshots supplement these database backups.
+Use the complete encrypted host helper and systemd timers described in [docs/BACKUPS.md](../docs/BACKUPS.md). Configure the private host environment/repositories first, then run a backup and isolated restore verification. Snapshots include the consistent SQLite database, referenced audio, all dashboard photo batches, and deployment configuration. The production timer does not include preview data.
 
-Verify the downloaded backup and rehearse restoration to a **new file**:
-
-```sh
-python -m scripts.verify_backup --backup /private/path/community-backup.db --restore-to /private/path/restore-check.db
-```
-
-A successful check does not replace a complete application recovery rehearsal. For actual recovery, stop every database writer (website, bot, collector), preserve the old database, restore the verified copy to the persistent volume using the deployment's ownership, and run migrations and smoke tests before restarting services. Do not restore over an open SQLite database. Keep backups off-server and establish a recurring copy/retention process before relying on this installation.
+For recovery, stop every database writer (website, bot, collector), preserve current data, and restore the database plus matching `gallery-audio/` and `gallery-photos/` directories from one verified snapshot into a new persistent data directory. Provision the app UID and private permissions, run migrations and smoke tests, then deliberately switch services. Do not overwrite an open SQLite database or restore an older member database merely to undo a website design change. Folder-based photos tracked in Git come from the matching source release; untracked custom assets need separate backup coverage.
 
 ## Ready for staff review
 

@@ -1,5 +1,11 @@
 # Community Hub & Discord Bot releases
 
+## Dashboard carousel batches — November 6, 2026
+
+Runtime `9b1cdbf` adds staff batch photo upload, private review, whole-carousel publication, retained-batch restoration and guarded inactive-batch deletion. Photos live in persistent data outside Git; new installs retain configurable folder-based galleries until staff publish a managed batch. Isolated photo rendering strips metadata, bounds dimensions and creates responsive display copies automatically. Limits: 20 photos, 20 MB each / 200 MB uploaded batch, 500 MB saved library. Camera originals are not retained; keep them separately. The encrypted snapshot helper now includes every saved photo batch with its matching database.
+
+All 115 isolated release-image tests passed, including authorization/CSRF and private-media checks. A real unpublished preview upload survived redeployment, and a snapshot/verification rehearsal checked all 17 database/audio/photo files. Existing 24 MP photography processed successfully through the sandbox. Production promotion preserved the current carousel and retained the previous image `hidden-lfo-before-photo-admin:a785414`; no migration or bot/collector restart. See README and docs/BACKUPS.md for reuse and recovery instructions.
+
 ## Audio-processing isolation — November 6, 2026
 
 Runtime `8f7a9e1` confines normalization to a credential-free Linux child with Landlock file restrictions, seccomp network/process restrictions, bounded resources and explicit audio container/decoder/protocol allowlists. Real MP3/WAV/AAC-M4A/ALAC-M4A processing and kernel denial checks passed in a 107-test release-image suite. Preview's deployed normalizer was checked with synthetic audio before production promotion. Existing source audio/playback files and LUFS targets remain intact; no database migration or bot/collector restart. Unsupported sandbox environments fail closed for normalization while playback remains available. This mitigates exposure; it does not resolve the underlying FFmpeg advisories. See docs/AUDIO.md for hosting requirements.
