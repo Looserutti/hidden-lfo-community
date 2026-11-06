@@ -6,6 +6,7 @@ x-app: &app
     DATABASE_URL: sqlite:////data/community.db
   volumes:
     - community_data:/data
+    - ./config:/srv/app/config:ro
   restart: unless-stopped
   init: true
   logging:

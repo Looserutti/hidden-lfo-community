@@ -1,9 +1,10 @@
 [
   {
-    "id": "discord",
-    "name": "Discord scheduled Events",
-    "adapter": "discord",
-    "url": "https://discord.com",
-    "timezone": "UTC"
+    "id": "local-venue",
+    "name": "Your local venue",
+    "adapter": "squarespace_events",
+    "url": "https://venue.example/events",
+    "timezone": "America/Los_Angeles",
+    "concerts_only": true
   }
 ]

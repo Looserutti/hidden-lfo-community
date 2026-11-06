@@ -44,7 +44,7 @@ fi
 docker run --rm --network none --read-only --volumes-from "$APP_CONTAINER" -v "$stage:/backups" -v "$SCRIPT_ROOT/scripts/backup_bundle.py:/backup_bundle.py:ro" --entrypoint python "$image" /backup_bundle.py --output /backups
 # Trusted private deployment configuration; encrypted by restic with all other files.
 install -d -m 700 "$stage/deployment"
-for file in .env compose.yaml config/site.json config/sources.json; do
+for file in .env compose.yaml config/site.json config/sources.json config/sources.local.json; do
     if [ -f "$APP_CURRENT/$file" ]; then
         install -D -m 600 "$APP_CURRENT/$file" "$stage/deployment/$file"
     fi

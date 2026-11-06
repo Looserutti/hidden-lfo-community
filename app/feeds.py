@@ -20,7 +20,11 @@ from app.db import Session, Setting, ImportedEvent, now
 
 
 def load_sources(path=None):
-    path = Path(path) if path else Path(__file__).resolve().parent.parent / 'config/sources.json'
+    if path is None:
+        configured = os.getenv('CALENDAR_SOURCES_FILE')
+        private = Path(__file__).resolve().parent.parent / 'config/sources.local.json'
+        path = Path(configured) if configured else (private if private.exists() else private.with_name('sources.json'))
+    path = Path(path)
     sources = json.loads(path.read_text())
     ids = set()
     for source in sources:

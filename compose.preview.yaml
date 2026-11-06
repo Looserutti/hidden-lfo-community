@@ -10,6 +10,7 @@ x-preview: &preview
     STAFF_REPORTS_ENABLED: "false"
   volumes:
     - preview_data:/data
+    - ./config:/srv/app/config:ro
   init: true
   logging:
     driver: json-file

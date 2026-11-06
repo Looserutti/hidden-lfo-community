@@ -26,3 +26,6 @@ deploy/preview/*.caddy
 
 # Private persistent local audio uploads
 var/gallery-audio/
+
+# Private deployment calendar registry; mounted at runtime, never bundled.
+config/sources.local.json

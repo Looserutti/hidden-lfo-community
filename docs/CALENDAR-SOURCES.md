@@ -1,6 +1,10 @@
 # Calendar source adapters
 
-Sources are configured in `config/sources.json`; a fresh generic installation can start from `config/sources.example.json`. Each source starts with collection and publication off until an administrator enables it. Sources reuse weekly scheduling, manual Pull now, per-listing exclusions and venue retention. Changing a bundled registry requires deploying/restarting the web, collector and bot so the website, collection and /shows use the same sources.
+A fresh checkout has an empty `config/sources.json` and no calendar sources. Nothing is collected or published automatically. Copy the fictional `config/sources.example.json` to **`config/sources.local.json`**, replace its settings with your community’s venues, and restart the web, bot and collector. The private file replaces the entire registry, rather than adding to bundled defaults. It is ignored by Git and excluded from Docker images. Compose mounts the config directory read-only into each app service. Keep the private file with your deployment configuration when upgrading releases; backups include it.
+
+For non-Compose installations, the loader also accepts `CALENDAR_SOURCES_FILE` pointing to a JSON registry. An explicitly selected missing or malformed file fails startup instead of silently using another registry. The default precedence is that environment path, then `config/sources.local.json`, then the empty `config/sources.json`. Each source starts with collection and publication off until an administrator enables it. Stable IDs preserve existing records and source switches. Removing a source stops its listings from being published without deleting stored records. Sources reuse weekly scheduling, manual Pull now, per-listing exclusions and venue retention.
+
+To import your own Discord scheduled Events, include a source with `id: "discord"`, `adapter: "discord"`, `name: "Discord scheduled Events"`, `url: "https://discord.com"` and `timezone: "UTC"`; the guild and credentials come from your private environment configuration. Dashboard source creation is not implemented yet; source definitions currently use the private file.
 
 ## Squarespace event lists
 
@@ -20,6 +24,6 @@ Example for another community (replace the example URL and location):
 }
 ```
 
-The reference Pour House Oceanside source uses this adapter with concerts_only enabled. Titles mentioning trivia, bingo, karaoke, open mic, DJ nights, all-vinyl nights, fundraisers, vendors/markets, holidays/closures, comedy or similar non-concert programming are excluded. A DJ promoter presenting an actual band concert is not excluded merely for having DJ in the promoter's name. Review imported selections in Calendar settings; title-based classification cannot guarantee the nature of every ambiguously named listing. Staff can exclude individual shows or manually add a verified concert that the filter omitted.
+With `concerts_only` enabled, Titles mentioning trivia, bingo, karaoke, open mic, DJ nights, all-vinyl nights, fundraisers, vendors/markets, holidays/closures, comedy or similar non-concert programming are excluded. A DJ promoter presenting an actual band concert is not excluded merely for having DJ in the promoter's name. Review imported selections in Calendar settings; title-based classification cannot guarantee the nature of every ambiguously named listing. Staff can exclude individual shows or manually add a verified concert that the filter omitted.
 
 Filtered non-concerts are not stored as new listings. If an already-imported show is renamed into an excluded category, its existing row is made ineligible without clearing staff exclusions. A later eligible concert title can restore it, with staff exclusions still respected. Existing cancellations and rolling venue-only cleanup remain in effect. The adapter imports only entries the venue exposes on its public page; it is not a guarantee of a complete or continually updated venue schedule.

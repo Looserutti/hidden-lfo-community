@@ -26,3 +26,6 @@ static/images/IMG_*
 releases
 
 var/gallery-audio
+
+# Private deployment calendar registry; mounted at runtime, never bundled.
+config/sources.local.json
