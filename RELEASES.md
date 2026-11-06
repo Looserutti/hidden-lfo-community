@@ -1,5 +1,11 @@
 # Community Hub & Discord Bot releases
 
+## v0.2.1 — Community calendar clarity
+
+Released November 6, 2026. Homepage upcoming events now include visible imported listings, with corrected timezone-aware browser dates. Dashboard statistics distinguish upcoming community events (native and Discord scheduled events) from external venue listings. Community events use a configurable aqua accent and a visible label, with a calendar key in desktop and mobile views. Native event registration links now include the Discord server ID.
+
+Production web code: `c32cad2`; database schema remains 0007. Previous public web release `2a61dae` is retained for rollback. No preview database was copied to production, and the gateway bot/collector were not restarted.
+
 ## v0.2.0 — Gallery audio and Hidden LFO Radio
 
 Released November 6, 2026. Adds an admin-managed audio library, optional peak-safe LUFS normalization, a compact photo-viewer player with selectable tracks and optional artist social links, and refined mobile landscape photo layouts. Playback starts only when a visitor presses Play and pauses when the photo viewer closes. Branding remains configurable. Audio files live in persistent storage outside Git.
