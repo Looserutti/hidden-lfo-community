@@ -93,3 +93,16 @@ class EventSubmission(Base):
     reviewed_by: Mapped[int | None] = mapped_column(nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     event_id: Mapped[int | None] = mapped_column(ForeignKey('events.id'), nullable=True)
+
+
+class GalleryTrack(Base):
+    """Audio metadata; actual uploads live outside source control."""
+    __tablename__ = 'gallery_tracks'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(200))
+    artist: Mapped[str] = mapped_column(String(160), default='')
+    filename: Mapped[str] = mapped_column(String(80), unique=True)
+    byte_size: Mapped[int] = mapped_column(Integer)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    published: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

@@ -34,7 +34,7 @@ Never commit `.env`. Never post your bot token or client secret in chat. Keep th
 - Website administrators use an explicit Discord-ID allowlist. Changes to Discord admin roles do not automatically update website access.
 - Provider backups and verified database backups exist in the reference deployment; recurring off-server database backup copying is still a follow-up.
 - Automatic Discord event announcements and weekly staff reports remain opt-in and are disabled in the reference deployment. Their complete live acceptance is outside this baseline's confirmed onboarding check.
-- Audio playback, music uploads and playlist administration are future work, not part of v0.1.0.
+- Gallery audio is post-v0.1.0 development; see [audio setup and administration](docs/AUDIO.md). The v0.1.0 tag preserves the pre-audio baseline.
 - A repository license has not yet been selected; choose one before describing reuse permissions as an open-source license grant.
 
 The sections below describe feature milestones; [the release record](RELEASES.md) identifies the current baseline and validation scope.
@@ -191,3 +191,8 @@ Channel permissions must match: everyone can view/read rules and introductions; 
 Rules-button message ID and first observed introduction timestamps are stored in settings, not in source control. The bot needs Manage Roles and a role above Verified/Member. Test the permission plan and the two onboarding states before applying it broadly. This feature is off by default for downstream deployments.
 
 Permission setup can be planned with `python -m scripts.configure_onboarding --policy /private/onboarding-policy.json --backup /private/permission-snapshot.json`. Use `config/onboarding.example.json` as the shape, classifying every guild channel and category by numeric ID; rules/introduction IDs come from the environment. Private channels are never modified. The tool defaults to a read-only plan and writes a private snapshot. Add `--apply` only after reviewing the plan and starting the configured bot so its acknowledgment button exists. Snapshot paths must be new files. Changes to role/per-user View Channel allows in community channels are deliberate to prevent bypassing Member; individual deny overrides and staff restrictions remain in force. The tool does not remove roles or messages.
+
+
+## Gallery soundtrack (post-v0.1 development)
+
+Admins manage uploads, track credits, ordering and publication in **Gallery audio**. Music appears only inside the expanded photo viewer and pauses when it closes. Audio files stay in persistent storage outside Git; new deployments start with no tracks. See [audio documentation](docs/AUDIO.md) for migrations, limits and backup requirements.

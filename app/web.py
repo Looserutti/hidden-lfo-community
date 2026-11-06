@@ -14,6 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select, func
 from app.branding import site_context, SITE
 from app import feeds
+from app.audio import audio_routes, playlist as audio_playlist
 from app.config import ADMIN_IDS, BASE_URL
 from app.config import DISCORD_INVITE_URL
 from app.db import init_db, Session, Event, Registration, Member, Setting, ImportedEvent, EventSubmission
@@ -69,7 +70,7 @@ def home(request: Request):
     with Session() as db:
         events = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= datetime.now(timezone.utc)).order_by(Event.starts_at)).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events}
-        return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL))
+        return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL, gallery_audio=audio_playlist(db)))
 
 @app.get('/calendar', response_class=HTMLResponse)
 def calendar_page(request: Request, year: int | None = None, month: int | None = None, agenda_page: int = Query(0, ge=0, le=100)):
@@ -408,3 +409,7 @@ def reject_submission(request: Request, submission_id: int, csrf: str = Form(...
     except ValueError as exc:
         raise HTTPException(409, str(exc))
     return RedirectResponse('/admin#member-submissions', status_code=303)
+
+
+app.include_router(audio_routes(lambda: Session(), admin, csrf_check,
+    lambda request, **fields: templates.TemplateResponse(request, 'admin_music.html', context(request, **fields))))

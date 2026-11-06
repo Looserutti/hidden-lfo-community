@@ -46,12 +46,21 @@
 </section>
 
 
-<dialog class="photo-viewer" aria-label="Fullscreen event photographs">
+<dialog class="photo-viewer{% if gallery_audio %} has-player{% endif %}" aria-label="Fullscreen event photographs">
   <button class="viewer-close" type="button" aria-label="Close photo viewer" autofocus>Close ×</button>
   <img class="viewer-image" alt="">
   <button class="gallery-arrow gallery-prev" type="button" aria-label="Previous photograph">&#8592;</button>
   <button class="gallery-arrow gallery-next" type="button" aria-label="Next photograph">&#8594;</button>
   <div class="gallery-counter" aria-live="polite"><span class="viewer-current">01</span> / {{ '%02d' | format(site.gallery | length) }}</div>
+  {% if gallery_audio %}
+  <section class="gallery-player" aria-label="Gallery soundtrack">
+    <div class="player-track"><span class="eyebrow">GALLERY RADIO</span><strong class="player-title"></strong><span class="player-artist"></span></div>
+    <div class="player-transport"><button class="player-previous" type="button" aria-label="Previous track">‹</button><audio class="player-audio" controls preload="none" aria-label="Gallery music"></audio><button class="player-next" type="button" aria-label="Next track">›</button></div>
+    <label class="player-selection">Track<select class="player-select" aria-label="Choose a track">{% for track in gallery_audio %}<option value="{{ loop.index0 }}">{{ track.title }}{% if track.artist %} — {{ track.artist }}{% endif %}</option>{% endfor %}</select></label>
+    <p class="player-status" role="status" aria-live="polite"></p>
+  </section>
+  <script type="application/json" id="gallery-playlist">{{ gallery_audio|tojson }}</script>
+  {% endif %}
 </dialog>
 
 {% endif %}
@@ -113,5 +122,6 @@
   </div>
   <p class="home-community-note">{{ site.footer_text }}</p>
 </section>
-<script src="/static/gallery.js" defer></script>
+<script src="/static/gallery.js?v=audio1" defer></script>
+<script src="/static/gallery-player.js?v=1" defer></script>
 {% endblock %}

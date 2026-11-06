@@ -23,3 +23,6 @@ backups/
 .vscode/
 # Server-specific optional reverse proxy routes
 deploy/preview/*.caddy
+
+# Private persistent local audio uploads
+var/gallery-audio/

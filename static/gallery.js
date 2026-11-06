@@ -78,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     previousOverflow = document.body.style.overflow;
     stopTimer();
     viewer.showModal();
+    viewer.dispatchEvent(new Event("gallery:open"));
     document.body.style.overflow = "hidden";
   }
 
@@ -91,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   viewer.querySelector(".gallery-prev").addEventListener("click", () => showPhoto(current - 1));
   viewer.querySelector(".gallery-next").addEventListener("click", () => showPhoto(current + 1));
   viewer.addEventListener("keydown", (event) => {
+    if (event.target.closest("audio, input, select, .gallery-player")) return;
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
       showPhoto(current + (event.key === "ArrowLeft" ? -1 : 1));

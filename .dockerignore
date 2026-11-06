@@ -24,3 +24,5 @@ static/images/IMG_*
 .codex
 .agents
 releases
+
+var/gallery-audio

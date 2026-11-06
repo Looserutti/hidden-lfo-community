@@ -64,3 +64,5 @@
 
 .submission-card { border-top: 1px solid var(--admin-line, #444); margin-top: 1.5rem; padding-top: 1rem; }
 .submission-card > form + form { margin-top: .75rem; }
+.audio-publish { display: flex; align-items: center; gap: 10px; }
+.audio-publish input { width: auto; margin: 0; }

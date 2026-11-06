@@ -1,0 +1,29 @@
+{% extends 'admin_base.html' %}
+{% block admin_content %}
+<div class="page-heading"><div><p class="eyebrow">GALLERY SOUNDTRACK</p><h1>Gallery audio</h1><p>Music appears only in the expanded photo viewer. Visitors press Play; closing the viewer pauses playback.</p></div><a href="/">Open gallery ↗</a></div>
+<article>
+  <h2>Upload a track</h2>
+  <p>MP3, WAV or M4A · up to {{ upload_mb }} MB per file. {{ used_mb }} / {{ storage_mb }} MB used.</p>
+  <form action="/admin/music/upload" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Audio file<input type="file" name="audio" accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4" required></label>
+    <label>Track title<input name="title" maxlength="200" placeholder="Defaults to the filename"></label>
+    <label>Artist<input name="artist" maxlength="160"></label>
+    <p class="hint">New uploads are drafts. Enable “Available in gallery” and save when ready.</p>
+    <button>Upload track</button>
+  </form>
+</article>
+{% for track in tracks %}
+<article>
+  <p class="eyebrow">{{ loop.index }} · {{ 'PUBLISHED' if track.published else 'DRAFT' }} · {{ '%.1f'|format(track.byte_size/1024/1024) }} MB</p>
+  <form action="/admin/music/{{ track.id }}" method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Title<input name="title" value="{{ track.title }}" maxlength="200" required></label>
+    <label>Artist<input name="artist" value="{{ track.artist }}" maxlength="160"></label>
+    <label class="audio-publish"><input type="checkbox" name="published" value="true" {% if track.published %}checked{% endif %}> Available in gallery</label>
+    <div class="actions"><button>Save track</button><button name="move" value="up" {% if loop.first %}disabled{% endif %}>Move up</button><button name="move" value="down" {% if loop.last %}disabled{% endif %}>Move down</button></div>
+  </form>
+  <details><summary>Remove track</summary><form action="/admin/music/{{ track.id }}/delete" method="post" onsubmit="return confirm('Delete this track and its audio file?')"><input type="hidden" name="csrf" value="{{ csrf }}"><p>This removes the file from this environment.</p><button>Delete audio file</button></form></details>
+</article>
+{% else %}<p>No audio uploaded yet.</p>{% endfor %}
+{% endblock %}

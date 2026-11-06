@@ -368,3 +368,26 @@
   .site-footer > span { text-align: center; }
   .footer-socials, .footer-admin { grid-column: 1; }
 }
+
+/* Gallery soundtrack stays inside the modal, separate from the homepage. */
+.photo-viewer.has-player { padding-bottom: 220px; }
+.photo-viewer.has-player .gallery-counter { top: 16px; left: 16px; right: auto; bottom: auto; }
+.gallery-player { position: absolute; bottom: 16px; left: 16px; right: 16px; width: min(100% - 32px, 900px); margin-inline: auto; padding: 16px 20px; background: #191919; border: 1px solid #444; border-radius: 8px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 1.3fr); gap: 12px 24px; align-items: center; }
+.player-track { display: grid; gap: 4px; min-width: 0; }
+.player-track .eyebrow { font-size: 0.65rem; color: #999; }
+.player-title { font-size: 1rem; overflow-wrap: anywhere; }
+.player-artist { font-size: 0.8rem; color: #aaa; }
+.player-transport { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.player-transport button { width: 36px; min-height: 44px; padding: 4px; background: transparent; color: #fff; border-color: #555; font-size: 1.4rem; }
+.player-transport button:disabled { opacity: .35; cursor: default; }
+.player-audio { width: 100%; min-width: 0; height: 44px; }
+.player-selection { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin: 0; font-size: .75rem; color: #aaa; }
+.player-selection select { max-width: none; padding: 6px 10px; font-size: .8rem; min-height: 36px; }
+.player-status { grid-column: 1 / -1; margin: 0; font-size: .8rem; }
+.player-status:empty { display: none; }
+@media (max-width: 700px) {
+  .photo-viewer.has-player { padding-bottom: 260px; }
+  .gallery-player { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 10px; }
+  .player-selection { grid-column: 1; }
+  .player-title { font-size: .9rem; }
+}
