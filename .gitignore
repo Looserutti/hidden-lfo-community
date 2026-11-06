@@ -31,3 +31,5 @@ var/gallery-audio/
 config/sources.local.json
 
 var/system-health/
+
+static/gallery-optimized/

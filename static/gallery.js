@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadViewerPhoto() {
     const ticket = ++pendingPhoto;
     const image = images[current];
-    const source = image.currentSrc || image.src;
+    const source = image.dataset.fullSrc || image.currentSrc || image.src;
     if (viewerImage.getAttribute('src') === source) {
       loading.textContent = '';
       return;
@@ -41,14 +41,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function hydrate(image) {
+    if (!image.dataset.src) return;
+    if (image.dataset.srcset) image.srcset = image.dataset.srcset;
+    image.src = image.dataset.src;
+    delete image.dataset.src;
+    delete image.dataset.srcset;
+  }
+
+  function warmNext() {
+    if (navigator.connection?.saveData) return;
+    hydrate(images[(current + 1) % images.length]);
+  }
+
   function showPhoto(index) {
     current = (index + images.length) % images.length;
 
+    hydrate(images[current]);
     images.forEach((image, i) => {
       image.classList.toggle("is-active", i === current);
       image.classList.remove("is-color");
     });
 
+    if (images[current].complete && images[current].naturalWidth) warmNext();
     counter.textContent = String(current + 1).padStart(2, "0");
     if (viewer.open) loadViewerPhoto();
     viewer.querySelector(".viewer-current").textContent = counter.textContent;
@@ -128,5 +143,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   showPhoto(0);
+  // Warm only the adjacent slide, after the visible image has finished loading.
+  images.forEach(image => image.addEventListener('load', () => {
+    if (image === images[current]) warmNext();
+  }));
+  if (images[0].complete && images[0].naturalWidth) warmNext();
   startTimer();
 });

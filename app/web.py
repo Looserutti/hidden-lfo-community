@@ -38,6 +38,8 @@ async def secure_response_headers(request: Request, call_next):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['X-Frame-Options'] = 'DENY'
+    if request.url.path.startswith('/static/gallery-optimized/') and response.status_code == 200:
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     if request.url.path.startswith(('/admin', '/auth', '/login')):
         response.headers['Cache-Control'] = 'no-store'
     if BASE_URL.startswith('https://'):

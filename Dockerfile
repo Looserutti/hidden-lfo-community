@@ -9,4 +9,6 @@ COPY . .
 # Source paths above are copied as directories; ensure migration and runtime imports work.
 RUN mkdir -p /data /backups && chown -R app:app /data /backups /srv/app
 USER app
+# Generate responsive photos before serving traffic; new folder additions generate on discovery.
+RUN python -c "from app.branding import SITE, discover_gallery; discover_gallery(SITE)"
 CMD ["uvicorn", "app.web:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]

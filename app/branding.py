@@ -47,7 +47,10 @@ def discover_gallery(site, static_root=None):
                 or path.suffix.lower() not in {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'}):
             continue
         label = re.sub(r'[_-]+', ' ', path.stem).strip()
-        photos.append({'src': '/static/' + quote(path.relative_to(static_root).as_posix(), safe='/'),
+        from app.gallery_images import variants
+        stat=path.stat()
+        optimized=variants(str(path.resolve()),stat.st_mtime_ns,stat.st_size,str(static_root.resolve()))
+        photos.append({**optimized, 'src': '/static/' + quote(path.relative_to(static_root).as_posix(), safe='/'),
                        'alt': f"{site['name']} — {label}"})
     return photos
 

@@ -18,7 +18,11 @@
   <div class="gallery-slides">
     {% for photo in site.gallery %}
     <img
-      src="{{ photo.src }}"
+      {% if loop.first %}src="{{ photo.display_src or photo.src }}"{% if photo.srcset %} srcset="{{ photo.srcset }}"{% endif %} fetchpriority="high"{% else %}data-src="{{ photo.display_src or photo.src }}"{% if photo.srcset %} data-srcset="{{ photo.srcset }}"{% endif %}{% endif %}
+      data-full-src="{{ photo.src }}"
+      sizes="(max-width: 800px) 100vw, 1100px"
+      {% if photo.width %}width="{{ photo.width }}" height="{{ photo.height }}"{% endif %}
+      decoding="async"
       alt="{{ photo.alt }}"
       class="gallery-image{% if loop.first %} is-active{% endif %}"
       loading="{% if loop.first %}eager{% else %}lazy{% endif %}"
@@ -135,6 +139,6 @@
   </div>
   <p class="home-community-note">{{ site.footer_text }}</p>
 </section>
-<script src="/static/gallery.js?v=landscape2" defer></script>
+<script src="/static/gallery.js?v=responsive3" defer></script>
 <script src="/static/gallery-player.js?v=artist-social1" defer></script>
 {% endblock %}
