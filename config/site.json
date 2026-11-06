@@ -14,5 +14,6 @@
     "weekday": 1,
     "hour": 9
   },
-  "venue_retention_days": 30
+  "venue_retention_days": 30,
+  "radio_name": "Hidden LFO Radio"
 }

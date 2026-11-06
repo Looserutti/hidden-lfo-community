@@ -54,14 +54,14 @@
   <button class="gallery-arrow gallery-next" type="button" aria-label="Next photograph">&#8594;</button>
   <div class="gallery-counter" aria-live="polite"><span class="viewer-current">01</span> / {{ '%02d' | format(site.gallery | length) }}</div>
   {% if gallery_audio %}
-  <section class="gallery-player" aria-label="Gallery soundtrack">
+  <section class="gallery-player" aria-label="{{ site.radio_name|default(site.name ~ ' Radio') }}">
     <button class="player-previous" type="button" aria-label="Previous track">‹</button>
     <audio class="player-audio" controls preload="none" aria-label="Gallery music"></audio>
     <button class="player-next" type="button" aria-label="Next track">›</button>
     <details class="player-details">
       <summary aria-label="Track info and playlist" title="Tracks and artist info"><span class="player-info-label">Tracks</span><span aria-hidden="true">⌃</span></summary>
       <div class="player-details-panel">
-        <div class="player-track"><span class="eyebrow">SELECTED TRACK</span><strong class="player-title"></strong><span class="player-artist"></span><a class="player-artist-social" hidden target="_blank" rel="noopener noreferrer">Artist social ↗</a></div>
+        <div class="player-track"><span class="eyebrow">{{ site.radio_name|default(site.name ~ ' Radio') }}</span><strong class="player-title"></strong><span class="player-artist"></span><a class="player-artist-social" hidden target="_blank" rel="noopener noreferrer">Artist social ↗</a></div>
         <ol class="player-playlist" aria-label="Choose a track">
         {% for track in gallery_audio %}
           <li><button type="button" class="player-track-choice" data-track-index="{{ loop.index0 }}" aria-label="{{ track.title }}{% if track.artist %} — {{ track.artist }}{% endif %}"><span class="player-track-number" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span><span>{{ track.title }}{% if track.artist %}<small>{{ track.artist }}</small>{% endif %}</span></button></li>
