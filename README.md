@@ -1,6 +1,10 @@
-# Community Platform — starter implementation
+# Community Hub & Discord Bot
 
-A **first working scaffold**, not a production-ready release. Public FastAPI event pages, Discord OAuth admin login, draft/publish/edit/unpublish events, SQLite models, Discord onboarding and RSVP buttons, and preliminary inactivity monitoring.
+**v0.1.0 — First Working Community Hub & Discord Bot** is the first working release baseline, confirmed in the Hidden LFO deployment on November 5, 2026. It combines a public community website, moderated event calendar, Discord onboarding, and staff activity tools.
+
+See [release notes and acceptance evidence](RELEASES.md#v010--first-working-community-hub--discord-bot) for the shipped features, real-user onboarding confirmation, validation, and remaining limitations. Audio playback is not part of this release.
+
+Branding, social links, Discord invite, guild/role/channel IDs, and venue sources are configurable for other communities. Keep deployment credentials and member data outside Git. Example environments intentionally leave the Discord invite blank.
 
 ## Hosting and required services
 
@@ -13,31 +17,32 @@ Start with [Services, costs, and setup order](deploy/HOSTING.md) for provider li
 3. Run `pip install -r requirements.txt`.
 4. Copy `.env.example` to `.env` and fill in settings. Generate SESSION_SECRET with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`.
 5. Set your Discord application's OAuth2 redirect URI to `http://localhost:8000/auth/callback` (development only). Enable Server Members Intent and Presence Intent in the Developer Portal. Invite bot with Manage Roles, Send Messages, Read Message History and relevant permissions; its role must be above Verified.
-6. Run website from project root: `uvicorn app.web:app --reload`. Open http://localhost:8000.
+6. Initialize the database with `alembic upgrade head`, then run the website from the project root: `uvicorn app.web:app --reload`. Open http://localhost:8000.
 7. In another terminal, activate the environment and run `python -m bot.main`.
-8. Visit `/login` with an allowlisted admin Discord account; create and publish an event. Bot posts RSVP buttons to configured events channel.
+8. Visit `/login` with an allowlisted admin Discord account; create and publish an event. Automatic Discord announcements require the separately configured `EVENT_PUBLISHING_ENABLED=true`; they are off by default.
 
 ## Security
 
-Never commit `.env`. Never post your bot token or client secret in chat. Keep the admin dashboard private through Discord OAuth allowlist. Use HTTPS, a strong session secret, backups, and proper process supervision in production. Configure channel access so unverified members cannot use RSVP buttons. **Before applying restrictive channel permissions, grant Verified to existing members.**
+Never commit `.env`. Never post your bot token or client secret in chat. Keep the admin dashboard private through Discord OAuth allowlist. Use HTTPS, a strong session secret, backups, and proper process supervision in production. Configure channel access so unverified members cannot use RSVP buttons. **Before applying restrictive channel permissions, preserve existing Member roles and review the explicit two-step onboarding permission plan.**
 
-## Known limitations / next milestones
+## Current limitations / next milestones
 
-- This is a scaffold, not fully tested against a live Discord server.
-- Event editing, unpublishing, and Discord announcement synchronization are implemented using a 30-second reconciliation loop; test on a real Discord server before relying on it. Unpublishing preserves RSVP history.
-- RSVP counts are refreshed on successful registration/cancellation and in the reconciliation loop.
-- Weekly report currently posts to the events channel; configure a private admin report channel before production.
-- Inactivity detection is observational only: Discord presence is not server-specific, offline/invisible presence cannot be observed, and missing history must not be treated as inactivity. Full `/activity`, `/activity-summary`, weekly scheduling, grace-period reporting, and reaction coverage for uncached messages are future work.
-- Database tables use `create_all` for first-run setup; add Alembic migrations before production schema changes.
-- Registration capacity checks should use transactional locking or PostgreSQL for high concurrency. Current SQLite logic may race under simultaneous clicks.
-- A production deployment needs stronger operational controls, rate limiting, backup automation, OAuth error handling, privacy policy, and tests.
-- Calendar grouping and display use the community’s configurable IANA time zone; stored timestamps remain UTC.
-- For public event pages, the link points to the bot announcement when posted; newcomers need a separate server invite link (future enhancement).
+- Real-user onboarding is confirmed in the Hidden LFO server; other communities must validate their own role hierarchy and channel permissions.
+- Activity tracking is observational. Presence is not server-specific, invisible/offline presence cannot be observed, and missing history is not proof of inactivity. No automatic removals.
+- SQLite uses a local persistent volume and serialized RSVP writes. Multi-host SQLite, high-volume deployments, and PostgreSQL migration need separate validation.
+- Automated Casbah/Soda Bar collection is not enabled in the reference deployment; it needs a supported source. External provider behavior can change.
+- Website administrators use an explicit Discord-ID allowlist. Changes to Discord admin roles do not automatically update website access.
+- Provider backups and verified database backups exist in the reference deployment; recurring off-server database backup copying is still a follow-up.
+- Automatic Discord event announcements and weekly staff reports remain opt-in and are disabled in the reference deployment. Their complete live acceptance is outside this baseline's confirmed onboarding check.
+- Audio playback, music uploads and playlist administration are future work, not part of v0.1.0.
+- A repository license has not yet been selected; choose one before describing reuse permissions as an open-source license grant.
+
+The sections below describe feature milestones; [the release record](RELEASES.md) identifies the current baseline and validation scope.
 
 ## Version 3: public calendar and event discovery
 
 - `/calendar` shows a Sunday-first monthly calendar with previous/next month navigation; use `?year=2026&month=11` to navigate directly.
-- Public event listing and details use browser-local time formatting. The monthly calendar **groups days by UTC**, so events near midnight may appear on a different day than the visitor's local date; this is a known limitation to address in a future release.
+- Public event listing and detail timestamps can use browser-local formatting. Calendar grouping and display use the configured community IANA time zone, with UTC storage. Mobile shows rolling groups of ten upcoming events from local midnight today, with left/right browsing, load-more and Today reset; desktop retains the monthly grid.
 - Set `DISCORD_INVITE_URL` in `.env` to a permanent invite created inside your Discord server. Visitors can join using the public website, but RSVPs still require the Verified role and happen inside Discord.
 - No website event registration or member-only event visibility is implemented; all published events are public.
 
@@ -49,19 +54,19 @@ Never commit `.env`. Never post your bot token or client secret in chat. Keep th
 - Set `STAFF_REPORT_CHANNEL_ID` to a **private staff-only text channel**. Weekly activity reports are no longer sent to the public events channel. The weekly loop runs every 168 hours after the bot becomes ready, not at a fixed calendar time, and may skip reports while offline.
 - Classification distinguishes active, review, grace, unknown, and exempt. Observations are not proof of actual attendance or absence; no automatic removals.
 - **Privacy:** member activity and registrations are administrator-only; limit access to staff who need them.
-- **Important:** `Base.metadata.create_all()` does not perform schema migrations. Add Alembic before changing production tables.
+- **Important:** use `alembic upgrade head` for schema migrations; `Base.metadata.create_all()` does not upgrade existing tables.
 
 ## Version 5: reliability foundation
 
 - SQLite RSVP operations use `BEGIN IMMEDIATE` to serialize capacity checks and updates across concurrent SQLite writers. Keep SQLite on a **local** persistent disk; do not share the file across hosts. PostgreSQL needs its own locking strategy before migration.
 - Alembic initial migration added. **New installs:** run `alembic upgrade head` before launching services. **Existing Version 4 databases:** back up the DB, compare actual schema to the Version 4 models, then run `alembic stamp 0001` only if they match. Do not run the initial migration against existing tables.
 - Consistent SQLite backups: `python -m scripts.backup_sqlite --output /safe/location/community.db`. Copy backups **off the server**, test restores, and schedule retention externally.
-- Concurrency tests cover overbooking and cancellation. This is still a development build; production hardening (reverse proxy, HTTPS, monitoring, OAuth security review, deployment services, Discord integration tests) is outstanding.
+- Concurrency tests cover overbooking and cancellation. The reference deployment now uses Docker Compose, Caddy HTTPS, protected Discord OAuth admin access and isolated preview storage. See the release notes for what was tested and what remains operational follow-up.
 - `init_db()` still uses `create_all()` for legacy compatibility; production startup should run migrations explicitly rather than depending on it.
 
 ## Version 6: single-server deployment (Docker Compose + Caddy)
 
-This deployment is a **candidate for integration testing**, not a security-certified production release. It assumes one Ubuntu VPS, a DNS name, and a local Docker named volume for SQLite. Do not use networked SQLite volumes or scale the bot to multiple replicas.
+This is the single-server deployment used for the working baseline. Each downstream deployment must validate its own integration and operational settings. It assumes one Ubuntu VPS, a DNS name, and a local Docker named volume for SQLite. Do not use networked SQLite volumes or scale the bot to multiple replicas.
 
 1. Point the DNS A/AAAA record for your domain to the VPS; allow inbound TCP 80/443 and UDP 443. Install Docker Engine with the Compose plugin on a supported Linux distribution. Restrict SSH with keys and a firewall.
 2. Copy `.env.example` to `.env`, set `SITE_DOMAIN` (e.g. `community.example.com`), `PUBLIC_BASE_URL=https://community.example.com`, `DISCORD_REDIRECT_URI=https://community.example.com/auth/callback`, a random `SESSION_SECRET`, bot credentials, guild/role/channel IDs, and `ADMIN_DISCORD_IDS`. Keep `.env` private; never commit it. Add the same HTTPS callback URI in Discord Developer Portal.
