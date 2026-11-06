@@ -1,5 +1,13 @@
 # Community Hub & Discord Bot releases
 
+## v0.2.2 — Pour House concert listings
+
+Released November 6, 2026. Adds a reusable Squarespace events adapter and a concerts-only source for Pour House Oceanside. Trivia, karaoke, open mic and other recognized non-concert listings are excluded. Administrators retain collection, publication and per-event exclusion controls; ambiguous titles should be reviewed. Listings use the existing Tuesday 9am Pacific collection schedule and venue-only 30-day retention.
+
+Production and preview runtime: `2d951c9`; schema remains 0007. The first collection found 15 upcoming concerts. Production web, bot and collector were updated so `/shows` recognizes the new source. A successful encrypted off-server backup preceded promotion; previous service images are retained as `hidden-lfo-before-pour-house:web`, `:bot` and `:calendar-collector`. No preview database was copied to production.
+
+Validation: all 93 tests passed in the release container, including source parsing, filtering, timezone handling and retirement of listings reclassified as non-concerts. Preview and public calendars were checked visually. The live gateway bot reconnected successfully. No additional paid service was added.
+
 ## v0.2.1 — Community calendar clarity
 
 Released November 6, 2026. Homepage upcoming events now include visible imported listings, with corrected timezone-aware browser dates. Dashboard statistics distinguish upcoming community events (native and Discord scheduled events) from external venue listings. Community events use a configurable aqua accent and a visible label, with a calendar key in desktop and mobile views. Native event registration links now include the Discord server ID.
