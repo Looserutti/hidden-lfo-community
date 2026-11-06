@@ -1,5 +1,9 @@
 # Community Hub & Discord Bot releases
 
+## Private calendar source configuration — November 6, 2026
+
+Fresh installations now start with an empty source registry. Fictional examples are provided separately; deployment-specific registries belong in ignored `config/sources.local.json`, excluded from Docker images and mounted read-only at runtime. `CALENDAR_SOURCES_FILE` supports alternative locations. Existing source IDs and database publication settings remain unchanged during migration. Backup tooling includes the private registry. Historical commits still contain the previously public venue definitions; this change removes active defaults rather than rewriting Git history.
+
 ## v0.2.2 — Pour House concert listings
 
 Released November 6, 2026. Adds a reusable Squarespace events adapter and a concerts-only source for Pour House Oceanside. Trivia, karaoke, open mic and other recognized non-concert listings are excluded. Administrators retain collection, publication and per-event exclusion controls; ambiguous titles should be reviewed. Listings use the existing Tuesday 9am Pacific collection schedule and venue-only 30-day retention.
