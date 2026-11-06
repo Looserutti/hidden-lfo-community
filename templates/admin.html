@@ -1,10 +1,11 @@
 {% extends 'admin_base.html' %}{% block admin_content %}
 <div class="admin-heading"><div><p class="eyebrow">COMMUNITY OPERATIONS</p><h1>Community overview</h1><p>Events and member observations, in one place.</p></div><a class="cta" href="#create-event">Create event</a></div>
-<section class="admin-metrics" aria-label="Community summary">
+<section class="admin-metrics overview-metrics" aria-label="Community summary">
   <a class="metric" href="/admin/activity"><span>Tracked members</span><strong>{{ member_total }}</strong><small>Members recorded by the bot</small></a>
   <a class="metric" href="/admin/activity?status=review"><span>Needs review</span><strong>{{ activity_totals.review }}</strong><small>Older observations to review with care</small></a>
   <a class="metric" href="/admin/activity?status=unknown"><span>Unknown activity</span><strong>{{ activity_totals.unknown }}</strong><small>Not enough history to classify</small></a>
-  <a class="metric" href="/calendar"><span>Upcoming events</span><strong>{{ upcoming_total }}</strong><small>Published on the public calendar</small></a>
+  <a class="metric" href="/calendar"><span>Upcoming community events</span><strong>{{ upcoming_total }}</strong><small>Published dashboard + Discord scheduled events</small></a>
+  <a class="metric" href="/admin/settings#listings"><span>Upcoming venue listings</span><strong>{{ venue_total }}</strong><small>External venue events visible on the calendar</small></a>
 </section>
 <p class="admin-notice">Staff access only. Activity reflects observations, not attendance. No members are automatically removed. <a href="/admin/activity#status-guide">How activity statuses work →</a></p>
 <section id="member-submissions" class="admin-panel"><h2>Member event submissions <span>({{ submissions|length }} pending)</span></h2><p>Verified members submit events with /event. Review and edit the details below before publishing to the website calendar.</p>
@@ -15,7 +16,8 @@
 <div class="event-date-fields"><label>Event date<input name="start_date" type="date" value="{{ local_start.strftime('%Y-%m-%d') }}" required></label><label>Start time<input name="start_time" type="time" value="{{ local_start.strftime('%H:%M') }}" required></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
 <label>Venue or location<input name="location" maxlength="250" value="{{ submission.location }}" required></label><button>Approve &amp; publish to calendar</button></form>
 <form method="post" action="/admin/submissions/{{ submission.id }}/reject"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="table-action">Reject submission</button></form></article>{% else %}<p class="note">No member events awaiting review.</p>{% endfor %}</section>
-<div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Plan what’s next</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
+<div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Dashboard-created events</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
+<p class="note">Edit events created here or approved from /event below. Manage Discord scheduled events in Discord, and imported venue listings in <a href="/admin/settings#listings">Calendar settings</a>.</p>
 <article id="create-event" class="admin-panel"><h2>Create draft event</h2><form method="post" action="/admin/events">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Title <input name="title" required maxlength="200"></label>

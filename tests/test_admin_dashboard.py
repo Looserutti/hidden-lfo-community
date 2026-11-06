@@ -37,7 +37,7 @@ def test_overview_and_member_search(dashboard):
         db.add(Event(title='Upcoming', published=True, starts_at=datetime.now(timezone.utc)+timedelta(days=1)))
     response = client.get('/admin')
     assert response.status_code == 200
-    assert 'Community overview' in response.text and 'Upcoming events' in response.text
+    assert 'Community overview' in response.text and 'Upcoming community events' in response.text
     assert response.headers['cache-control'] == 'no-store'
     for search in ('STAGE', 'artist', '999'):
         response = client.get('/admin/activity', params={'search': search})
@@ -181,7 +181,7 @@ def test_home_merges_visible_imports_and_native_events(dashboard, monkeypatch):
     from app import feeds
     from app.db import ImportedEvent, Setting
     client,sessions=dashboard
-    monkeypatch.setattr(feeds,'SOURCES',[{'id':'venue','name':'Venue'}])
+    monkeypatch.setattr(feeds,'SOURCES',[{'id':'venue','name':'Venue','adapter':'ticketweb_calendar'}])
     start=datetime.now(timezone.utc)+timedelta(days=1)
     with sessions.begin() as db:
         for key in ('website','venue.publish'):db.add(Setting(key='feeds.'+key,value='true'))
@@ -195,7 +195,9 @@ def test_home_merges_visible_imports_and_native_events(dashboard, monkeypatch):
     assert 'Imported show 3' not in html and 'Native show' in html
     assert 'href="https://example.org/1"' in html
     assert 'No upcoming events' not in html
-    assert '<strong>5</strong>' in client.get('/admin').text
+    dashboard_html=client.get('/admin').text
+    assert '<span>Upcoming community events</span><strong>1</strong>' in dashboard_html
+    assert '<span>Upcoming venue listings</span><strong>4</strong>' in dashboard_html
     with sessions.begin() as db:db.get(Setting,'feeds.website').value='false'
     assert 'Imported show' not in client.get('/').text
 
@@ -213,3 +215,26 @@ def test_native_event_discord_destination_includes_guild(dashboard, monkeypatch)
     assert re.search(r'datetime="[^"]+[+-]\d{2}:\d{2}"',html)
     monkeypatch.setattr(web,'GUILD_ID',0)
     assert 'Register in Discord</a>' not in client.get(f'/events/{event_id}').text
+
+
+def test_overview_counts_discord_as_community_and_venues_separately(dashboard,monkeypatch):
+    from app import feeds
+    from app.db import ImportedEvent, Setting
+    client,sessions=dashboard
+    monkeypatch.setattr(feeds,'SOURCES',[{'id':'guild-events','name':'Discord','adapter':'discord'},
+        {'id':'venue','name':'Venue','adapter':'ticketweb_calendar'}])
+    future=datetime.now(timezone.utc)+timedelta(days=1)
+    with sessions.begin() as db:
+        for key in ('website','guild-events.publish','venue.publish'):db.add(Setting(key='feeds.'+key,value='true'))
+        db.add_all([Event(title='Published',published=True,starts_at=future),
+                    Event(title='Draft',published=False,starts_at=future),
+                    Event(title='Past',published=True,starts_at=future-timedelta(days=2))])
+        for source,external,suppressed,cancelled in [('guild-events','1',False,False),('venue','2',False,False),
+                ('venue','3',True,False),('guild-events','4',False,True)]:
+            db.add(ImportedEvent(source_id=source,external_id=external,title='Listing',starts_at=future,
+                source_url='https://example.org/show',location='Venue',suppressed=suppressed,cancelled=cancelled))
+    html=client.get('/admin').text
+    assert '<span>Upcoming community events</span><strong>2</strong>' in html
+    assert '<span>Upcoming venue listings</span><strong>1</strong>' in html
+    with sessions.begin() as db:db.get(Setting,'feeds.venue.publish').value='false'
+    assert '<span>Upcoming venue listings</span><strong>0</strong>' in client.get('/admin').text

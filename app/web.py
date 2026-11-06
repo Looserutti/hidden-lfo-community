@@ -151,11 +151,15 @@ def dashboard(request: Request):
         events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         _, activity_totals = report(db)
-        upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= datetime.now(timezone.utc) for e in events)
-        upcoming_total += len(feeds.calendar_events(db, datetime.now(timezone.utc)))
+        start = datetime.now(timezone.utc)
+        imported = feeds.calendar_events(db, start)
+        discord_sources = {source['id'] for source in feeds.SOURCES if source['adapter'] == 'discord'}
+        discord_total = sum(event.source_id in discord_sources for event in imported)
+        upcoming_total = sum(e.published and e.starts_at.replace(tzinfo=timezone.utc) >= start for e in events) + discord_total
+        venue_total = len(imported) - discord_total
         return templates.TemplateResponse(request, 'admin.html', context(request, events=events, counts=counts,
             submissions=submissions, activity_totals=activity_totals, member_total=sum(activity_totals.values()),
-            upcoming_total=upcoming_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
+            upcoming_total=upcoming_total, venue_total=venue_total, draft_total=sum(not e.published for e in events), calendar_timezone=CALENDAR_ZONE))
 
 @app.post('/admin/events')
 def create_event(request: Request, csrf: str = Form(...), title: str = Form(...), description: str = Form(''), starts_at: str = Form(''), location: str = Form('Discord'), capacity: str = Form(''), start_date: str = Form(''), start_time: str = Form('')):

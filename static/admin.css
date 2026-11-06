@@ -11,7 +11,7 @@
 .admin-heading p { margin: .5rem 0; }
 .admin-heading > span { color: var(--admin-muted); font-size: .85rem; }
 .admin-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
-.activity-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.overview-metrics, .activity-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .metric { display: flex; flex-direction: column; padding: 1.25rem; gap: .6rem; border: 1px solid var(--admin-line); text-decoration: none; background: #151515; }
 .metric:hover, .metric[aria-current] { border-color: var(--off-white); background: #202020; }
 .metric > span { font-size: .8rem; color: var(--off-white); }
