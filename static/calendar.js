@@ -2,6 +2,16 @@
 (() => {
   const agenda = document.querySelector('.calendar-agenda');
   if (!agenda) return;
+  const today = agenda.querySelector('.agenda-today-link');
+  today?.addEventListener('click', (event) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const target = new URL(today.href);
+    if (target.pathname === location.pathname && target.search === location.search) {
+      event.preventDefault();
+      location.hash = target.hash;
+      location.reload();
+    }
+  });
   const more = agenda.querySelector('.agenda-load-more');
   if (!more) return;
   const status = agenda.querySelector('.agenda-status');
