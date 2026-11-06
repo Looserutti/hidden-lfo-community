@@ -52,13 +52,15 @@ def validate_config(values, production=False, bot=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--env-file', type=Path, default=Path('.env'))
+    parser.add_argument('--env-file', type=Path, help='Optional dotenv file; otherwise use .env if present and the process environment')
     parser.add_argument('--production', action='store_true')
     parser.add_argument('--bot', action='store_true')
     args = parser.parse_args()
-    if not args.env_file.is_file():
+    if args.env_file is not None and not args.env_file.is_file():
         parser.error('Environment file does not exist')
-    values = {**dotenv_values(args.env_file), **os.environ}
+    env_file = args.env_file or Path('.env')
+    file_values = dotenv_values(env_file) if env_file.is_file() else {}
+    values = {**file_values, **os.environ}
     issues = validate_config(values, args.production, args.bot)
     if issues:
         print('Configuration needs attention (credential values are never printed):')

@@ -65,3 +65,19 @@ def test_outbound_bot_jobs_require_explicit_opt_in(monkeypatch, enabled):
     asyncio.run(main.CommunityBot.setup_hook(fake_bot))
     for job in jobs:
         assert job.start.call_count == int(enabled)
+
+
+def test_preflight_accepts_container_environment_without_dotenv(tmp_path):
+    import os
+    from pathlib import Path
+    import subprocess
+    import sys
+    script = Path(__file__).resolve().parent.parent / 'scripts/check_config.py'
+    result = subprocess.run([sys.executable, str(script), '--production'],
+        cwd=tmp_path, env={**os.environ, **settings()}, capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'Configuration checks passed' in result.stdout
+    assert 'test-only-secret' not in result.stdout + result.stderr
+    result = subprocess.run([sys.executable, str(script), '--env-file', 'missing.env'],
+        cwd=tmp_path, env={**os.environ, **settings()}, capture_output=True, text=True)
+    assert result.returncode != 0
