@@ -85,7 +85,7 @@ def calendar_page(request: Request, year: int | None = None, month: int | None =
         events = sorted([*events, *feeds.calendar_events(db, start, next_month)], key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))
         prev, nxt = calendar_navigation(year, month)
         return templates.TemplateResponse(request, 'calendar.html', context(request, weeks=month_grid(year, month, events, CALENDAR_ZONE), calendar_timezone=CALENDAR_ZONE, month_name=calendar.month_name[month], year=year, month=month, previous=prev, following=nxt, counts=counts, invite_url=DISCORD_INVITE_URL))
-  
+
 
 @app.get('/events/{event_id}', response_class=HTMLResponse)
 def event_detail(request: Request, event_id: int):
