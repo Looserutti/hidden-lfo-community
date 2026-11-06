@@ -6,8 +6,11 @@
 {% block content %}
 
 <!-- HIDDEN LFO INTRODUCTION -->
-<section class="home-intro">
-  <p class="eyebrow">{{ site.eyebrow }}</p>
+<section class="home-intro homepage-intro">
+  <div class="home-intro-top">
+    <p class="eyebrow">{{ site.eyebrow }}</p>
+    {% include '_public_menu.html' %}
+  </div>
   <h1>{{ site.name }}</h1>
   <p class="intro-description">{{ site.description }}</p>
 </section>

@@ -81,9 +81,9 @@ def context(request: Request, **kwargs):
 def home(request: Request):
     with Session() as db:
         start = datetime.now(timezone.utc)
-        native = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start).order_by(Event.starts_at, Event.id).limit(3)).all()
-        events = sorted([*native, *feeds.calendar_events(db, start, limit=3)],
-                        key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))[:3]
+        native = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start).order_by(Event.starts_at, Event.id).limit(2)).all()
+        events = sorted([*native, *feeds.calendar_events(db, start, limit=2)],
+                        key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))[:2]
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events if e.id is not None}
         return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL, gallery_audio=audio_playlist(db)))
 

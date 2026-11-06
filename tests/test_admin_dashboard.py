@@ -193,7 +193,7 @@ def test_home_merges_visible_imports_and_native_events(dashboard, monkeypatch):
                 starts_at=start+timedelta(hours=i),location='Venue',source_url=f'https://example.org/{i}',
                 cancelled=False,suppressed=i==0))
     html=client.get('/').text
-    assert 'Imported show 0' not in html and 'Imported show 1' in html and 'Imported show 2' in html
+    assert 'Imported show 0' not in html and 'Imported show 1' in html and 'Imported show 2' not in html
     assert 'Imported show 3' not in html and 'Native show' in html
     assert 'href="https://example.org/1"' in html
     assert 'No upcoming events' not in html

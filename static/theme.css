@@ -453,3 +453,11 @@
 @media(max-width:650px){.public-menu-wrap{padding:0 16px}.project-story{padding-top:36px;padding-bottom:48px}.project-writeup{font-size:1rem;margin-top:24px}.project-story h2{font-size:2rem}}
 @media(prefers-reduced-motion:reduce){.project-photo-toggle img{transition:none}}
 .project-story{background:transparent;border:0;border-bottom:1px solid #444;border-radius:0;margin:0}.project-photo-toggle{border-radius:0}
+
+/* Keep homepage navigation and location together without a separate header row. */
+main:has(.homepage-intro) { margin-top: 24px; }
+.home-intro.homepage-intro { padding-top: 0; }
+.home-intro-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.home-intro-top .eyebrow { margin: 0; padding-top: 0; }
+.home-intro-top .public-menu-wrap { position: static; transform: none; width: auto; padding: 0; flex: 0 0 auto; }
+.home-intro-top .site-menu summary { margin-top: -8px; }
