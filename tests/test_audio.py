@@ -152,3 +152,25 @@ def test_real_processing_preserves_source_and_meets_target(library):
         _,peak=normalization.measure(audio.track_path(t.normalized_filename))
         assert peak<=-1
     assert hashlib.sha256(path.read_bytes()).hexdigest()==before
+
+
+def test_artist_social_link_toggle_and_validation(library):
+    c,sessions=library
+    upload(c)
+    with sessions() as db: track_id=db.scalars(select(GalleryTrack)).one().id
+    fields={'csrf':'test-csrf','title':'Track','artist':'Artist','published':'true',
+            'artist_social_url':'https://example.org/artist','artist_social_enabled':'true'}
+    endpoint=f'/admin/music/{track_id}'
+    assert c.post(endpoint,data=fields,follow_redirects=False).status_code==303
+    assert 'https://example.org/artist' in c.get('/').text
+    fields.pop('artist_social_enabled')
+    assert c.post(endpoint,data=fields,follow_redirects=False).status_code==303
+    assert 'https://example.org/artist' not in c.get('/').text
+    with sessions() as db:
+        track=db.get(GalleryTrack,track_id)
+        assert track.artist_social_url=='https://example.org/artist' and not track.artist_social_enabled
+    for bad in ['javascript:alert(1)','data:text/html,test','https://user:password@example.org','https://example.org/\nfoo']:
+        fields['artist_social_url']=bad
+        assert c.post(endpoint,data=fields).status_code==400
+    fields.update(artist_social_url='',artist_social_enabled='true')
+    assert c.post(endpoint,data=fields).status_code==400

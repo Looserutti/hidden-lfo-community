@@ -61,7 +61,7 @@
     <details class="player-details">
       <summary aria-label="Track info and playlist" title="Tracks and artist info"><span class="player-info-label">Tracks</span><span aria-hidden="true">⌃</span></summary>
       <div class="player-details-panel">
-        <div class="player-track"><span class="eyebrow">SELECTED TRACK</span><strong class="player-title"></strong><span class="player-artist"></span></div>
+        <div class="player-track"><span class="eyebrow">SELECTED TRACK</span><strong class="player-title"></strong><span class="player-artist"></span><a class="player-artist-social" hidden target="_blank" rel="noopener noreferrer">Artist social ↗</a></div>
         <ol class="player-playlist" aria-label="Choose a track">
         {% for track in gallery_audio %}
           <li><button type="button" class="player-track-choice" data-track-index="{{ loop.index0 }}" aria-label="{{ track.title }}{% if track.artist %} — {{ track.artist }}{% endif %}"><span class="player-track-number" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span><span>{{ track.title }}{% if track.artist %}<small>{{ track.artist }}</small>{% endif %}</span></button></li>
@@ -135,5 +135,5 @@
   <p class="home-community-note">{{ site.footer_text }}</p>
 </section>
 <script src="/static/gallery.js?v=landscape2" defer></script>
-<script src="/static/gallery-player.js?v=playlist3" defer></script>
+<script src="/static/gallery-player.js?v=artist-social1" defer></script>
 {% endblock %}

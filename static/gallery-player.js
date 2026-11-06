@@ -16,6 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.src = tracks[index].url;
     viewer.querySelector('.player-title').textContent = tracks[index].title;
     viewer.querySelector('.player-artist').textContent = tracks[index].artist;
+    const social = viewer.querySelector('.player-artist-social');
+    const socialUrl = tracks[index].artist_social_url;
+    social.hidden = !socialUrl;
+    if (socialUrl) {
+      social.href = socialUrl;
+      social.setAttribute('aria-label', `${tracks[index].artist || tracks[index].title} social profile (opens in a new tab)`);
+    } else social.removeAttribute('href');
     choices.forEach((button,i) => button.setAttribute('aria-current', String(i === index)));
     audio.setAttribute('aria-label', `Gallery music: ${tracks[index].title}`);
     status.textContent = '';

@@ -3,6 +3,7 @@ import os
 import re
 from pathlib import Path
 from uuid import uuid4
+from urllib.parse import urlsplit
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse, FileResponse
 from starlette.datastructures import UploadFile
@@ -23,7 +24,7 @@ def track_path(filename):
 
 
 def playlist(db):
-    return [{'id': t.id, 'title': t.title, 'artist': t.artist, 'url': f'/media/audio/{t.id}'}
+    return [{'id': t.id, 'title': t.title, 'artist': t.artist, 'artist_social_url': t.artist_social_url if t.artist_social_enabled else '', 'url': f'/media/audio/{t.id}'}
             for t in db.scalars(select(GalleryTrack).where(GalleryTrack.published == True)
                                 .order_by(GalleryTrack.position, GalleryTrack.id)).all()]
 
@@ -114,6 +115,18 @@ def audio_routes(session, require_admin, csrf_check, render):
         title, artist = str(form.get('title','')).strip(), str(form.get('artist','')).strip()
         if not 1 <= len(title) <= 200 or len(artist) > 160:
             raise HTTPException(400, 'Enter a title (up to 200 characters) and artist (up to 160)')
+        social_url = str(form.get('artist_social_url', '')).strip()
+        social_enabled = form.get('artist_social_enabled') == 'true'
+        try:
+            parsed = urlsplit(social_url)
+            valid = parsed.scheme in ('http', 'https') and bool(parsed.hostname) and not parsed.username and not parsed.password
+            parsed.port
+        except ValueError:
+            valid = False
+        if social_url and (len(social_url) > 2048 or any(c.isspace() or ord(c) < 32 for c in social_url) or not valid):
+            raise HTTPException(400, 'Enter a complete http:// or https:// artist link')
+        if social_enabled and not social_url:
+            raise HTTPException(400, 'Add an artist link before enabling it')
         normalize = form.get('normalize') == 'true'
         try: target_lufs = float(form.get('target_lufs', '-14'))
         except ValueError: raise HTTPException(400, 'Choose a loudness target')
@@ -123,6 +136,7 @@ def audio_routes(session, require_admin, csrf_check, render):
             track = db.get(GalleryTrack, track_id)
             if not track: raise HTTPException(404, 'Track not found')
             track.title, track.artist = title, artist
+            track.artist_social_url, track.artist_social_enabled = social_url, social_enabled
             track.published = form.get('published') == 'true'
             changed_target = target_lufs != track.target_lufs
             if changed_target and track.normalization_status in ('queued','processing'):

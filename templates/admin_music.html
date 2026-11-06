@@ -20,6 +20,9 @@
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label>Title<input name="title" value="{{ track.title }}" maxlength="200" required></label>
     <label>Artist<input name="artist" value="{{ track.artist }}" maxlength="160"></label>
+    <label>Artist social link<input type="url" name="artist_social_url" value="{{ track.artist_social_url }}" maxlength="2048" placeholder="https://…"></label>
+    <label class="audio-publish"><input type="checkbox" name="artist_social_enabled" value="true" {% if track.artist_social_enabled %}checked{% endif %}> Show artist link in track details</label>
+    <p class="hint">Switch this off to hide the link without removing the saved URL.</p>
     <label class="audio-publish"><input type="checkbox" name="published" value="true" {% if track.published %}checked{% endif %}> Available in gallery</label>
     <label class="audio-publish"><input type="checkbox" name="normalize" value="true" {% if track.normalization_enabled %}checked{% endif %} {% if not normalization_available %}disabled{% endif %}> Normalize playback volume</label>
     <label>Playback loudness<select name="target_lufs">{% for value in [-14,-16,-18] %}<option value="{{ value }}" {% if track.target_lufs == value %}selected{% endif %}>{{ value }} LUFS{% if value == -14 %} · Spotify Normal target{% endif %}</option>{% endfor %}</select></label>

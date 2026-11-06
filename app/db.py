@@ -101,6 +101,8 @@ class GalleryTrack(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(200))
     artist: Mapped[str] = mapped_column(String(160), default='')
+    artist_social_url: Mapped[str] = mapped_column(String(2048), default='')
+    artist_social_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     filename: Mapped[str] = mapped_column(String(80), unique=True)
     byte_size: Mapped[int] = mapped_column(Integer)
     position: Mapped[int] = mapped_column(Integer, default=0)
