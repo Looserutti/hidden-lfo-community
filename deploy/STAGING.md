@@ -2,6 +2,8 @@
 
 Use one Ubuntu server with local persistent storage. A 2 GB RAM / 1 vCPU VPS is a starting point; verify actual memory use after launch. Use a staging subdomain and the existing Discord OAuth application. The default Compose launch runs only migration, website and HTTPS proxy. The bot and calendar collector are optional profiles.
 
+For service signup links, costs, and prerequisites, start with [HOSTING.md](HOSTING.md).
+
 ## Before launch
 
 1. Run tests locally and commit reviewed code. Transfer a tracked source release (`git archive`) or clone the chosen commit on the server; do not upload the entire Mac working folder, `.env`, original photos or backup files.
@@ -39,7 +41,7 @@ docker compose --profile shows up -d calendar-collector
 
 ## Backup and restore rehearsal
 
-Run `sh deploy/backup.sh` on the server. It writes a consistent SQLite backup. Download it through your authenticated SSH connection to a private folder on your Mac; provider server snapshots supplement these database backups.
+Prepare a private, writable backup directory for the current app UID with `sudo install -d -m 700 -o 10001 -g 10001 backups`, then run `sh deploy/backup.sh` on the server. It writes a consistent SQLite backup. Download it through your authenticated SSH connection to a private folder on your Mac; provider server snapshots supplement these database backups.
 
 Verify the downloaded backup and rehearse restoration to a **new file**:
 

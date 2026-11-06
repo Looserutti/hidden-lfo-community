@@ -11,3 +11,5 @@ Run a second website on the same server with a separate Compose project, pinned 
 For later changes, build a new candidate image, change **only preview** PREVIEW_IMAGE, and run the preview Compose commands from the candidate checkout. Review it in desktop/mobile browsers. After acceptance, deploy that tested commit and any necessary backed-up migrations to production. Do not copy a preview database to production. Keep the previous image/release for rollback. Git pushes do not automatically deploy either environment.
 
 A single shared server reduces cost but is not infrastructure isolation: both sites share host resources and the proxy network. Watch memory/disk usage. Large changes can require a separate server later. Public preview is not a place for member database copies or production bot credentials. Provider backups retain existing server data under their configured retention.
+
+For required accounts, provider websites, database requirements, and a complete setup order, see [HOSTING.md](HOSTING.md).

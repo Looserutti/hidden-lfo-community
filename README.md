@@ -2,6 +2,10 @@
 
 A **first working scaffold**, not a production-ready release. Public FastAPI event pages, Discord OAuth admin login, draft/publish/edit/unpublish events, SQLite models, Discord onboarding and RSVP buttons, and preliminary inactivity monitoring.
 
+## Hosting and required services
+
+Start with [Services, costs, and setup order](deploy/HOSTING.md) for provider links, free resources, SQLite storage, domain/DNS setup, and the production/preview workflow.
+
 ## On your Mac
 
 1. Install Python 3.11+ and open this folder in VS Code.
