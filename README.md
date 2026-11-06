@@ -1,8 +1,10 @@
 # Community Hub & Discord Bot
 
-**v0.1.0 — First Working Community Hub & Discord Bot** is the first working release baseline, confirmed in the Hidden LFO deployment on November 5, 2026. It combines a public community website, moderated event calendar, Discord onboarding, and staff activity tools.
+The current platform combines a public community website, moderated event calendar, Discord onboarding, staff activity tools, a photo carousel with audio playback, and member project highlights. The administrator control hub manages homepage photos, community events and imports, member projects, radio tracks, community activity, and system health.
 
-See [release notes and acceptance evidence](RELEASES.md#v010--first-working-community-hub--discord-bot) for the shipped features, real-user onboarding confirmation, validation, and remaining limitations. Audio playback is not part of this release.
+**Audio playback is included on `main`.** Released in v0.2.0, the gallery player offers selectable tracks, artist credits and optional artist social links. Playback starts when a visitor presses Play and pauses when the expanded photo viewer closes. Administrators manage tracks through **Radio**; uploaded recordings remain in persistent server storage and complete backups, outside Git. See [audio setup and administration](docs/AUDIO.md).
+
+See the [release record](RELEASES.md) for shipped features, validation evidence, and limitations. The `v0.1.0` tag preserves the historical November 5, 2026 baseline from before audio was added; it does not describe the current feature set on `main`.
 
 Branding, social links, Discord invite, guild/role/channel IDs, and venue sources are configurable for other communities. Keep deployment credentials and member data outside Git. Example environments intentionally leave the Discord invite blank.
 
@@ -34,7 +36,7 @@ Never commit `.env`. Never post your bot token or client secret in chat. Keep th
 - Website administrators use an explicit Discord-ID allowlist. Changes to Discord admin roles do not automatically update website access.
 - Provider backups and verified database backups exist in the reference deployment. Complete encrypted application backups and restore timers are available; off-server protection requires an authorized destination.
 - Automatic Discord event announcements and weekly staff reports remain opt-in and are disabled in the reference deployment. Their complete live acceptance is outside this baseline's confirmed onboarding check.
-- Gallery audio is post-v0.1.0 development; see [audio setup and administration](docs/AUDIO.md). The v0.1.0 tag preserves the pre-audio baseline.
+- Photo processing and audio normalization require supported Linux isolation; see [audio hosting requirements](docs/AUDIO.md). Direct Mac development does not provide that processing environment; playback of existing tracks remains available.
 - A repository license has not yet been selected; choose one before describing reuse permissions as an open-source license grant.
 
 The sections below describe feature milestones; [the release record](RELEASES.md) identifies the current baseline and validation scope.
@@ -193,9 +195,9 @@ Rules-button message ID and first observed introduction timestamps are stored in
 Permission setup can be planned with `python -m scripts.configure_onboarding --policy /private/onboarding-policy.json --backup /private/permission-snapshot.json`. Use `config/onboarding.example.json` as the shape, classifying every guild channel and category by numeric ID; rules/introduction IDs come from the environment. Private channels are never modified. The tool defaults to a read-only plan and writes a private snapshot. Add `--apply` only after reviewing the plan and starting the configured bot so its acknowledgment button exists. Snapshot paths must be new files. Changes to role/per-user View Channel allows in community channels are deliberate to prevent bypassing Member; individual deny overrides and staff restrictions remain in force. The tool does not remove roles or messages.
 
 
-## Gallery soundtrack (post-v0.1 development)
+## Gallery soundtrack and Radio (released in v0.2.0)
 
-Admins manage uploads, track credits, ordering and publication in **Gallery audio**. Music appears only inside the expanded photo viewer and pauses when it closes. Audio files stay in persistent storage outside Git; new deployments start with no tracks. See [audio documentation](docs/AUDIO.md) for migrations, limits and backup requirements.
+Admins manage uploads, track credits, ordering and publication in **Radio** (`/admin/music`). Music appears only inside the expanded photo viewer and pauses when it closes. Audio files stay in persistent storage outside Git; new deployments start with no tracks. See [audio documentation](docs/AUDIO.md) for migrations, limits and backup requirements.
 
 **Approved member announcements:** set `MEMBER_EVENT_ANNOUNCEMENTS_ENABLED=true` and configure `EVENTS_CHANNEL_ID` to your announcement channel. The bot posts future admin-approved `/event` submissions within roughly 30 seconds, with the event details, calendar link and RSVP buttons. Rejected/pending submissions and external venue imports are not announced. This switch is independent of general `EVENT_PUBLISHING_ENABLED`. Set `MEMBER_EVENT_ANNOUNCEMENTS_SINCE` to an ISO timestamp with timezone when enabling it on an existing install to avoid announcing older approvals. Message IDs are persisted to avoid repeated posts during ordinary polls/restarts; edits/RSVP counts update the existing message. Keep one gateway bot instance; a crash between Discord accepting a send and the database commit can still require staff reconciliation. Mentions are disabled in submitted announcement text.
 
