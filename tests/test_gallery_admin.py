@@ -1,5 +1,7 @@
 import base64
 import io
+import os
+os.environ.setdefault("SESSION_SECRET", "isolated-photo-admin-test-secret")
 import json
 import sys
 from pathlib import Path
