@@ -12,13 +12,17 @@ def validate_config(values, production=False, bot=False):
                 'ADMIN_DISCORD_IDS', 'PUBLIC_BASE_URL', 'DISCORD_REDIRECT_URI']
     if bot:
         required += ['DISCORD_BOT_TOKEN', 'DISCORD_GUILD_ID', 'VERIFIED_ROLE_ID', 'RULES_CHANNEL_ID']
+    if bot and str(values.get('ONBOARDING_ENABLED', '')).lower() == 'true':
+        required += ['MEMBER_ROLE_ID', 'INTRO_CHANNEL_ID']
+        if values.get('MEMBER_ROLE_ID') == values.get('VERIFIED_ROLE_ID'):
+            issues.append('MEMBER_ROLE_ID: must differ from VERIFIED_ROLE_ID')
     for key in required:
         value = (values.get(key) or '').strip()
         if not value or value.startswith(('replace-with-', 'your_')):
             issues.append(f'{key}: required value is missing or a placeholder')
     if len(values.get('SESSION_SECRET') or '') < 32:
         issues.append('SESSION_SECRET: use at least 32 random characters')
-    for key in ('DISCORD_CLIENT_ID', 'DISCORD_GUILD_ID', 'VERIFIED_ROLE_ID', 'RULES_CHANNEL_ID', 'EVENTS_CHANNEL_ID', 'STAFF_REPORT_CHANNEL_ID'):
+    for key in ('DISCORD_CLIENT_ID', 'DISCORD_GUILD_ID', 'VERIFIED_ROLE_ID', 'RULES_CHANNEL_ID', 'EVENTS_CHANNEL_ID', 'STAFF_REPORT_CHANNEL_ID', 'MEMBER_ROLE_ID', 'INTRO_CHANNEL_ID'):
         value = (values.get(key) or '').strip()
         if value and (not value.isdigit() or int(value) <= 0):
             issues.append(f'{key}: must be a positive Discord ID')

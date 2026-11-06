@@ -10,6 +10,7 @@ from app.config import GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHAN
 from app.db import Session, Member, Event, Registration, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
+from bot import onboarding
 
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
@@ -63,7 +64,7 @@ class RulesView(discord.ui.View):
                 'could not be updated. Please try again or contact an administrator.',
                 ephemeral=True
             )
-        await interaction.response.send_message('Thanks! You are now verified.', ephemeral=True)
+        await interaction.response.send_message(onboarding.instructions(interaction.user) if onboarding.ready() else 'Thanks! You are now verified.', ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
 
 class RSVPView(discord.ui.View):
     def __init__(self, event_id: int):
@@ -115,7 +116,7 @@ async def post_rules(interaction: discord.Interaction):
     channel = bot.get_channel(RULES_CHANNEL_ID)
     if not isinstance(channel, discord.TextChannel):
         return await interaction.response.send_message('Rules channel not configured.', ephemeral=True)
-    await channel.send('Please read the server rules and click **I Agree** to access the community.', view=RulesView())
+    await channel.send('Please read the server rules and click **I Agree**. Then introduce yourself in the welcome channel to unlock community channels.' if onboarding.ready() else 'Please read the server rules and click **I Agree** to access the community.', view=RulesView())
     await interaction.response.send_message('Rules message posted.', ephemeral=True)
 
 @bot.tree.command(name='inactive', description='Review inactive members (observed activity only)', guild=discord.Object(id=GUILD_ID) if GUILD_ID else None)
@@ -144,6 +145,10 @@ async def on_member_join(m):
         record = sync_member_identity(db, m)
         record.joined_at = m.joined_at
         db.commit()
+    try:
+        await onboarding.welcome(m)
+    except discord.HTTPException:
+        logging.exception('Could not post onboarding welcome')
 
 @bot.event
 async def on_member_update(before, after):
@@ -169,6 +174,7 @@ async def on_user_update(before, after):
 async def on_message(message):
     if message.guild and message.guild.id == GUILD_ID and not message.author.bot:
         with Session() as db: touch(db, message.author.id)
+        await onboarding.introduction(message)
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -199,7 +205,10 @@ async def on_ready():
                 if m.status != discord.Status.offline:
                     record.last_observed_online = now()
             db.commit()
-
+        try:
+            await onboarding.ensure_rules_button(bot, RulesView())
+        except Exception:
+            logging.exception('Could not prepare the onboarding rules button')
 
 
 async def refresh_event_message(event_id: int):

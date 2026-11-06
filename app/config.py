@@ -21,3 +21,8 @@ STAFF_REPORT_CHANNEL_ID = env_int("STAFF_REPORT_CHANNEL_ID")
 # Outbound bot jobs are opt-in, including on staging.
 EVENT_PUBLISHING_ENABLED = os.getenv('EVENT_PUBLISHING_ENABLED', 'false').lower() == 'true'
 STAFF_REPORTS_ENABLED = os.getenv('STAFF_REPORTS_ENABLED', 'false').lower() == 'true'
+
+# Optional two-step onboarding; IDs remain community-specific configuration.
+ONBOARDING_ENABLED = os.getenv('ONBOARDING_ENABLED', 'false').lower() == 'true'
+MEMBER_ROLE_ID = env_int('MEMBER_ROLE_ID')
+INTRO_CHANNEL_ID = env_int('INTRO_CHANNEL_ID')
