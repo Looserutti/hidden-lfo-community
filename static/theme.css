@@ -45,13 +45,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  width: 100%;
-  margin-bottom: 32px;
+  gap: 13.6px;
+  width: 85%;
+  margin: 0 auto;
+  padding: 0.6375rem 1.0625rem;
+  font-size: 0.85rem;
+  background: #aaa;
+  border-color: #aaa;
 }
 
 .discord-invite-arrow {
-  font-size: 1.4rem;
+  font-size: 1.19rem;
   line-height: 1;
 }
 
@@ -59,7 +63,7 @@
 
 .home-gallery {
   width: 100%;
-  margin: 48px 0 80px;
+  margin: var(--home-divider-gap) 0;
   aspect-ratio: 16 / 9;
   background: #151515;
   border: 1px solid #444;
@@ -69,7 +73,7 @@
 /* Upcoming events */
 
 .home-events {
-  padding: 24px 0 80px;
+  padding: 24px 0 var(--home-divider-gap);
   border-top: 1px solid #444;
 }
 
@@ -114,10 +118,21 @@
   text-transform: uppercase;
 }
 
+.home-events > .home-community-note:only-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .home-community-note {
   margin: 24px 0 0;
-  font-size: 0.9rem;
+  padding: 24px 7.5% 0;
+  border-top: 1px solid #444;
+  font-size: 0.68rem;
+  text-align: center;
 }
+
+main:has(.homepage-intro) { --home-divider-gap: 48px; }
 
 /* Mobile adjustments */
 
@@ -126,12 +141,8 @@
     padding: 48px 0 40px;
   }
 
-  .home-gallery {
-    margin: 32px 0 48px;
-  }
-
-  .home-events {
-    padding-bottom: 48px;
+  main:has(.homepage-intro) {
+    --home-divider-gap: 32px;
   }
 }
 
@@ -324,6 +335,24 @@
   text-align: left;
 }
 
+main:has(.homepage-intro) + .site-footer {
+  position: relative;
+  border-top-color: transparent;
+  padding-top: 12px;
+}
+
+main:has(.homepage-intro) + .site-footer::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  inset-inline: max(1.5rem, calc((100% - 1052px) / 2));
+  border-top: 1px solid #444;
+}
+
+@media (max-width: 700px) {
+  main:has(.homepage-intro) + .site-footer::before { inset-inline: 1rem; }
+}
+
 .footer-admin {
   grid-column: 3;
   justify-self: end;
@@ -455,9 +484,71 @@
 .project-story{background:transparent;border:0;border-bottom:1px solid #444;border-radius:0;margin:0}.project-photo-toggle{border-radius:0}
 
 /* Keep homepage navigation and location together without a separate header row. */
-main:has(.homepage-intro) { margin-top: 24px; }
+main:has(.homepage-intro) {
+  margin-block: 24px 0;
+  min-height: 0;
+}
+
 .home-intro.homepage-intro { padding-top: 0; }
-.home-intro-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.home-intro-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .home-intro-top .eyebrow { margin: 0; padding-top: 0; }
 .home-intro-top .public-menu-wrap { position: static; transform: none; width: auto; padding: 0; flex: 0 0 auto; }
-.home-intro-top .site-menu summary { margin-top: -8px; }
+.home-intro-top .site-menu summary { margin-top: 0; border: 0; background: transparent; }
+
+@media (max-width: 700px) {
+  main:has(.homepage-intro) {
+    --home-divider-gap: clamp(12px, 3.2svh, 26px);
+    margin-top: var(--home-divider-gap);
+  }
+
+  .homepage-intro {
+    --home-heading-gap: 18px;
+    position: relative;
+    padding-bottom: var(--home-heading-gap);
+  }
+
+  .homepage-intro .home-intro-top { margin-bottom: var(--home-heading-gap); }
+  .homepage-intro .home-intro-top .public-menu-wrap {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .homepage-intro .home-intro-top .eyebrow { padding-right: 50px; }
+  .homepage-intro h1 { font-size: clamp(2.975625rem, 14.5475vw, 5.29rem); }
+  .homepage-intro .intro-description { margin-top: var(--home-heading-gap); }
+  .homepage-intro + .home-gallery { max-height: clamp(120px, calc(100svh - 400px), 360px); }
+  .home-events { padding-top: calc(var(--home-divider-gap) * 0.75); }
+  .home-community-note {
+    margin-top: calc(var(--home-divider-gap) * 0.75);
+    padding-top: calc(var(--home-divider-gap) * 0.75);
+  }
+
+  main:has(.homepage-intro) + .site-footer {
+    padding-top: 10px;
+    padding-bottom: clamp(12px, 3.2svh, 26px);
+    row-gap: 12px;
+  }
+}
+
+.home-gallery > .gallery-expand {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--light-grey);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+.home-gallery > .gallery-expand svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px #000);
+}

@@ -4,11 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!gallery) return;
 
   const images = [...gallery.querySelectorAll(".gallery-image")];
-  const previous = gallery.querySelector(".gallery-prev");
-  const next = gallery.querySelector(".gallery-next");
-  const counter = gallery.querySelector("#gallery-current");
-
-  if (!images.length || !previous || !next || !counter) return;
+  if (!images.length) return;
 
   const viewer = document.querySelector(".photo-viewer");
   const viewerImage = viewer.querySelector(".viewer-image");
@@ -64,9 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (images[current].complete && images[current].naturalWidth) warmNext();
-    counter.textContent = String(current + 1).padStart(2, "0");
     if (viewer.open) loadViewerPhoto();
-    viewer.querySelector(".viewer-current").textContent = counter.textContent;
+    viewer.querySelector(".viewer-current").textContent = String(current + 1).padStart(2, "0");
   }
 
   function stopTimer() {
@@ -84,16 +79,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }, 6000);
   }
-
-  previous.addEventListener("click", () => {
-    showPhoto(current - 1);
-    startTimer();
-  });
-
-  next.addEventListener("click", () => {
-    showPhoto(current + 1);
-    startTimer();
-  });
 
   images.forEach((image) => {
     image.addEventListener("click", () => {

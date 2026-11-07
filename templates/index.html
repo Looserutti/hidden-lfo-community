@@ -57,23 +57,14 @@
     {% endfor %}
   </div>
 
-  <button class="gallery-arrow gallery-prev"
-          type="button"
-          aria-label="Previous photograph">
-    &#8592;
+  <button class="gallery-expand" type="button" aria-haspopup="dialog"
+          aria-label="{{ 'Expand and listen' if gallery_audio else 'Expand photo' }}"
+          title="{{ 'Expand and listen' if gallery_audio else 'Expand photo' }}">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8.25 2H2v6.25M15.75 2H22v6.25M2 15.75V22h6.25M22 15.75V22h-6.25"/>
+      {% if gallery_audio %}<path d="M6 10h2l4-3v10l-4-3H6z M15 10a3 3 0 0 1 0 4m2-6a6 6 0 0 1 0 8"/>{% endif %}
+    </svg>
   </button>
-
-  <button class="gallery-arrow gallery-next"
-          type="button"
-          aria-label="Next photograph">
-    &#8594;
-  </button>
-
-  <button class="gallery-expand" type="button" aria-haspopup="dialog" aria-label="Expand photo">Expand</button>
-
-  <div class="gallery-counter" aria-live="polite">
-    <span id="gallery-current">01</span> / {{ '%02d' | format(site.gallery | length) }}
-  </div>
 </section>
 
 
@@ -115,57 +106,8 @@
     <span>Join the Discord</span><span class="discord-invite-arrow" aria-hidden="true">↗</span>
   </a>
   {% endif %}
-  <div class="events-panel">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">WHAT'S NEXT</p>
-      </div>
-
-      <div class="actions">
-        <a class="cta home-primary-link" href="/calendar">Community Calendar</a>
-
-      </div>
-    </div>
-
-    <div class="grid">
-      {% for event in events %}
-      <article class="{{ 'event-community' if event.is_community or not event.external_url else 'event-venue' }}">
-        <p class="eyebrow">{{ 'COMMUNITY EVENT' if event.is_community or not event.external_url else 'VENUE LISTING' }}</p>
-        <h2>
-          <a href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ event.title }}</a>
-        </h2>
-
-        <p>
-          {% set display_start = event.starts_at|calendar_time %}
-          <time
-            class="local-time"
-            datetime="{{ display_start.isoformat() }}"
-          >
-            {{ display_start.strftime('%B %d, %Y · %H:%M %Z') }}
-          </time>
-        </p>
-
-        <p>{{ event.location }}</p>
-
-        {% if not event.external_url %}<p>
-          {{ counts[event.id] }} registered
-          {% if event.capacity %}
-          / {{ event.capacity }} spots
-          {% endif %}
-        </p>{% endif %}
-
-        <a href="{{ event.external_url if event.external_url else '/events/' ~ event.id }}" {% if event.external_url %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ 'View ' ~ event.source_name ~ ' listing ↗' if event.external_url else 'View event details →' }}</a>
-      </article>
-
-      {% else %}
-      <article>
-        <p>No upcoming events have been published yet.</p>
-      </article>
-      {% endfor %}
-    </div>
-  </div>
   <p class="home-community-note">{{ site.footer_text }}</p>
 </section>
-<script src="/static/gallery.js?v=responsive3" defer></script>
+<script src="/static/gallery.js?v=viewer14" defer></script>
 <script src="/static/gallery-player.js?v=artist-social1" defer></script>
 {% endblock %}
