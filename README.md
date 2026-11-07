@@ -8,6 +8,14 @@ See the [release record](RELEASES.md) for shipped features, validation evidence,
 
 Branding, social links, Discord invite, guild/role/channel IDs, and venue sources are configurable for other communities. Keep deployment credentials and member data outside Git. Example environments intentionally leave the Discord invite blank.
 
+## v0.3 live performance management (development)
+
+An additive module provides separate performer signups, arrival/readiness, original
+and projected set times, organizer-approved 15-minute sets, overlapping setup and
+teardown, immediate or house-music handoffs, and durable Discord stage boards and
+preparation notices. Attendance RSVPs are unchanged. It is opt-in and not deployed.
+See [operation, configuration, and test limitations](docs/PERFORMANCES.md).
+
 ## Hosting and required services
 
 Start with [Services, costs, and setup order](deploy/HOSTING.md) for provider links, free resources, SQLite storage, domain/DNS setup, and the production/preview workflow.

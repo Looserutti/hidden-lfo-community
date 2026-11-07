@@ -1,0 +1,99 @@
+{% extends 'admin_base.html' %}
+{% block head %}{{ super() }}<link rel="stylesheet" href="/static/performances.css?v=13"><script src="/static/performance_settings.js" defer></script>{% endblock %}
+{% block admin_content %}
+<div class="performance-page">
+<p><a href="/admin/meetups">← {{ site.event_manager_name }}</a></p>
+<h1>{{ event.title }}</h1>
+<p>Attendees can show up without an RSVP. Open performer signups before activating the stage. Only you start each set. Setup and teardown may overlap performances.</p>
+{% if not state %}
+<section class="admin-panel"><h2>Enable performer registration</h2>
+<p>Assign an existing Discord text channel or event thread. Enable the bot’s performance-management setting to publish its stage board and preparation notices. The bot needs View Channel, Send Messages, and Read Message History access (plus Send Messages in Threads for a thread).</p>
+<form method="post" action="/admin/meetups/{{ event.id }}/configure">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Discord channel or thread ID<input name="channel_id" inputmode="numeric" pattern="[0-9]+" required></label>
+<div class="event-date-fields"><label>Event end date<input name="end_date" type="date" required></label><label>Event end time<input name="end_time" type="time" required></label></div>
+<p class="note">Times use {{ site.calendar_timezone }}. Original performance times begin at the event start and are frozen when this configuration is saved.</p>
+<label>Performer limit<input name="capacity" type="number" min="1" max="100" value="25" required></label>
+<div class="performance-setting">
+<label for="set_minutes">Set length (minutes)</label>
+<input id="set_minutes" type="range" min="1" max="120" value="15" aria-label="Set length (minutes) slider" data-timing-field="set_minutes_value">
+<input id="set_minutes_value" name="set_minutes" type="number" min="1" max="120" value="15" aria-label="Set length (minutes) exact value" required>
+</div>
+<label>Estimated transition (seconds)<input name="transition_seconds" type="number" min="0" max="3600" value="0" required></label>
+<div class="performance-setting">
+<label for="minimum_seconds">Minimum handoff (seconds)</label>
+<input id="minimum_seconds" type="range" min="0" max="3600" value="0" aria-label="Minimum handoff (seconds) slider" data-timing-field="minimum_seconds_value">
+<input id="minimum_seconds_value" name="minimum_seconds" type="number" min="0" max="3600" value="0" aria-label="Minimum handoff (seconds) exact value" required>
+</div>
+<label>Next performer notice (minutes before projected start)<input name="next_notice_minutes" type="number" min="0" max="120" value="10" required></label>
+<label>On-deck notice (minutes before projected start)<input name="deck_notice_minutes" type="number" min="0" max="120" value="25" required></label>
+<p class="note">The performer limit is independent of attendance capacity. A full lineup may extend beyond the event end; projected overruns are shown rather than shortening sets.</p>
+<button>Save performance configuration</button></form></section>
+{% else %}
+{% set config = state.config %}
+{% macro control(action, label, target='', disabled=false) %}
+<form method="post" action="/admin/meetups/{{ event.id }}/action">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ config.revision }}">
+<input type="hidden" name="request_id" value="{{ request_id }}-{{ action }}-{{ target }}"><input type="hidden" name="action" value="{{ action }}"><input type="hidden" name="target_id" value="{{ target }}"><button{% if action in ('activate', 'start', 'open', 'reopen_event') %} class="performance-go"
+{% elif action in ('pause', 'pause_set') %} class="performance-pause"
+{% elif action in ('resume', 'resume_set', 'recover_set') %} class="performance-resume"
+{% elif action in ('end_set', 'end_event', 'close', 'skip') %} class="performance-stop"{% endif %}{% if disabled %} disabled{% endif %}>{{ label }}</button></form>
+{% endmacro %}
+<section class="admin-panel performance-light-panel">
+<div class="performance-stage-heading">
+<h2>Stage · {% if config.lifecycle == 'live' and state.current and not state.current.paused %}<span class="performance-live-playing">live</span>{% else %}{{ config.lifecycle }}{% endif %}</h2>
+<div class="performance-stage-timer">
+<div id="clock" data-state-url="/meetups/{{ event.id }}/timer/state" aria-label="Set countdown">–:––</div>
+<p id="status" role="status">Connecting…</p>
+</div>
+</div>
+<script src="/static/performer_timer.js" type="module"></script>
+{% if not event.published %}<p class="admin-notice">Event unpublished. New signups and performance starts are suspended.</p>{% endif %}
+<div class="performance-lineup"><div><h3>Current</h3><p>{% if state.current %}{{ state.current.display_name }}{% if state.current.paused %} · PAUSED{% endif %} · started {{ (state.current.actual_start|calendar_time).strftime('%H:%M:%S') }}{% elif config.lifecycle == 'ended' %}Event ended · final set sheet retained{% elif config.lifecycle == 'paused' %}Paused · no set is playing{% elif config.lifecycle == 'scheduled' %}Awaiting event activation{% else %}Transition / house music · no set is playing{% endif %}</p>
+</div><div><h3>Next</h3><p>{% if state.next %}{{ state.next.display_name }} · {{ 'Ready' if state.next.ready else 'Arrived, not ready' if state.next.arrived else 'Not checked in' }}{% if state.next.projected_start %}<br>Estimated {{ (state.next.projected_start|calendar_time).strftime('%H:%M') }}{% endif %}{% else %}No upcoming performer{% endif %}</p>
+</div><div><h3>On deck</h3><p>{% if state.deck %}{{ state.deck.display_name }} · {{ 'Ready' if state.deck.ready else 'Arrived, not ready' if state.deck.arrived else 'Not checked in' }}{% if state.deck.projected_start %}<br>Estimated {{ (state.deck.projected_start|calendar_time).strftime('%H:%M') }}{% endif %}{% else %}—{% endif %}</p></div></div>
+<p class="note">Estimates assume planned set lengths and transitions; an unready performer requires your decision. Refresh for the latest lineup. Starting always requires your approval.</p>
+{% if config.lifecycle != 'ended' %}
+<h3>Event controls</h3>
+{% if config.lifecycle == 'scheduled' %}{{ control('activate', 'Activate live event') }}{% endif %}
+<div class="performance-actions">
+{% set can_start = config.lifecycle == 'live' and event.published and not state.current and state.next and state.next.ready and state.next.arrived %}
+{{ control('start', 'Start Set', state.next.id if state.next else '', disabled=not can_start) }}
+{% if state.current %}
+{{ control('resume_set' if state.current.paused else 'pause_set', 'Resume set' if state.current.paused else 'Pause set', state.current.id) }}
+{{ control('end_set', 'End Set/Begin Transition', state.current.id) }}{% elif state.next and config.lifecycle == 'live' and event.published and not can_start %}
+<p>Next performer must arrive and confirm readiness before starting.</p>
+{% endif %}</div>
+{% if state.recoverable and config.lifecycle == 'live' and event.published %}{{ control('recover_set', 'Restore set', state.recoverable.id) }}{% endif %}
+<div class="performance-actions">
+{% if config.lifecycle == 'paused' %}{{ control('resume', 'Unlock next set') }}{% endif %}
+{% if state.next %}{{ control('skip', 'Skip next performer', state.next.id) }}{% endif %}
+<div class="performance-registration-controls{% if config.registration_open %} is-open{% endif %}">
+{{ control('close' if config.registration_open else 'open', 'Close performer registration' if config.registration_open else 'Open performer registration') }}
+</div>
+{% if not state.current %}<details><summary class="performance-stop">End the live event</summary>
+<p>This closes performer registration and finalizes the set sheet.</p>
+{{ control('end_event', 'Confirm end of live event') }}</details>{% endif %}
+</div>
+{% elif event.published %}
+{{ control('reopen_event', 'Reopen live event and performer registration') }}
+{% endif %}
+{% if config.lifecycle == 'ended' %}
+<p><a href="/admin/meetups/{{ event.id }}/set-sheet.csv">Download final set sheet (CSV)</a></p>
+{% endif %}
+<div class="performance-stage-footer">
+<p><a href="/admin/meetups/{{ event.id }}">Refresh stage and projections</a></p>
+{% if state.projected_finish %}
+{% set finish = state.projected_finish|calendar_time %}
+{% set minutes = finish.hour * 60 + finish.minute + (1 if finish.second or finish.microsecond else 0) %}
+{% set rounded_minutes = ((minutes + 29) // 30 * 30) % 1440 %}
+<p class="performance-finish">Projected finish: {{ rounded_minutes // 60 % 12 or 12 }}:{{ '%02d'|format(rounded_minutes % 60) }} {{ 'PM' if rounded_minutes >= 720 else 'AM' }}{% if state.overrun_seconds %} · {{ (state.overrun_seconds / 60)|round(1) }} minutes beyond event window{% endif %}</p>{% endif %}
+</div></section>
+<section class="admin-panel performance-light-panel"><h2>Performer set sheet</h2><p>Original times stay fixed. Live estimates and actual times are separate. Times use {{ site.calendar_timezone }}.</p>
+<div class="admin-table-scroll" role="region" aria-label="Performer set sheet" tabindex="0"><table class="admin-table"><thead><tr><th>Position</th><th>Performer</th><th>Arrival / readiness</th><th>Status</th><th>Original start</th><th>Projected start</th><th>Actual start / end</th><th>Organizer override</th></tr></thead><tbody>
+{% for row in state.queue %}<tr><td>{{ row.position }}</td><td>{{ row.display_name }}<br><small>{{ row.discord_id }}</small></td><td>{{ 'Arrived' if row.arrived else 'Absent' }} / {{ 'Ready' if row.ready else 'Not ready' }}</td><td>{{ row.status }}{% if row.paused %} · paused{% endif %}</td><td>{{ (row.original_start|calendar_time).strftime('%H:%M') }}</td><td>{{ (row.projected_start|calendar_time).strftime('%H:%M') if row.projected_start else '—' }}</td><td>{{ (row.actual_start|calendar_time).strftime('%H:%M:%S') if row.actual_start else '—' }} / {{ (row.actual_end|calendar_time).strftime('%H:%M:%S') if row.actual_end else '—' }}</td><td>{% if row.status == 'registered' and config.lifecycle != 'ended' %}{{ control('checkin', 'Record arrival', row.discord_id) }}{{ control('ready', 'Mark ready', row.discord_id) }}{{ control('notready', 'Mark not ready', row.discord_id) }}{{ control('checkout', 'Check out', row.discord_id) }}{% endif %}</td></tr>
+{% else %}<tr><td colspan="8">No performers registered.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endif %}
+</div>
+{% endblock %}

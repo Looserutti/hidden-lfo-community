@@ -30,6 +30,7 @@ class Event(Base):
     location: Mapped[str] = mapped_column(String(250), default='Discord')
     capacity: Mapped[int | None] = mapped_column(Integer, nullable=True)
     published: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     discord_message_id: Mapped[int | None] = mapped_column(nullable=True)
     discord_channel_id: Mapped[int | None] = mapped_column(nullable=True)
 
@@ -116,3 +117,6 @@ class GalleryTrack(Base):
     normalization_error: Mapped[str] = mapped_column(String(240), default='')
     target_lufs: Mapped[float] = mapped_column(Float, default=-14)
     output_lufs: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+# Register additive performance tables on the shared metadata.
+from app.performance_models import PerformanceEvent, PerformanceSlot, PerformerRegistration, PerformanceAction, PerformanceNotice

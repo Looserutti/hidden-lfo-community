@@ -32,3 +32,6 @@ MEMBER_EVENT_ANNOUNCEMENTS_SINCE = os.getenv('MEMBER_EVENT_ANNOUNCEMENTS_SINCE',
 
 # Optional first-publication notifications; configure each community's channel.
 PROJECT_ANNOUNCEMENTS_CHANNEL_ID = env_int('PROJECT_ANNOUNCEMENTS_CHANNEL_ID')
+
+# New outbound performance board and preparation notices are opt-in.
+PERFORMANCE_MANAGEMENT_ENABLED = os.getenv('PERFORMANCE_MANAGEMENT_ENABLED', 'false').lower() == 'true'

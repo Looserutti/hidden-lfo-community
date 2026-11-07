@@ -1,0 +1,12 @@
+{% extends 'admin_base.html' %}
+{% block admin_content %}
+<div class="admin-heading"><div><p class="eyebrow">LIVE MEETUPS</p><h1>{{ site.event_manager_name }}</h1><p>Manage performer registration, check-in, readiness, schedules, and the stage.</p></div></div>
+<p>Choose an event to open its set sheet and organizer controls. Performer signups remain separate from attendance RSVPs.</p>
+<section class="admin-panel"><h2>Meetups</h2>
+{% for event in events %}{% set config = configs.get(event.id) %}
+<article><h3>{{ event.title }}</h3><p>{{ (event.starts_at|calendar_time).strftime('%b %d, %Y · %H:%M') }} · {{ 'Published' if event.published else 'Draft / unpublished' }}{% if config %} · {{ config.lifecycle }}{% endif %}</p>
+<a class="cta" href="/admin/meetups/{{ event.id }}">{{ 'Open ' ~ site.event_manager_name if config else 'Set up this meetup' }}</a></article>
+{% else %}<p>No community events yet. <a href="/admin/calendar#create-event">Create an event in Community Calendar</a>, then return here to set up its performers and stage.</p>{% endfor %}
+</section>
+<p class="note">Community Calendar handles event details and publication. {{ site.event_manager_name }} handles live performance operations.</p>
+{% endblock %}

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, func, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session as DBSession
-from app.db import Member, Event, Registration, now
+from app.db import Member, Event, PerformanceEvent, Registration, now
 
 def member(db: DBSession, discord_id: int) -> Member:
     m = db.get(Member, discord_id)
@@ -37,6 +37,9 @@ def rsvp(db: DBSession, event_id: int, discord_id: int, verified: bool, attendin
         if not event or not event.published:
             db.rollback()
             return 'This event is not available.'
+        if attending and db.get(PerformanceEvent, event_id):
+            db.rollback()
+            return 'You can attend without an RSVP. To play, register on the performer stage board.'
         reg = db.scalar(select(Registration).where(Registration.event_id == event_id, Registration.discord_id == discord_id))
         if attending:
             if reg and reg.status == 'going':
@@ -76,11 +79,15 @@ def inactive_members(db: DBSession, grace_days=90, inactive_days=60):
     return results
 
 
-def event_announcement(e: Event, count: int) -> str:
+def event_announcement(e: Event, count: int | None) -> str:
     start = e.starts_at
     if start.tzinfo is None:
         start = start.replace(tzinfo=timezone.utc)
     stamp = int(start.timestamp())
+    details = (f'**{e.title}**\n{e.description}\n'
+               f'Starts: <t:{stamp}:F> (<t:{stamp}:R>)\nLocation: {e.location}')
+    if count is None:
+        return (details[:1850] + '\nAttendance is open without an RSVP.')[:1950]
     cap = str(e.capacity) if e.capacity is not None else 'unlimited'
     return (f'**{e.title}**\n{e.description}\n'
             f'Starts: <t:{stamp}:F> (<t:{stamp}:R>)\n'

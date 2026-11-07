@@ -147,7 +147,7 @@
 
         <p>{{ event.location }}</p>
 
-        {% if not event.external_url %}<p>
+        {% if event.id in counts %}<p>
           {{ counts[event.id] }} registered
           {% if event.capacity %}
           / {{ event.capacity }} spots

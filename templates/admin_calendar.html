@@ -13,7 +13,7 @@
 <label>Description<textarea name="description">{{ submission.description }}</textarea></label>
 <div class="event-date-fields"><label>Event date<input name="start_date" type="date" value="{{ local_start.strftime('%Y-%m-%d') }}" required></label><label>Start time<input name="start_time" type="time" value="{{ local_start.strftime('%H:%M') }}" required></label></div><p class="note">Times use {{ calendar_timezone }}.</p>
 <label>Venue or location<input name="location" maxlength="250" value="{{ submission.location }}" required></label><button>Approve &amp; publish to calendar</button></form>
-<form method="post" action="/admin/submissions/{{ submission.id }}/reject"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="table-action">Reject submission</button></form></article>{% else %}<p class="note">No member events awaiting review.</p>{% endfor %}</section>
+<form method="post" action="/admin/submissions/{{ submission.id }}/reject"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="table-action">Deny and remove from queue</button></form></article>{% else %}<p class="note">No member events awaiting review.</p>{% endfor %}</section>
 <div class="admin-heading"><div><p class="eyebrow">EVENT MANAGEMENT</p><h2>Dashboard-created events</h2></div><span>{{ events|length }} events · {{ draft_total }} unpublished</span></div>
 <p class="note">Edit events created here or approved from /event below. Manage Discord scheduled events in Discord, and imported venue listings in <a href="/admin/settings#listings">Calendar settings</a>.</p>
 <article id="create-event" class="admin-panel"><h2>Create draft event</h2><form method="post" action="/admin/events">
@@ -27,7 +27,7 @@
 <h2>Events</h2>
 {% for event in events %}<article>
 <h3>{{ event.title }} — {{ 'Published' if event.published else 'Unpublished / Draft' }}</h3>
-<p><a href="/admin/events/{{ event.id }}/registrations">View registrations</a></p><p>{{ counts[event.id] }} registered{% if event.capacity %} / {{ event.capacity }} capacity{% endif %}</p>
+<p><a href="/admin/events/{{ event.id }}/registrations">View attendance RSVPs</a></p><p>{{ counts[event.id] }} registered{% if event.capacity %} / {{ event.capacity }} capacity{% endif %}</p>
 <details><summary>Edit event</summary><form method="post" action="/admin/events/{{ event.id }}/edit">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label>Title <input name="title" required maxlength="200" value="{{ event.title }}"></label>
@@ -38,6 +38,12 @@
 <button>Save changes</button></form></details>
 <form action="/admin/events/{{ event.id }}/publish" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button>{{ 'Unpublish' if event.published else 'Publish' }}</button></form>
 {% if event.published %}<form action="/admin/events/{{ event.id }}/cancel" method="post" onsubmit="return confirm('Remove this event from the public calendar and Discord announcement?')"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Cancel event</button></form>{% endif %}
+<details><summary>{{ 'Delete event' if event.published or event.discord_message_id else 'Delete unpublished event' }}</summary>
+<p>Remove this event from the calendar and event lists. Signup and set history will be retained.</p>
+<form action="/admin/events/{{ event.id }}/delete" method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<button>{{ 'Confirm delete event' if event.published or event.discord_message_id else 'Confirm delete unpublished event' }}</button>
+</form></details>
 </article>{% else %}<p>No events yet.</p>{% endfor %}
 <p class="note">The Discord bot reconciles event posts about every 30 seconds while online. Unpublishing preserves RSVP history and removes the Discord announcement.</p>
 {% endblock %}

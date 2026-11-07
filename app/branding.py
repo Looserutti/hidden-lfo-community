@@ -36,6 +36,9 @@ def load_site(path=None):
     retention = site.get('venue_retention_days', 30)
     if type(retention) is not int or not 1 <= retention <= 3650:
         raise ValueError('venue_retention_days must be between 1 and 3650')
+    manager_name = site.setdefault('event_manager_name', 'Event Manager')
+    if not isinstance(manager_name, str) or not manager_name.strip():
+        raise ValueError('Site setting event_manager_name must be non-empty text')
     return site
 
 

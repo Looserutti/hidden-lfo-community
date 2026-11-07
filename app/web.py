@@ -19,7 +19,7 @@ from app import feeds
 from app.audio import audio_routes, playlist as audio_playlist
 from app.config import ADMIN_IDS, BASE_URL, GUILD_ID
 from app.config import DISCORD_INVITE_URL
-from app.db import init_db, Session, Event, Registration, Member, Setting, ImportedEvent, EventSubmission
+from app.db import init_db, Session, Event, PerformanceEvent, PerformerRegistration, Registration, Member, Setting, ImportedEvent, EventSubmission, now
 from app.submissions import review_submission
 from app.activity import report
 
@@ -71,7 +71,8 @@ def context(request: Request, **kwargs):
     with Session() as gallery_db:
         gallery=current_gallery(gallery_db,SITE['name'])
     path=request.url.path
-    admin_section=('calendar' if path.startswith(('/admin/calendar','/admin/settings','/admin/events','/admin/submissions')) else
+    admin_section=('meetups' if path.startswith('/admin/meetups') or (path.startswith('/admin/events/') and '/performances' in path) else
+                   'calendar' if path.startswith(('/admin/calendar','/admin/settings','/admin/events','/admin/submissions')) else
                    'homepage' if path.startswith('/admin/photos') else 'projects' if path.startswith('/admin/projects') else
                    'radio' if path.startswith('/admin/music') else 'community' if path.startswith(('/admin/activity','/admin/members')) else
                    'health' if path.startswith('/admin/health') else 'hub')
@@ -84,7 +85,7 @@ def home(request: Request):
         native = db.scalars(select(Event).where(Event.published == True, Event.starts_at >= start).order_by(Event.starts_at, Event.id).limit(2)).all()
         events = sorted([*native, *feeds.calendar_events(db, start, limit=2)],
                         key=lambda e: e.starts_at.replace(tzinfo=timezone.utc))[:2]
-        counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events if e.id is not None}
+        counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) for e in events if e.id is not None and not db.get(PerformanceEvent, e.id)}
         return templates.TemplateResponse(request, 'index.html', context(request, events=events, counts=counts, invite_url=DISCORD_INVITE_URL, gallery_audio=audio_playlist(db), share_url=BASE_URL.rstrip('/') + '/'))
 
 @app.get('/calendar', response_class=HTMLResponse)
@@ -116,7 +117,8 @@ def event_detail(request: Request, event_id: int):
         if not e or not e.published:
             raise HTTPException(404)
         count = db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going'))
-        return templates.TemplateResponse(request, 'event.html', context(request, event=e, count=count, invite_url=DISCORD_INVITE_URL, discord_guild_id=GUILD_ID))
+        performance = db.get(PerformanceEvent, event_id)
+        return templates.TemplateResponse(request, 'event.html', context(request, event=e, count=count, performance=performance, invite_url=DISCORD_INVITE_URL, discord_guild_id=GUILD_ID))
 
 @app.get('/login')
 def login(request: Request):
@@ -183,7 +185,7 @@ def calendar_dashboard(request: Request):
     admin(request)
     with Session() as db:
         submissions = db.scalars(select(EventSubmission).where(EventSubmission.status == 'pending').order_by(EventSubmission.submitted_at)).all()
-        events = db.scalars(select(Event).order_by(Event.starts_at.desc())).all()
+        events = db.scalars(select(Event).where(Event.deleted_at.is_(None)).order_by(Event.starts_at.desc())).all()
         counts = {e.id: db.scalar(select(func.count()).select_from(Registration).where(Registration.event_id == e.id, Registration.status == 'going')) or 0 for e in events}
         start = datetime.now(timezone.utc)
         imported = feeds.calendar_events(db, start)
@@ -208,11 +210,14 @@ def create_event(request: Request, csrf: str = Form(...), title: str = Form(...)
 def publish_event(request: Request, event_id: int, csrf: str = Form(...)):
     admin(request)
     csrf_check(request, csrf)
-    with Session.begin() as db:
+    from app import performances
+    with Session() as db:
+        performances.lock(db)
         e = db.get(Event, event_id)
-        if not e:
+        if not e or e.deleted_at is not None:
             raise HTTPException(404)
         e.published = not e.published
+        db.commit()
     return RedirectResponse('/admin/calendar', status_code=303)
 from fastapi.staticfiles import StaticFiles
 app.mount('/static', StaticFiles(directory='static'), name='static')
@@ -266,6 +271,35 @@ def edit_event(request: Request, event_id: int, csrf: str = Form(...),
             raise HTTPException(400, 'Capacity cannot be below current registration count')
         for key, value in changes.items():
             setattr(e, key, value)
+    return RedirectResponse('/admin/calendar', status_code=303)
+
+
+@app.post('/admin/events/{event_id}/delete')
+def delete_event(request: Request, event_id: int, csrf: str = Form(...)):
+    admin(request)
+    csrf_check(request, csrf)
+    from app import performances
+
+    with Session() as db:
+        performances.lock(db)
+        event = db.get(Event, event_id)
+        if event is None:
+            raise HTTPException(404, 'Event not found')
+        if event.deleted_at is None:
+            performance = db.get(PerformanceEvent, event_id)
+            if performance and performance.lifecycle in ('live', 'paused'):
+                playing = db.scalar(select(PerformerRegistration.id).where(
+                    PerformerRegistration.event_id == event_id,
+                    PerformerRegistration.status == 'playing',
+                ))
+                if playing is not None:
+                    raise HTTPException(409, 'End the current set in Meet Up Manager before deleting this event.')
+                performance.lifecycle = 'ended'
+                performance.registration_open = False
+                performance.revision += 1
+            event.published = False
+            event.deleted_at = now()
+        db.commit()
     return RedirectResponse('/admin/calendar', status_code=303)
 
 
@@ -464,3 +498,31 @@ app.include_router(gallery_routes(lambda: Session(), admin, csrf_check,
 from app.project_routes import project_routes
 app.include_router(project_routes(lambda: Session(), admin, csrf_check,
     lambda request, template, **fields: templates.TemplateResponse(request, template, context(request, **fields))))
+
+from app.performance_routes import performance_routes
+app.include_router(performance_routes(lambda: Session(), admin, csrf_check,
+    lambda request, template='admin_performances.html', **fields: templates.TemplateResponse(request, template, context(request, **fields)), CALENDAR_ZONE))
+
+
+@app.get('/meetups/{event_id}/timer', response_class=HTMLResponse)
+def performer_timer(request: Request, event_id: int):
+    performer_timer_state(event_id)
+    return templates.TemplateResponse(request, 'performer_timer.html', {'event_id': event_id, 'site': SITE})
+
+
+@app.get('/meetups/{event_id}/timer/state')
+def performer_timer_state(event_id: int):
+    from app import performances
+    with Session() as db:
+        event = db.get(Event, event_id)
+        if not event or not event.published:
+            raise HTTPException(404)
+        try:
+            state = performances.snapshot(db, event_id)
+        except performances.PerformanceError:
+            raise HTTPException(404)
+    current = state['current']
+    return JSONResponse({
+        'remaining': current['remaining_seconds'] if current else None,
+        'paused': bool(current and current['paused']),
+    }, headers={'Cache-Control': 'no-store'})

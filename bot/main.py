@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy import select, func
 from app.config import PROJECT_ANNOUNCEMENTS_CHANNEL_ID, BASE_URL, GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_SINCE
-from app.db import Session, Member, Event, Registration, Setting, init_db, now
+from app.db import Session, Member, Event, PerformanceEvent, Registration, Setting, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
 from bot import onboarding
@@ -99,6 +99,14 @@ class CommunityBot(commands.Bot):
             events = db.scalars(select(Event).where(Event.discord_message_id.is_not(None))).all()
             for e in events:
                 self.add_view(RSVPView(e.id), message_id=e.discord_message_id)
+        from bot.performances import StageView
+        from app.performances import snapshot
+        with Session() as db:
+            for config in db.scalars(select(PerformanceEvent)):
+                state = snapshot(db, config.event_id)
+                self.add_view(StageView.from_state(state), message_id=config.board_message_id)
+        if PERFORMANCE_MANAGEMENT_ENABLED and not performance_worker.is_running():
+            performance_worker.start()
         if GUILD_ID:
             await self.tree.sync(guild=discord.Object(id=GUILD_ID))
         if (EVENT_PUBLISHING_ENABLED or MEMBER_EVENT_ANNOUNCEMENTS_ENABLED) and not publish_events.is_running():
@@ -224,7 +232,8 @@ async def refresh_event_message(event_id: int):
             return
         channel_id, message_id = e.discord_channel_id, e.discord_message_id
         published = e.published
-        content = announcement_content(e, db.scalar(select(func.count()).select_from(Registration).where(
+        performance = db.get(PerformanceEvent, event_id)
+        content = announcement_content(e, None if performance else db.scalar(select(func.count()).select_from(Registration).where(
             Registration.event_id == e.id, Registration.status == 'going')) or 0, approved_member_event(db, e.id))
     channel = bot.get_channel(channel_id)
     if not isinstance(channel, discord.TextChannel):
@@ -232,8 +241,8 @@ async def refresh_event_message(event_id: int):
     try:
         message = await channel.fetch_message(message_id)
         if published:
-            if message.content != content:
-                await message.edit(content=content, view=RSVPView(event_id), allowed_mentions=discord.AllowedMentions.none())
+            if message.content != content or (performance and message.components):
+                await message.edit(content=content, view=None if performance else RSVPView(event_id), allowed_mentions=discord.AllowedMentions.none())
         else:
             await message.delete()
     except discord.NotFound:
@@ -271,10 +280,11 @@ async def publish_events():
             if not EVENT_PUBLISHING_ENABLED and not member_enabled:
                 continue
             if e.published and e.discord_message_id is None and e.starts_at.replace(tzinfo=timezone.utc) > now():
-                count = db.scalar(select(func.count()).select_from(Registration).where(
+                performance = db.get(PerformanceEvent, e.id)
+                count = None if performance else db.scalar(select(func.count()).select_from(Registration).where(
                     Registration.event_id == e.id, Registration.status == 'going')) or 0
                 try:
-                    message = await channel.send(announcement_content(e, count, is_member), view=RSVPView(e.id), allowed_mentions=discord.AllowedMentions.none())
+                    message = await channel.send(announcement_content(e, count, is_member), view=None if performance else RSVPView(e.id), allowed_mentions=discord.AllowedMentions.none())
                     e.discord_message_id = message.id
                     e.discord_channel_id = channel.id
                     db.commit()
@@ -342,6 +352,10 @@ from bot.shows import register_shows
 register_shows(bot)
 from bot.events import register_events
 register_events(bot)
+
+from app.config import PERFORMANCE_MANAGEMENT_ENABLED
+from bot.performances import register_performances
+performance_worker = register_performances(bot)
 
 if __name__ == '__main__':
     token = os.getenv('DISCORD_BOT_TOKEN', '')
