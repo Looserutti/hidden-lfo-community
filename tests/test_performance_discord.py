@@ -133,7 +133,7 @@ def test_performance_worker_requires_explicit_opt_in(monkeypatch, enabled):
     monkeypatch.setattr(main,'STAFF_REPORTS_ENABLED',False)
     monkeypatch.setattr(main,'PROJECT_ANNOUNCEMENTS_CHANNEL_ID',0)
     worker=MagicMock();worker.is_running.return_value=False
-    monkeypatch.setattr(main,'performance_worker',worker)
+    monkeypatch.setattr(main,'performance_worker',worker,raising=False)
     bot=SimpleNamespace(add_view=MagicMock(),tree=SimpleNamespace(sync=AsyncMock()))
     asyncio.run(main.CommunityBot.setup_hook(bot))
     assert worker.start.call_count == int(enabled)

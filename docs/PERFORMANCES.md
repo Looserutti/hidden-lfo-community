@@ -1,8 +1,12 @@
 # Live performance management (v0.3 development)
 
-This module is implemented in an isolated development copy. It is not deployed.
-Existing ordinary event RSVPs, attendance capacity, onboarding, calendar imports,
-projects, and media features keep their existing behavior.
+Performance management is optional. Hidden LFO calls it **Sync Manager**.
+The generic configuration calls it **Event Manager**. Set the name with
+`event_manager_name` in `config/site.json`.
+
+The community calendar, member access, projects, and media do not require
+performance setup. Ordinary events retain their attendance RSVPs. For events
+configured in the manager, attendees can show up and performers sign up in Discord.
 
 ## Operating model
 
@@ -13,7 +17,7 @@ its finish and waits, allowing an immediate handoff or a house-music transition.
 Estimated transition time and enforced minimum handoff are separate settings;
 both default to zero. An organizer can wait longer at any time.
 
-A performer registers independently of an RSVP, then reports arrival and readiness
+A performer can sign up before the stage is activated, then reports arrival and readiness
 separately. Arrival alone never marks them ready. Checkout clears readiness.
 Verified membership is required for member actions. Organizers use the existing
 Discord-ID admin allowlist, with private website controls protected by OAuth and
@@ -23,9 +27,8 @@ CSRF checks. Only one set can be active per event.
 
 Once reviewed and deployed to a test environment with a separate database:
 
-1. Apply Alembic through 0009 before launching the upgraded services.
-2. Create a native community event in the admin calendar; choose Manage performers
-   & live stage. Assign an existing event text channel or thread by its Discord ID.
+1. Apply Alembic through the release head before launching the upgraded services.
+2. Create a native community event in the admin calendar; open the event in the manager. Assign an existing event text channel or thread by its Discord ID.
    A channel/thread maps to one event, preventing ambiguous commands.
 3. Set event end, performer capacity (default 25, configurable 1–100), set duration,
    estimated/minimum handoff, and notification leads. Original performance times

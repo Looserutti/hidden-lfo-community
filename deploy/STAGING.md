@@ -55,3 +55,27 @@ For recovery, stop every database writer (website, bot, collector), preserve cur
 - Server memory, disk space, error logs and costs are monitored. Container logs rotate at 10 MB × 3 files per service.
 
 Docker startup, certificates, external DNS, firewall configuration, live Discord permissions and off-server backup copying must be tested on the actual server. Passing local unit tests is not a hosted-launch sign-off.
+
+
+## Performance management release checks
+
+Use a release identified by its Git commit and follow the same build and migration
+sequence in staging and production. Run the migration against a copy of the
+previous database first. Verify the existing calendar, ordinary RSVPs, and
+member login, and confirm that the migrated copy retains existing records.
+With `PERFORMANCE_MANAGEMENT_ENABLED=false`, the bot leaves performance
+commands and the stage-board worker disabled.
+
+For the live test, use a separate Discord application, test server, and database.
+Keep only one instance of the test bot running. Create a draft event, configure it
+with a fresh Discord channel, publish it, and register a performer before stage
+activation. On event day, check in, mark ready, activate the stage, and start a set.
+Verify the countdown on a phone over cellular, the two warning thresholds,
+pause and resume, and the final set sheet download and Discord attachment.
+Unpublish and delete a disposable event to check calendar and board cleanup.
+
+Before a production rollout, verify a backup and record the current release.
+Pause database writers during the migration and start the updated services only
+after it succeeds. Check HTTPS, admin sign-in, the calendar, and the bot after
+startup. If a rollback requires restoring the database, stop the writers and
+follow the backup and restore procedure above.

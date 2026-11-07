@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy import select, func
-from app.config import PROJECT_ANNOUNCEMENTS_CHANNEL_ID, BASE_URL, GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_SINCE
+from app.config import PROJECT_ANNOUNCEMENTS_CHANNEL_ID, BASE_URL, GUILD_ID, VERIFIED_ROLE_ID, RULES_CHANNEL_ID, EVENTS_CHANNEL_ID, ADMIN_IDS, STAFF_REPORT_CHANNEL_ID, EVENT_PUBLISHING_ENABLED, STAFF_REPORTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_ENABLED, MEMBER_EVENT_ANNOUNCEMENTS_SINCE, PERFORMANCE_MANAGEMENT_ENABLED
 from app.db import Session, Member, Event, PerformanceEvent, Registration, Setting, init_db, now
 from app.services import member, sync_member_identity, touch, rsvp, inactive_members, event_announcement
 from app.activity import report, report_text, classify
@@ -99,14 +99,17 @@ class CommunityBot(commands.Bot):
             events = db.scalars(select(Event).where(Event.discord_message_id.is_not(None))).all()
             for e in events:
                 self.add_view(RSVPView(e.id), message_id=e.discord_message_id)
-        from bot.performances import StageView
-        from app.performances import snapshot
-        with Session() as db:
-            for config in db.scalars(select(PerformanceEvent)):
-                state = snapshot(db, config.event_id)
-                self.add_view(StageView.from_state(state), message_id=config.board_message_id)
-        if PERFORMANCE_MANAGEMENT_ENABLED and not performance_worker.is_running():
-            performance_worker.start()
+        if PERFORMANCE_MANAGEMENT_ENABLED:
+            from bot.performances import StageView
+            from app.performances import snapshot
+            with Session() as db:
+                for config in db.scalars(select(PerformanceEvent)):
+                    if not config.board_message_id:
+                        continue
+                    state = snapshot(db, config.event_id)
+                    self.add_view(StageView.from_state(state), message_id=config.board_message_id)
+            if not performance_worker.is_running():
+                performance_worker.start()
         if GUILD_ID:
             await self.tree.sync(guild=discord.Object(id=GUILD_ID))
         if (EVENT_PUBLISHING_ENABLED or MEMBER_EVENT_ANNOUNCEMENTS_ENABLED) and not publish_events.is_running():
@@ -353,9 +356,9 @@ register_shows(bot)
 from bot.events import register_events
 register_events(bot)
 
-from app.config import PERFORMANCE_MANAGEMENT_ENABLED
-from bot.performances import register_performances
-performance_worker = register_performances(bot)
+if PERFORMANCE_MANAGEMENT_ENABLED:
+    from bot.performances import register_performances
+    performance_worker = register_performances(bot)
 
 if __name__ == '__main__':
     token = os.getenv('DISCORD_BOT_TOKEN', '')
